@@ -758,25 +758,19 @@ async function inicializarBaseDeDatos() {
 }
 
 function obtenerRarezaAleatoria(tipo) {
-    const r = Math.random() * 100;
-    const tipoLimpio = (tipo || 'estandar').toLowerCase().trim();
+    const rand = Math.random() * 100;
 
-    if (tipoLimpio === 'oro elite' || tipoLimpio === 'elite') {
-        if (r < 20) return 'legendaria';
-        if (r < 65) return 'epica';
-        return 'rara';
-    } 
-    else if (tipoLimpio === 'premium') {
-        if (r < 5) return 'legendaria';
-        if (r < 20) return 'epica';
-        if (r < 60) return 'rara';
-        return 'comun';
-    } 
-    else {
-        if (r < 1) return 'legendaria';
-        if (r < 5) return 'epica';
-        if (r < 20) return 'rara';
-        return 'comun';
+    // Ajustá los porcentajes a tu gusto, pero las palabras siempre en minúsculas:
+    if (tipo === 'premium') { // Si tenés sobres premium en el futuro
+        if (rand < 50) return 'rara';
+        if (rand < 85) return 'epica';
+        return 'legendaria';
+    } {
+        // Sobre Mundial común:
+        if (rand < 70) return 'comun';      // 70% comunes
+        if (rand < 90) return 'rara';       // 20% raras
+        if (rand < 98) return 'epica';      // 8% épicas
+        return 'legendaria';                // 2% legendarias
     }
 }
 
@@ -886,7 +880,7 @@ app.post('/api/abrir-sobre', (req, res) => {
                 const jugadoresElegidos = [];
                 for (let i = 0; i < 5; i++) {
                     const rarezaBuscada = obtenerRarezaAleatoria(tipo); 
-                    let filtrados = todosLosJugadores.filter(j => j.rareza === rarezaBuscada);
+                    let filtrados = todosLosJugadores.filter(j => j.rareza.toLowerCase() === rarezaBuscada.toLowerCase());
                     if (filtrados.length === 0) filtrados = todosLosJugadores.filter(j => j.rareza === 'comun');
 
                     const elegido = filtrados[Math.floor(Math.random() * filtrados.length)];
