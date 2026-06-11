@@ -1,30 +1,34 @@
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
-const path = require('path');
+const { Pool } = require('pg');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 🔥 ADAPTACIÓN PARA RENDER: Si detecta el entorno de Render, guarda en el disco persistente. Si estás en tu compu, local.
-const dbFolder = process.env.RENDER ? '/opt/render/project/src/data' : __dirname;
-const dbPath = path.join(dbFolder, 'album_mundial.db');
-
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-        console.error('Error al crear el archivo de base de datos:', err);
-    } else {
-        console.log('✅ Base de datos conectada en:', dbPath);
-        inicializarBaseDeDatos();
-    }
+// Conexión a la base de datos de Neon en la nube
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_Fkl8WfbH7SgQ@ep-dark-lab-atehlsos.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require',
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
-function inicializarBaseDeDatos() {
-    db.serialize(() => {
+// Probamos la conexión
+pool.query('SELECT NOW()', (err, res) => {
+  if (err) {
+    console.error('❌ Error al conectar a PostgreSQL en Neon:', err);
+  } else {
+    console.log('✅ Conectado con éxito a PostgreSQL en la nube');
+    inicializarBaseDeDatos();
+  }
+});
+
+async function inicializarBaseDeDatos() {
+    try {
         // TABLA DE JUGADORES
-        db.run(`CREATE TABLE IF NOT EXISTS jugadores (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        await pool.query(`CREATE TABLE IF NOT EXISTS jugadores (
+            id SERIAL PRIMARY KEY,
             nombre TEXT,
             pais TEXT,
             bandera TEXT,
@@ -34,41 +38,37 @@ function inicializarBaseDeDatos() {
         )`);
 
         // NUEVA TABLA DE USUARIOS
-        db.run(`CREATE TABLE IF NOT EXISTS usuarios (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        await pool.query(`CREATE TABLE IF NOT EXISTS usuarios (
+            id SERIAL PRIMARY KEY,
             username TEXT UNIQUE,
             password TEXT
         )`);
 
         // PROGRESO VINCULADO AL USUARIO
-        db.run(`CREATE TABLE IF NOT EXISTS usuario_progreso (
-            usuario_id INTEGER PRIMARY KEY,
+        await pool.query(`CREATE TABLE IF NOT EXISTS usuario_progreso (
+            usuario_id INTEGER PRIMARY KEY REFERENCES usuarios(id),
             monedas INTEGER DEFAULT 100,
-            sobres INTEGER DEFAULT 3,
-            FOREIGN KEY(usuario_id) REFERENCES usuarios(id)
+            sobres INTEGER DEFAULT 3
         )`);
 
         // 🏆 NUEVA TABLA: RANKING DE MINIJUEGO VINCULADO AL USUARIO
-        db.run(`CREATE TABLE IF NOT EXISTS ranking (
-            usuario_id INTEGER PRIMARY KEY,
-            puntos INTEGER DEFAULT 0,
-            FOREIGN KEY(usuario_id) REFERENCES usuarios(id)
+        await pool.query(`CREATE TABLE IF NOT EXISTS ranking (
+            usuario_id INTEGER PRIMARY KEY REFERENCES usuarios(id),
+            puntos INTEGER DEFAULT 0
         )`);
 
         // ÁLBUM VINCULADO AL USUARIO
-        db.run(`CREATE TABLE IF NOT EXISTS album_usuario (
-            usuario_id INTEGER,
-            jugador_id INTEGER,
+        await pool.query(`CREATE TABLE IF NOT EXISTS album_usuario (
+            usuario_id INTEGER REFERENCES usuarios(id),
+            jugador_id INTEGER REFERENCES jugadores(id),
             cantidad INTEGER DEFAULT 1,
-            PRIMARY KEY (usuario_id, jugador_id),
-            FOREIGN KEY(usuario_id) REFERENCES usuarios(id),
-            FOREIGN KEY(jugador_id) REFERENCES jugadores(id)
+            PRIMARY KEY (usuario_id, jugador_id)
         )`);
 
         // Carga inicial de jugadores (Solo si está vacía)
-        db.get("SELECT COUNT(*) AS total FROM jugadores", [], (err, row) => {
-            if (row && row.total === 0) {
-                const jugadoresMundial = [
+        const checkJugadores = await pool.query("SELECT COUNT(*) AS total FROM jugadores");
+        if (parseInt(checkJugadores.rows[0].total) === 0) {
+            const jugadoresMundial = [
                    // --- AUSTRALIA ---
                     ['Aiden O\'Neill', 'Australia', '🇦🇺', 'Mediocampista', 'fotos/aus_oneill.jpg', 'comun'],
                     ['Alessandro Circati', 'Australia', '🇦🇺', 'Defensor', 'fotos/aus_circa.jpg', 'comun'],
@@ -742,16 +742,19 @@ function inicializarBaseDeDatos() {
                     ['Francis de Vries', 'Nueva Zelanda', '🇳🇿', 'Defensor', 'fotos/zel_vries.jpg', 'comun'], //
                     ['Chris Wood', 'Nueva Zelanda', '🇳🇿', 'Delantero', 'fotos/zel_wood.jpg', 'legendaria'] //
 
+            ];
 
-                ]
-                
-                const stmt = db.prepare("INSERT INTO jugadores (nombre, pais, bandera, posicion, foto, rareza) VALUES (?, ?, ?, ?, ?, ?)");
-                jugadoresMundial.forEach(j => stmt.run(j));
-                stmt.finalize();
-                console.log("🌱 Base de datos poblada con jugadores iniciales.");
+            for (const j of jugadoresMundial) {
+                await pool.query(
+                    "INSERT INTO jugadores (nombre, pais, bandera, posicion, foto, rareza) VALUES ($1, $2, $3, $4, $5, $6)",
+                    j
+                );
             }
-        });
-    });
+            console.log("🌱 Base de datos poblada con jugadores iniciales.");
+        }
+    } catch (error) {
+        console.error("❌ Error inicializando la base de datos:", error);
+    }
 }
 
 function obtenerRarezaAleatoria(tipo) {
@@ -759,24 +762,21 @@ function obtenerRarezaAleatoria(tipo) {
     const tipoLimpio = (tipo || 'estandar').toLowerCase().trim();
 
     if (tipoLimpio === 'oro elite' || tipoLimpio === 'elite') {
-        // 👑 SOBRE ORO ÉLITE: ¡Chau comunes! Pura calidad.
-        if (r < 20) return 'legendaria';  // 20% de chances (¡Altísimo!)
-        if (r < 65) return 'epica';       // 45% de chances
-        return 'rara';                    // 35% de chances (Lo peor que te puede tocar es Rara)
+        if (r < 20) return 'legendaria';
+        if (r < 65) return 'epica';
+        return 'rara';
     } 
     else if (tipoLimpio === 'premium') {
-        // 🔷 SOBRE PREMIUM: Probabilidades mejoradas.
-        if (r < 5) return 'legendaria';   // 5% 
-        if (r < 20) return 'epica';       // 15% 
-        if (r < 60) return 'rara';        // 40% 
-        return 'comun';                   // 40% 
+        if (r < 5) return 'legendaria';
+        if (r < 20) return 'epica';
+        if (r < 60) return 'rara';
+        return 'comun';
     } 
     else {
-        // 📦 SOBRE ESTÁNDAR (Común)
-        if (r < 1) return 'legendaria';   // 1% (Casi imposible)
-        if (r < 5) return 'epica';        // 4%
-        if (r < 20) return 'rara';        // 15%
-        return 'comun';                   // 80% (Puro pasto)
+        if (r < 1) return 'legendaria';
+        if (r < 5) return 'epica';
+        if (r < 20) return 'rara';
+        return 'comun';
     }
 }
 
@@ -785,41 +785,40 @@ function obtenerRarezaAleatoria(tipo) {
 // ==========================================
 
 // Registro de usuario
-app.post('/api/register', (req, res) => {
+app.post('/api/register', async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: "Faltan datos" });
 
-    db.run('INSERT INTO usuarios (username, password) VALUES (?, ?)', [username, password], function(err) {
-        if (err) {
-            if (err.message.includes("UNIQUE")) {
-                return res.status(400).json({ error: "El nombre de usuario ya existe" });
-            }
-            return res.status(500).json({ error: err.message });
+    try {
+        // Insertamos el usuario y pedimos que nos devuelva el ID creado
+        const nuevoUsuario = await pool.query(
+            'INSERT INTO usuarios (username, password) VALUES ($1, $2) RETURNING id',
+            [username, password]
+        );
+        
+        const nuevoUsuarioId = nuevoUsuario.rows[0].id;
+
+        // Inicializamos su progreso y ranking de forma secuencial
+        await pool.query('INSERT INTO usuario_progreso (usuario_id, monedas, sobres) VALUES ($1, 100, 3)', [nuevoUsuarioId]);
+        await pool.query('INSERT INTO ranking (usuario_id, puntos) VALUES ($1, 0)', [nuevoUsuarioId]);
+
+        res.json({ mensaje: "Usuario registrado con éxito", usuario_id: nuevoUsuarioId });
+    } catch (err) {
+        if (err.message.includes("unique") || err.message.includes("duplicate")) {
+            return res.status(400).json({ error: "El nombre de usuario ya existe" });
         }
-        
-        const nuevoUsuarioId = this.lastID;
-        
-        db.serialize(() => {
-            // 1. Le creamos su progreso inicial automáticamente
-            db.run('INSERT INTO usuario_progreso (usuario_id, monedas, sobres) VALUES (?, 100, 3)', [nuevoUsuarioId]);
-            
-            // 🚀 CORRECCIÓN: Inicializamos al pibe con 0 puntos en el ranking para que figure en la tabla al toque
-            db.run('INSERT INTO ranking (usuario_id, puntos) VALUES (?, 0)', [nuevoUsuarioId], (errProgreso) => {
-                if (errProgreso) return res.status(500).json({ error: errProgreso.message });
-                res.json({ mensaje: "Usuario registrado con éxito", usuario_id: nuevoUsuarioId });
-            });
-        });
-    });
+        return res.status(500).json({ error: err.message });
+    }
 });
 
 // Login de usuario
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
-    db.get('SELECT * FROM usuarios WHERE username = ? AND password = ?', [username, password], (err, user) => {
+    pool.query('SELECT * FROM usuarios WHERE username = $1 AND password = $2', [username, password], (err, resultado) => {
         if (err) return res.status(500).json({ error: err.message });
-        if (!user) return res.status(400).json({ error: "Credenciales incorrectas" });
+        if (resultado.rows.length === 0) return res.status(400).json({ error: "Credenciales incorrectas" });
         
-        res.json({ mensaje: "Ingreso exitoso", usuario_id: user.id });
+        res.json({ mensaje: "Ingreso exitoso", usuario_id: resultado.rows[0].id });
     });
 });
 
@@ -831,22 +830,20 @@ app.get('/api/progreso', (req, res) => {
     const usuario_id = req.query.usuario_id;
     if (!usuario_id) return res.status(400).json({ error: "Falta usuario_id" });
 
-    // 🔥 Agregamos r.puntos y el LEFT JOIN con la tabla ranking
     const query = `
         SELECT u.username, up.monedas, up.sobres, COALESCE(r.puntos, 0) AS puntos
         FROM usuario_progreso up
         JOIN usuarios u ON up.usuario_id = u.id
         LEFT JOIN ranking r ON up.usuario_id = r.usuario_id
-        WHERE up.usuario_id = ?
+        WHERE up.usuario_id = $1
     `;
 
-    db.get(query, [usuario_id], (err, row) => {
+    pool.query(query, [usuario_id], (err, resultado) => {
         if (err) return res.status(500).json({ error: err.message });
         
-        if (row) {
-            res.json(row);
+        if (resultado.rows.length > 0) {
+            res.json(resultado.rows[0]);
         } else {
-            // Si por algún motivo no hay progreso creado, devolvemos todo en cero
             res.json({ username: "Usuario", monedas: 0, sobres: 0, puntos: 0 });
         }
     });
@@ -859,63 +856,63 @@ app.get('/api/album', (req, res) => {
     const query = `
         SELECT j.*, CASE WHEN au.jugador_id IS NOT NULL THEN 1 ELSE 0 END AS obtenido 
         FROM jugadores j
-        LEFT JOIN album_usuario au ON j.id = au.jugador_id AND au.usuario_id = ?
+        LEFT JOIN album_usuario au ON j.id = au.jugador_id AND au.usuario_id = $1
     `;
-    db.all(query, [usuario_id], (err, rows) => {
+    pool.query(query, [usuario_id], (err, resultado) => {
         if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
+        res.json(resultado.rows);
     });
 });
 
 app.post('/api/abrir-sobre', (req, res) => {
-    // 🔥 ACÁ ESTÁ LA MAGIA: Ahora recibimos el "tipo" desde el frontend
     const { usuario_id, tipo } = req.body; 
     if (!usuario_id) return res.status(400).json({ error: "Falta usuario_id" });
 
-    db.get('SELECT sobres FROM usuario_progreso WHERE usuario_id = ?', [usuario_id], (err, row) => {
+    pool.query('SELECT sobres FROM usuario_progreso WHERE usuario_id = $1', [usuario_id], (err, resultadoProgreso) => {
         if (err) return res.status(500).json({ error: err.message });
-        if (!row || row.sobres <= 0) return res.status(400).json({ error: "No tenés sobres disponibles" });
+        if (resultadoProgreso.rows.length === 0 || resultadoProgreso.rows[0].sobres <= 0) {
+            return res.status(400).json({ error: "No tenés sobres disponibles" });
+        }
 
-        db.all('SELECT * FROM jugadores', [], (err, todosLosJugadores) => {
+        pool.query('SELECT * FROM jugadores', [], async (err, resultadoJugadores) => {
             if (err) return res.status(500).json({ error: err.message });
             
-            db.run('UPDATE usuario_progreso SET sobres = sobres - 1 WHERE usuario_id = ?', [usuario_id], (err) => {
-                if (err) return res.status(500).json({ error: err.message });
+            const todosLosJugadores = resultadoJugadores.rows;
+
+            try {
+                await pool.query('UPDATE usuario_progreso SET sobres = sobres - 1 WHERE usuario_id = $1', [usuario_id]);
 
                 const jugadoresElegidos = [];
                 for (let i = 0; i < 5; i++) {
-                    // Le mandamos el tipo de sobre a la ruleta
                     const rarezaBuscada = obtenerRarezaAleatoria(tipo); 
-                    
                     let filtrados = todosLosJugadores.filter(j => j.rareza === rarezaBuscada);
-                    // Si por algún motivo no hay jugadores de esa rareza en la BD, tiramos un común de comodín
                     if (filtrados.length === 0) filtrados = todosLosJugadores.filter(j => j.rareza === 'comun');
 
                     const elegido = filtrados[Math.floor(Math.random() * filtrados.length)];
                     jugadoresElegidos.push(elegido);
                 }
 
-                db.serialize(() => {
-                    const stmt = db.prepare(`
+                // Guardamos los jugadores obtenidos usando promesas ordenadas
+                for (const j of jugadoresElegidos) {
+                    await pool.query(`
                         INSERT INTO album_usuario (usuario_id, jugador_id, cantidad) 
-                        VALUES (?, ?, 1)
+                        VALUES ($1, $2, 1)
                         ON CONFLICT(usuario_id, jugador_id) 
-                        DO UPDATE SET cantidad = cantidad + 1
-                    `);
-                    
-                    jugadoresElegidos.forEach(j => stmt.run(usuario_id, j.id));
-                    stmt.finalize();
-                    
-                    res.json(jugadoresElegidos);
-                });
-            });
+                        DO UPDATE SET cantidad = album_usuario.cantidad + 1
+                    `, [usuario_id, j.id]);
+                }
+                
+                res.json(jugadoresElegidos);
+            } catch (errorPostgres) {
+                return res.status(500).json({ error: errorPostgres.message });
+            }
         });
     });
 });
 
 app.post('/api/tienda/entrenar', (req, res) => {
     const { usuario_id } = req.body;
-    db.run('UPDATE usuario_progreso SET monedas = monedas + 50 WHERE usuario_id = ?', [usuario_id], (err) => {
+    pool.query('UPDATE usuario_progreso SET monedas = monedas + 50 WHERE usuario_id = $1', [usuario_id], (err) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ mensaje: "Monedas sumadas" });
     });
@@ -923,37 +920,37 @@ app.post('/api/tienda/entrenar', (req, res) => {
 
 app.post('/api/tienda/comprar-sobre', (req, res) => {
     const { usuario_id } = req.body;
-    db.get('SELECT monedas FROM usuario_progreso WHERE usuario_id = ?', [usuario_id], (err, row) => {
+    pool.query('SELECT monedas FROM usuario_progreso WHERE usuario_id = $1', [usuario_id], (err, resultado) => {
         if (err) return res.status(500).json({ error: err.message });
-        if (!row || row.monedas < 25) return res.status(400).json({ error: "Monedas insuficientes" });
+        if (resultado.rows.length === 0 || resultado.rows[0].monedas < 25) {
+            return res.status(400).json({ error: "Monedas insuficientes" });
+        }
 
-        db.run('UPDATE usuario_progreso SET monedas = monedas - 25, sobres = sobres + 1 WHERE usuario_id = ?', [usuario_id], (err) => {
+        pool.query('UPDATE usuario_progreso SET monedas = monedas - 25, sobres = sobres + 1 WHERE usuario_id = $1', [usuario_id], (err) => {
             if (err) return res.status(500).json({ error: err.message });
             res.json({ mensaje: "Sobre comprado" });
         });
     });
 });
 
-// Endpoint 1: Sumar monedas por jugar
 app.post('/api/modificar-monedas', (req, res) => {
     const { usuario_id, cantidad } = req.body;
-    db.run("UPDATE usuario_progreso SET monedas = monedas + ? WHERE usuario_id = ?", [cantidad, usuario_id], function(err) {
+    pool.query("UPDATE usuario_progreso SET monedas = monedas + $1 WHERE usuario_id = $2", [cantidad, usuario_id], (err) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true });
     });
 });
 
-// Endpoint 2: Compra de sobre con lógica de costos
 app.post('/api/comprar-sobre-tienda', (req, res) => {
     const { usuario_id, tipo, costo } = req.body;
 
-    db.get("SELECT monedas FROM usuario_progreso WHERE usuario_id = ?", [usuario_id], (err, row) => {
+    pool.query("SELECT monedas FROM usuario_progreso WHERE usuario_id = $1", [usuario_id], (err, resultado) => {
         if (err) return res.status(500).json({ error: err.message });
-        if (!row || row.monedas < costo) {
+        if (resultado.rows.length === 0 || resultado.rows[0].monedas < costo) {
             return res.status(400).json({ error: "❌ No te alcanzan las monedas, ¡andá a entrenar!" });
         }
 
-        db.run("UPDATE usuario_progreso SET monedas = monedas - ?, sobres = sobres + 1 WHERE usuario_id = ?", [costo, usuario_id], (err2) => {
+        pool.query("UPDATE usuario_progreso SET monedas = monedas - $1, sobres = sobres + 1 WHERE usuario_id = $2", [costo, usuario_id], (err2) => {
             if (err2) return res.status(500).json({ error: err2.message });
             res.json({ success: true, tipo: tipo });
         });
@@ -961,7 +958,7 @@ app.post('/api/comprar-sobre-tienda', (req, res) => {
 });
 
 // ==========================================
-// 🏆 ENDPOINTS PARA EL RANKING GLOBAL (SQLITE)
+// 🏆 ENDPOINTS PARA EL RANKING GLOBAL
 // ==========================================
 
 app.post('/api/actualizar-ranking', (req, res) => {
@@ -970,12 +967,12 @@ app.post('/api/actualizar-ranking', (req, res) => {
 
     const query = `
         INSERT INTO ranking (usuario_id, puntos) 
-        VALUES (?, ?)
+        VALUES ($1, $2)
         ON CONFLICT(usuario_id) 
-        DO UPDATE SET puntos = puntos + ?
+        DO UPDATE SET puntos = ranking.puntos + $3
     `;
 
-    db.run(query, [usuario_id, puntos, puntos], function(err) {
+    pool.query(query, [usuario_id, puntos, puntos], (err) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true, mensaje: "¡Puntos sumados al ranking con éxito!" });
     });
@@ -990,9 +987,9 @@ app.get('/api/obtener-ranking', (req, res) => {
         LIMIT 10
     `;
 
-    db.all(query, [], (err, rows) => {
+    pool.query(query, [], (err, resultado) => {
         if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
+        res.json(resultado.rows);
     });
 });
 
