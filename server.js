@@ -880,6 +880,7 @@ app.post('/api/abrir-sobre', (req, res) => {
             const todosLosJugadores = resultadoJugadores.rows;
 
             try {
+                // Descontamos el sobre
                 await pool.query('UPDATE usuario_progreso SET sobres = sobres - 1 WHERE usuario_id = $1', [usuario_id]);
 
                 const jugadoresElegidos = [];
@@ -889,20 +890,63 @@ app.post('/api/abrir-sobre', (req, res) => {
                     if (filtrados.length === 0) filtrados = todosLosJugadores.filter(j => j.rareza === 'comun');
 
                     const elegido = filtrados[Math.floor(Math.random() * filtrados.length)];
-                    jugadoresElegidos.push(elegido);
+                    
+                    // Clonamos el objeto para agregarle propiedades personalizadas sin romper el original
+                    jugadoresElegidos.push({ ...elegido, repetido: false, monedasDevueltas: 0 });
                 }
 
-                // Guardamos los jugadores obtenidos usando promesas ordenadas
+                let monedasTotalesGanadas = 0;
+
+                // Guardamos los jugadores obtenidos controlando las repetidas
                 for (const j of jugadoresElegidos) {
-                    await pool.query(`
-                        INSERT INTO album_usuario (usuario_id, jugador_id, cantidad) 
-                        VALUES ($1, $2, 1)
-                        ON CONFLICT(usuario_id, jugador_id) 
-                        DO UPDATE SET cantidad = album_usuario.cantidad + 1
-                    `, [usuario_id, j.id]);
+                    // 1. Verificamos si el usuario ya tiene este jugador en su álbum
+                    const checkExistencia = await pool.query(
+                        'SELECT cantidad FROM album_usuario WHERE usuario_id = $1 AND jugador_id = $2',
+                        [usuario_id, j.id]
+                    );
+
+                    if (checkExistencia.rows.length > 0) {
+                        // ¡Está repetido! Sumamos cantidad en el álbum
+                        await pool.query(
+                            'UPDATE album_usuario SET cantidad = cantidad + 1 WHERE usuario_id = $1 AND jugador_id = $2',
+                            [usuario_id, j.id]
+                        );
+
+                        // Marcamos la carta como repetida para avisarle al frontend
+                        j.repetido = true;
+
+                        // Asignamos las monedas según la rareza que tenés en la tabla
+                        if (j.rareza === 'comun') j.monedasDevueltas = 50;
+                        else if (j.rareza === 'rara') j.monedasDevueltas = 150;
+                        else if (j.rareza === 'epica') j.monedasDevueltas = 300;
+                        else if (j.rareza === 'legendaria') j.monedasDevueltas = 1000;
+
+                        monedasTotalesGanadas += j.monedasDevueltas;
+
+                    } else {
+                        // No estaba repetido, se inserta de cero de forma normal
+                        await pool.query(
+                            'INSERT INTO album_usuario (usuario_id, jugador_id, cantidad) VALUES ($1, $2, 1)',
+                            [usuario_id, j.id]
+                        );
+                    }
+                }
+
+                // 2. Si acumuló monedas por repetidas, se las impactamos en su progreso
+                if (monedasTotalesGanadas > 0) {
+                    await pool.query(
+                        'UPDATE usuario_progreso SET monedas = monedas + $1 WHERE usuario_id = $2',
+                        [monedasTotalesGanadas, usuario_id]
+                    );
                 }
                 
-                res.json(jugadoresElegidos);
+                // 3. Devolvemos el array de los 5 jugadores. 
+                // Ahora cada jugador lleva las propiedades 'repetido' (true/false) y 'monedasDevueltas'
+                res.json({
+                    jugadores: jugadoresElegidos,
+                    monedasGanadasPorRepetidas: monedasTotalesGanadas
+                });
+
             } catch (errorPostgres) {
                 return res.status(500).json({ error: errorPostgres.message });
             }
