@@ -868,6 +868,14 @@ app.post('/api/abrir-sobre', (req, res) => {
     const { usuario_id, tipo } = req.body; 
     if (!usuario_id) return res.status(400).json({ error: "Falta usuario_id" });
 
+    // Tabla de recompensas por rareza
+    const premios = {
+        'comun': 5,
+        'rara': 15,
+        'epica': 30,
+        'legendaria': 60
+    };
+
     pool.query('SELECT sobres FROM usuario_progreso WHERE usuario_id = $1', [usuario_id], (err, resultadoProgreso) => {
         if (err) return res.status(500).json({ error: err.message });
         if (resultadoProgreso.rows.length === 0 || resultadoProgreso.rows[0].sobres <= 0) {
@@ -880,6 +888,7 @@ app.post('/api/abrir-sobre', (req, res) => {
             const todosLosJugadores = resultadoJugadores.rows;
 
             try {
+                // Descontamos el sobre
                 await pool.query('UPDATE usuario_progreso SET sobres = sobres - 1 WHERE usuario_id = $1', [usuario_id]);
 
                 const jugadoresElegidos = [];
@@ -889,17 +898,38 @@ app.post('/api/abrir-sobre', (req, res) => {
                     if (filtrados.length === 0) filtrados = todosLosJugadores.filter(j => j.rareza === 'comun');
 
                     const elegido = filtrados[Math.floor(Math.random() * filtrados.length)];
-                    jugadoresElegidos.push(elegido);
+                    jugadoresElegidos.push({ ...elegido });
                 }
 
-                // Guardamos los jugadores obtenidos usando promesas ordenadas
+                // Procesamos cada carta
                 for (const j of jugadoresElegidos) {
-                    await pool.query(`
+                    const monedasARecibir = premios[j.rareza] || 5;
+
+                    // Intentamos insertar. Si ya existe, NO la duplicamos en la DB (DO NOTHING)
+                    // pero usamos RETURNING para saber si falló el insert (era repetida)
+                    const resInsert = await pool.query(`
                         INSERT INTO album_usuario (usuario_id, jugador_id, cantidad) 
                         VALUES ($1, $2, 1)
                         ON CONFLICT(usuario_id, jugador_id) 
-                        DO UPDATE SET cantidad = album_usuario.cantidad + 1
+                        DO NOTHING
+                        RETURNING jugador_id
                     `, [usuario_id, j.id]);
+                    
+                    // Si resInsert.rows.length es 0, significa que YA TENÍAS la carta
+                    if (resInsert.rows.length === 0) {
+                        j.repetida = true;
+                        j.monedasGanadas = monedasARecibir;
+                        
+                        // Sumamos las monedas al usuario
+                        await pool.query(`
+                            UPDATE usuario_progreso 
+                            SET monedas = monedas + $1 
+                            WHERE usuario_id = $2
+                        `, [monedasARecibir, usuario_id]);
+                    } else {
+                        j.repetida = false;
+                        j.monedasGanadas = 0;
+                    }
                 }
                 
                 res.json(jugadoresElegidos);
