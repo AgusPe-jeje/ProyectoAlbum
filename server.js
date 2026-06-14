@@ -865,8 +865,11 @@ app.get('/api/album', (req, res) => {
 });
 
 app.post('/api/abrir-sobre', (req, res) => {
-    const { usuario_id, tipo } = req.body; 
+    // Recibimos sobre_id enviado desde tu nuevo frontend adaptado
+    const { usuario_id, sobre_id, tipo } = req.body; 
+    
     if (!usuario_id) return res.status(400).json({ error: "Falta usuario_id" });
+    if (!sobre_id) return res.status(400).json({ error: "Falta sobre_id" });
 
     // Tabla de recompensas por rareza
     const premios = {
@@ -876,20 +879,23 @@ app.post('/api/abrir-sobre', (req, res) => {
         'legendaria': 60
     };
 
-    pool.query('SELECT sobres FROM usuario_progreso WHERE usuario_id = $1', [usuario_id], (err, resultadoProgreso) => {
+    // 1. Verificamos que el sobre específico realmente exista en el inventario de este usuario
+    pool.query('SELECT id FROM inventario_sobres WHERE id = $1 AND usuario_id = $2', [sobre_id, usuario_id], (err, resultadoSobre) => {
         if (err) return res.status(500).json({ error: err.message });
-        if (resultadoProgreso.rows.length === 0 || resultadoProgreso.rows[0].sobres <= 0) {
-            return res.status(400).json({ error: "No tenés sobres disponibles" });
+        if (resultadoSobre.rows.length === 0) {
+            return res.status(400).json({ error: "El sobre solicitado no existe o ya fue abierto" });
         }
 
+        // 2. Traemos todos los jugadores disponibles para armar el sobre
         pool.query('SELECT * FROM jugadores', [], async (err, resultadoJugadores) => {
             if (err) return res.status(500).json({ error: err.message });
             
             const todosLosJugadores = resultadoJugadores.rows;
 
             try {
-                // Descontamos el sobre
-                await pool.query('UPDATE usuario_progreso SET sobres = sobres - 1 WHERE usuario_id = $1', [usuario_id]);
+                // 3. Borramos el sobre específico del inventario (Camino 2) antes de procesar las cartas
+                // Esto previene duplicaciones accidentales si el usuario genera múltiples llamadas rápidas
+                await pool.query('DELETE FROM inventario_sobres WHERE id = $1 AND usuario_id = $2', [sobre_id, usuario_id]);
 
                 const jugadoresElegidos = [];
                 for (let i = 0; i < 5; i++) {
@@ -901,7 +907,7 @@ app.post('/api/abrir-sobre', (req, res) => {
                     jugadoresElegidos.push({ ...elegido });
                 }
 
-                // Procesamos cada carta
+                // 4. Procesamos cada carta obtenida
                 for (const j of jugadoresElegidos) {
                     const monedasARecibir = premios[j.rareza] || 5;
 
@@ -920,7 +926,7 @@ app.post('/api/abrir-sobre', (req, res) => {
                         j.repetida = true;
                         j.monedasGanadas = monedasARecibir;
                         
-                        // Sumamos las monedas al usuario
+                        // Sumamos las monedas correspondientes al usuario
                         await pool.query(`
                             UPDATE usuario_progreso 
                             SET monedas = monedas + $1 
@@ -932,7 +938,9 @@ app.post('/api/abrir-sobre', (req, res) => {
                     }
                 }
                 
+                // 5. Respondemos al cliente con el set de 5 cartas procesadas
                 res.json(jugadoresElegidos);
+
             } catch (errorPostgres) {
                 return res.status(500).json({ error: errorPostgres.message });
             }
@@ -949,16 +957,40 @@ app.post('/api/tienda/entrenar', (req, res) => {
 });
 
 app.post('/api/tienda/comprar-sobre', (req, res) => {
-    const { usuario_id } = req.body;
+    // Agregamos 'tipo' y 'costo' para que sea flexible
+    const { usuario_id, tipo, costo } = req.body; 
+
+    // 1. Verificamos monedas
     pool.query('SELECT monedas FROM usuario_progreso WHERE usuario_id = $1', [usuario_id], (err, resultado) => {
         if (err) return res.status(500).json({ error: err.message });
-        if (resultado.rows.length === 0 || resultado.rows[0].monedas < 25) {
+        
+        if (resultado.rows.length === 0 || resultado.rows[0].monedas < costo) {
             return res.status(400).json({ error: "Monedas insuficientes" });
         }
 
-        pool.query('UPDATE usuario_progreso SET monedas = monedas - 25, sobres = sobres + 1 WHERE usuario_id = $1', [usuario_id], (err) => {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json({ mensaje: "Sobre comprado" });
+        // 2. Transacción: Restamos monedas E insertamos el sobre nuevo
+        // Usamos una transacción para que si algo falla, no se descuenten las monedas
+        pool.query('BEGIN', (err) => {
+            if (err) return res.status(500).json({ error: "Error iniciando transacción" });
+
+            // A. Descontamos monedas
+            pool.query('UPDATE usuario_progreso SET monedas = monedas - $1 WHERE usuario_id = $2', [costo, usuario_id], (err) => {
+                if (err) {
+                    return pool.query('ROLLBACK', () => res.status(500).json({ error: err.message }));
+                }
+
+                // B. Insertamos el sobre con su tipo
+                pool.query('INSERT INTO inventario_sobres (usuario_id, tipo) VALUES ($1, $2)', [usuario_id, tipo], (err) => {
+                    if (err) {
+                        return pool.query('ROLLBACK', () => res.status(500).json({ error: err.message }));
+                    }
+
+                    pool.query('COMMIT', (err) => {
+                        if (err) return res.status(500).json({ error: "Error finalizando transacción" });
+                        res.json({ mensaje: `Sobre ${tipo} comprado con éxito` });
+                    });
+                });
+            });
         });
     });
 });
