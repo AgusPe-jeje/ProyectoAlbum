@@ -1,0 +1,322 @@
+/* ========================================================================
+   📌 1. VARIABLES GLOBALES Y CONFIGURACIÓN BASE
+   ======================================================================== */
+:root {
+    --bg-principal: #0b0c10;
+    --bg-card: #161a26;
+    --dorado: #ffc107;
+    --celeste: #20b5cb;
+    --rojo: #ff4a4a;
+    --texto: #ffffff;
+    
+    /* 🎨 Paleta Oficial para Rarezas */
+    --color-comun: #8e9bb0;
+    --color-rara: #0074e8;
+    --color-epica: #a335ee;
+    --color-legendaria: #ffb100;
+
+    /* Resplandores base */
+    --shadow-comun: 0 0 10px var(--color-comun), 0 4px 8px rgba(0,0,0,0.5);
+    --shadow-rara: 0 0 15px var(--color-rara), 0 4px 8px rgba(0,0,0,0.5);
+    --shadow-epica: 0 0 18px var(--color-epica), 0 4px 8px rgba(0,0,0,0.5);
+}
+
+body {
+    background-color: var(--bg-principal);
+    color: var(--texto);
+    font-family: 'Arial Black', Gadget, sans-serif;
+    margin: 0; padding: 20px;
+    display: flex; flex-direction: column; align-items: center;
+}
+
+/* Elementos globales interactivos nativos */
+button { 
+    background: var(--dorado); color: #000; border: none; padding: 12px 24px; 
+    font-size: 1rem; border-radius: 8px; cursor: pointer; font-family: inherit; 
+    box-shadow: 0 4px 0 #b38600; transition: transform 0.1s; 
+}
+button:active { transform: scale(0.96); }
+
+input { 
+    background: #222533; border: 2px solid #4a5a73; padding: 10px; 
+    border-radius: 6px; color: white; margin-bottom: 10px; font-family: inherit; 
+}
+
+/* ========================================================================
+   👤 2. LOGIN, PANEL DE ESTADO Y BOTONERA PRINCIPAL
+   ======================================================================== */
+#seccion-login { 
+    background: var(--bg-card); padding: 25px; border-radius: 12px; 
+    border: 3px solid #2b354a; text-align: center; margin-bottom: 20px; 
+}
+
+.header-status {
+    background: #151a26; border: 3px solid #4a5a73; padding: 15px 30px; 
+    border-radius: 12px; display: flex; gap: 40px; margin-bottom: 25px; 
+    box-shadow: 0 6px 0 #0f121a;
+}
+.stat-box { font-size: 1.1rem; text-shadow: 2px 2px #000; }
+
+.nav-modulos { display: flex; gap: 10px; margin-bottom: 25px; width: 100%; max-width: 800px; }
+.btn-modulo {
+    flex: 1; background: #2f364d; color: #a3acc4; border: 2px solid #1c202e;
+    padding: 12px; font-size: 1.1rem; border-radius: 10px; cursor: pointer;
+    box-shadow: 0 4px 0 #141722; font-family: inherit; transition: all 0.2s ease-in-out;
+}
+.btn-modulo:hover { background: #3d4663; color: #fff; }
+.btn-modulo.activo {
+    background: var(--dorado); color: #000; border-color: #fff;
+    box-shadow: 0 4px 0 #b38600, 0 0 15px rgba(255,193,7,0.6);
+}
+
+.modulo-contenido { display: none; width: 100%; max-width: 950px; }
+.modulo-contenido.activo { display: block; }
+.caja-modulo { background: var(--bg-card); border-radius: 16px; padding: 25px; text-align: center; border: 3px solid #2b354a; }
+
+/* Controladores de visibilidad de interfaces generales */
+#interfaz-juego { display: none !important; }
+#interfaz-juego.mostrar { display: flex !important; }
+.btn-accion { background: var(--celeste); color: #fff; box-shadow: 0 4px 0 #137e8f; }
+
+/* ========================================================================
+   🛍️ 3. MÓDULO DE LA TIENDA DE COFRES
+   ======================================================================== */
+.contenedor-tienda-cofres { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+.tarjeta-cofre { background: #1c202e; border: 2px solid #2b354a; border-radius: 12px; padding: 20px; width: 220px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: transform 0.2s; }
+.tarjeta-cofre:hover { transform: translateY(-5px); }
+.tarjeta-cofre h3 { margin-top: 0; font-size: 1.1rem; }
+.cofre-icono { font-size: 1.8rem; font-weight: bold; margin: 15px 0; }
+.desc-prob { font-size: 0.8rem; color: #a3acc4; min-height: 40px; }
+
+.btn-comprar {
+    background: #28a745; color: white; border: none; padding: 10px 20px;
+    font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; box-shadow: 0 3px 0 #19692c;
+}
+.btn-comprar:active { transform: translateY(3px); box-shadow: none; }
+
+.tarjeta-cofre.plata h3 { color: #c0c0c0; }
+.tarjeta-cofre.oro h3 { color: var(--dorado); }
+.tarjeta-cofre.legendario { border-color: #20b5cb; }
+.tarjeta-cofre.legendario h3 { color: #20b5cb; }
+.tarjeta-cofre.legendario .btn-comprar { background: #17a2b8; box-shadow: 0 3px 0 #117a8b; }
+
+/* ========================================================================
+   ✨ 4. SECCIÓN DE RECOMPENSAS (SOBRE ABIERTO)
+   ======================================================================== */
+.seccion-sobre-abierto { margin-top: 45px; padding: 25px; background: #11141d; border-radius: 14px; border: 3px dashed #3a475e; text-align: center; width: 100%; box-sizing: border-box; }
+.titulo-sobre { color: var(--dorado); font-size: 1.3rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; text-shadow: 2px 2px 0px #000; }
+#grid-sobre-abierto { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; margin-top: 15px; }
+
+/* ========================================================================
+   🃏 5. DISEÑO DE CARTAS (ALBUM Y TIENDA)
+   ======================================================================== */
+.grid-album, .grid-sobre { display: flex; justify-content: center; flex-wrap: wrap; gap: 25px; margin-top: 20px; }
+.carta-clash {
+    width: 155px; height: 215px; border-radius: 10px; position: relative; box-sizing: border-box; 
+    overflow: visible; background: #000; cursor: pointer; 
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
+    animation: aparecerCarta 0.4s ease-out backwards;
+}
+.carta-clash:hover { transform: translateY(-10px) scale(1.05); }
+.carta-foto { width: 100%; height: 100%; object-fit: fill; border-radius: 10px; display: block; }
+.carta-clash.bloqueada { filter: grayscale(100%) brightness(30%); opacity: 0.55; box-shadow: none !important; }
+
+/* 🏷️ Rarezas y Textos Verticales */
+.rareza-vertical {
+    position: absolute; top: 10px; left: 8px; writing-mode: vertical-rl; transform: rotate(180deg);
+    font-size: 0.68rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; color: #ffffff;
+    background: rgba(0, 0, 0, 0.65); padding: 6px 4px; border-radius: 4px; border-left: 2px solid transparent;
+    user-select: none; pointer-events: none; z-index: 5;
+}
+
+.carta-clash.comun { box-shadow: var(--shadow-comun); border: 2px solid var(--color-comun); }
+.carta-clash.comun:hover { box-shadow: 0 0 20px var(--color-comun), 0 8px 16px rgba(0,0,0,0.6); }
+.carta-clash.comun .rareza-vertical { border-left-color: var(--color-comun); text-shadow: 0 0 4px var(--color-comun); color: #e1e7f0; }
+
+.carta-clash.rara { box-shadow: var(--shadow-rara); border: 2px solid var(--color-rara); }
+.carta-clash.rara:hover { box-shadow: 0 0 25px var(--color-rara), 0 8px 16px rgba(0,0,0,0.6); }
+.carta-clash.rara .rareza-vertical { border-left-color: var(--color-rara); text-shadow: 0 0 6px var(--color-rara), 0 0 10px var(--color-rara); }
+
+.carta-clash.epica { box-shadow: var(--shadow-epica); border: 2px solid var(--color-epica); }
+.carta-clash.epica:hover { box-shadow: 0 0 30px var(--color-epica), 0 8px 16px rgba(0,0,0,0.6); }
+.carta-clash.epica .rareza-vertical { border-left-color: var(--color-epica); text-shadow: 0 0 8px var(--color-epica), 0 0 12px var(--color-epica); color: #f3e5ff; }
+
+.carta-clash.legendaria { border: 2px solid var(--color-legendaria); box-shadow: 0 0 15px var(--color-legendaria), 0 4px 8px rgba(0,0,0,0.5); }
+.carta-clash.legendaria .rareza-vertical { border-left-color: var(--color-legendaria); text-shadow: 0 0 8px var(--color-legendaria), 0 0 15px #ffdb66; color: #fff4d1; }
+.carta-clash.legendaria:not(.bloqueada):hover { transform: translateY(-10px) scale(1.05); box-shadow: 0 0 35px 5px rgba(255, 177, 0, 0.95), 0 12px 24px rgba(0,0,0,0.7); filter: brightness(1.1); }
+.carta-clash.legendaria:not(.bloqueada):hover .rareza-vertical { text-shadow: 0 0 12px var(--color-legendaria), 0 0 20px #ffffff; background: rgba(0, 0, 0, 0.85); }
+
+/* 🔢 Badge de Repetidas */
+.badge-repetidas {
+    position: absolute; top: 8px; right: 8px; background: rgba(0, 0, 0, 0.7); color: var(--dorado);
+    font-size: 0.8rem; font-weight: 800; padding: 3px 10px; border-radius: 20px; border: 1px solid var(--dorado);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 10; pointer-events: none; backdrop-filter: blur(2px); text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+/* ========================================================================
+   🌍 6. SECTOR MÓDULO ÁLBUM Y FILTRO DE PAÍSES
+   ======================================================================== */
+#selector-paises {
+    display: flex; gap: 8px; justify-content: flex-start; overflow-x: auto;
+    padding: 10px; margin-bottom: 20px; width: 100%; white-space: nowrap;
+    scroll-behavior: smooth; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+}
+#selector-paises::-webkit-scrollbar { height: 6px; }
+#selector-paises::-webkit-scrollbar-track { background: #161a26; border-radius: 10px; }
+#selector-paises::-webkit-scrollbar-thumb { background: #4a5a73; border-radius: 10px; }
+
+.btn-pais {
+    display: inline-flex; align-items: center; gap: 6px; background: #1c202e; color: #a3acc4;
+    border: 2px solid #2b354a; padding: 8px 14px; font-size: 0.85rem; border-radius: 20px;
+    cursor: pointer; font-family: inherit; flex-shrink: 0; scroll-snap-align: center; transition: all 0.2s ease; box-shadow: 0 3px 0 #0f121a;
+}
+.btn-pais:hover { background: #252b3d; color: #fff; transform: translateY(-2px); }
+.btn-pais.activo {
+    background: var(--celeste); color: #fff; border-color: #ffffff;
+    box-shadow: 0 3px 0 #137e8f, 0 0 12px rgba(32,181,203,0.4); transform: translateY(0);
+}
+
+/* 📊 Barra de progreso de colección */
+.progreso-album-contenedor { background: rgba(21, 26, 38, 0.9); border: 2px solid #11151d; border-radius: 10px; padding: 12px 15px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+.progreso-texto { display: flex; justify-content: space-between; font-family: 'Arial Black', 'Impact', sans-serif; font-size: 0.9rem; color: #fff; margin-bottom: 8px; text-transform: uppercase; }
+.progreso-barra-fondo { background: #11151d; height: 16px; border-radius: 20px; overflow: hidden; padding: 2px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.progreso-barra-llenado { background: linear-gradient(90deg, #10b981 0%, #059669 100%); height: 100%; width: 0%; border-radius: 20px; box-shadow: inset 0 2px 4px rgba(255,255,255,0.3); transition: width 0.4s ease-out; }
+
+/* 🏆 Pestaña de Selección Completada */
+.btn-pais.pais-completo {
+    border: 2px solid #ffb100 !important; border-bottom: 5px solid #b37c00 !important;
+    background: linear-gradient(180deg, #332a15 0%, #1a150a 100%) !important; color: #ffb100 !important; animation: brilloOro 2s infinite ease-in-out;
+}
+
+/* ========================================================================
+   ⚽ 7. JUEGO DE PENALES Y LEADERBOARD LATERAL
+   ======================================================================== */
+.contenedor-penales-layout { display: flex; flex-direction: row; gap: 20px; justify-content: center; align-items: flex-start; width: 100%; max-width: 1000px; margin: 0 auto; }
+.juego-penales-principal { flex: 2; min-width: 320px; }
+.panel-lateral-ranking { flex: 1; min-width: 280px; background: var(--bg-card); border: 2px solid #2b354a; border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
+
+.tabla-ranking { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.tabla-ranking th { background: #232938; color: var(--dorado); padding: 8px; text-align: center; }
+.tabla-ranking td { padding: 10px 8px; border-bottom: 1px solid #1f2533; text-align: center; }
+.tabla-ranking tr:nth-child(1) td:nth-child(1) { color: #ffd700; font-size: 1.2rem; }
+.tabla-ranking tr:nth-child(2) td:nth-child(1) { color: #c0c0c0; font-size: 1.1rem; }
+.tabla-ranking tr:nth-child(3) td:nth-child(1) { color: #cd7f32; font-size: 1.05rem; }
+.fila-usuario-actual { background: rgba(32, 181, 203, 0.2) !important; border: 2px solid var(--celeste); }
+
+/* Campo de fútbol interactivo */
+.arco-futbol {
+    width: 300px; height: 150px; border: 6px solid white; border-bottom: none; margin: 20px auto;
+    position: relative; background: radial-gradient(circle at 50% 100%, #20b5cb 0%, #0b0c10 100%); border-radius: 10px 10px 0 0; overflow: hidden;
+}
+.zona-disparo { position: absolute; top: 0; height: 100%; cursor: pointer; transition: background 0.3s; }
+.zona-disparo:hover { background: rgba(255, 255, 255, 0.1); }
+.izquierda { left: 0; width: 33%; }
+.centro { left: 33%; width: 34%; }
+.derecha { right: 0; width: 33%; }
+
+#balon-animado { position: absolute; bottom: 0; left: 45%; font-size: 2rem; transition: transform 0.5s ease-out; z-index: 5; }
+.arquero { position: absolute; top: 20px; left: 45%; font-size: 2.5rem; transition: all 0.3s ease-out; z-index: 4; }
+
+/* ========================================================================
+   🎰 8. SISTEMA DE TIMBA (VERSUS COMPETITIVO Y BITÁCORA)
+   ======================================================================== */
+.seccion-timba-clash { margin-top: 25px; background: rgba(15, 18, 26, 0.4); border: 2px dashed rgba(255, 177, 0, 0.3); border-radius: 12px; padding: 15px; }
+.contenedor-partido-timba { display: flex; flex-direction: column; align-items: center; background: #1c2331; border: 2px solid #11151d; border-bottom: 5px solid #11151d; border-radius: 10px; padding: 20px; margin-top: 10px; }
+.arena-versus-container { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 500px; background: rgba(17, 21, 29, 0.6); border-radius: 12px; padding: 15px 20px; border: 1px solid rgba(255, 255, 255, 0.05); }
+.bando-equipo { flex: 1; text-align: center; font-family: 'Arial Black', 'Impact', sans-serif; text-transform: uppercase; }
+.vs-circulo { background: #ff4a4a; color: #fff; font-family: 'Impact', sans-serif; font-size: 1.1rem; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid #11151d; box-shadow: 0 4px 8px rgba(0,0,0,0.4); margin: 0 15px; }
+
+.inputs-apuesta-timba { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 15px; width: 100%; }
+.prediccion-goles { display: flex; align-items: center; gap: 10px; }
+
+/* ✨ UNIFICADO: Limpieza y ocultamiento estricto de flechas en inputs numéricos de timba */
+.prediccion-goles input, .monto-apuesta input {
+    text-align: center; font-weight: bold; background: #11151d; color: #fff;
+    appearance: none; -webkit-appearance: none;
+}
+.prediccion-goles input::-webkit-outer-spin-button, .prediccion-goles input::-webkit-inner-spin-button,
+.monto-apuesta input::-webkit-outer-spin-button, .monto-apuesta input::-webkit-inner-spin-button {
+    -webkit-appearance: none; margin: 0;
+}
+.prediccion-goles input { width: 50px; height: 50px; font-size: 1.6rem; border: 2px solid var(--celeste); border-radius: 8px; }
+.monto-apuesta { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.monto-apuesta label { font-family: 'Arial Black', sans-serif; font-size: 0.8rem; color: var(--dorado); }
+.monto-apuesta input { width: 120px; padding: 8px; font-size: 1rem; border: 2px solid #ffb100; color: var(--dorado); border-radius: 6px; }
+
+/* Historial Inferior de la Banca */
+.historial-timba-contenedor { margin-top: 20px; background: #151a26; border: 2px solid #11151d; border-radius: 8px; padding: 12px; text-align: left; width: 100%; box-sizing: border-box; }
+.historial-timba-contenedor h4 { margin: 0 0 8px 0; color: var(--dorado); font-family: 'Arial Black', sans-serif; font-size: 0.8rem; letter-spacing: 0.5px; }
+#lista-historial-timba { padding-left: 0; margin: 0; max-height: 95px; overflow-y: auto; }
+.item-historial-partido { list-style: none; font-size: 0.85rem; padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.03); color: #b0b8c4; display: flex; justify-content: space-between; align-items: center; }
+
+/* Grid de opciones de resultados para 6 botones */
+.grid-opciones-goles {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Tres columnas simétricas */
+    gap: 10px;
+    width: 100%;
+    max-width: 500px; /* Le damos un toque más de ancho para que entren cómodos */
+    margin: 15px auto 0 auto;
+}
+
+/* En caso de que se juegue desde un celular muy chico, baja a 2 columnas automáticamente */
+@media (max-width: 480px) {
+    .grid-opciones-goles {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.btn-opcion-resultado {
+    background: #1c202e;
+    color: #fff;
+    border: 2px solid var(--celeste) !important;
+    font-size: 1.2rem !important;
+    font-weight: bold;
+    padding: 10px !important;
+    border-radius: 8px;
+    box-shadow: 0 4px 0 #137e8f !important;
+}
+
+.btn-opcion-resultado:hover {
+    background: #252d3d;
+    box-shadow: 0 0 10px var(--celeste) !important;
+}
+
+/* ========================================================================
+   🚪 9. BOTÓN DE SALIR (ESTILO CLASH EXCLUSIVO)
+   ======================================================================== */
+.btn-logout-clash {
+    background: #222834; color: #ff5252; font-family: 'Arial Black', 'Impact', sans-serif;
+    font-size: 0.85rem; font-weight: bold; padding: 6px 16px; margin-left: 15px;
+    border: 2px solid #11151d; border-bottom: 5px solid #11151d; border-radius: 8px;
+    cursor: pointer; transition: all 0.1s ease; text-transform: uppercase; display: flex; align-items: center; gap: 5px;
+}
+.btn-logout-clash:hover { background: #2b3344; color: #ff6e6e; transform: translateY(-1px); border-bottom: 6px solid #11151d; }
+.btn-logout-clash:active { transform: translateY(3px); border-bottom: 2px solid #11151d; }
+
+/* ========================================================================
+   📱 10. ADAPTACIÓN PARA DISPOSITIVOS MÓVILES
+   ======================================================================== */
+@media (max-width: 768px) {
+    .contenedor-penales-layout { flex-direction: column; align-items: center; }
+    .juego-penales-principal, .panel-lateral-ranking { width: 100%; }
+    .menu-navegacion { display: flex; flex-direction: row; justify-content: space-around; padding: 10px; }
+    #contenedor-grid-album, #grid-sobre-abierto { grid-template-columns: repeat(3, 1fr) !important; gap: 8px; padding: 5px; }
+    .carta-clash { width: 100%; height: auto; }
+    .rareza-vertical { font-size: 0.6rem; }
+    .contenedor-arco { width: 100%; max-width: 360px; margin: 0 auto; }
+    #arquero-animado { width: 60px; }
+    .botones-patear { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 100%; padding: 0 10px; }
+}
+
+/* ========================================================================
+   🎬 11. KEYFRAMES DE ANIMACIONES
+   ======================================================================== */
+@keyframes aparecerCarta { from { opacity: 0; transform: translateY(15px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes popBadge { from { transform: scale(0); } to { transform: scale(1); } }
+@keyframes giroSorpresa {
+    0% { transform: scale(0.3) rotateY(90deg); filter: brightness(3); opacity: 0; }
+    80% { transform: scale(1.05) rotateY(-10deg); filter: brightness(1.2); }
+    100% { transform: scale(1) rotateY(0deg); filter: brightness(1); opacity: 1; }
+}
+@keyframes brilloOro { 0%, 100% { box-shadow: 0 0 5px rgba(255,177,0,0.2); } 50% { box-shadow: 0 0 15px rgba(255,177,0,0.6); } }

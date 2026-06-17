@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏆 Virtual Album Mundial 🏆</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <h1 style="text-shadow: 3px 3px #000; margin-bottom: 10px;">🏆 ÁLBUM MUNDIAL PE 🏆</h1>
+
+    <div id="seccion-login">
+        <h3>INGRESAR AL SISTEMA LOCAL</h3>
+        <input type="text" id="input-usuario" placeholder="USUARIO">
+        <input type="password" id="input-pass" placeholder="CONTRASEÑA">
+        <br>
+        <button onclick="autenticarUsuario()">INGRESAR / REGISTRAR</button>
+    </div>
+
+    <main id="interfaz-juego" style="display: none; width: 100%; display: flex; flex-direction: column; align-items: center;">
+        
+        <div class="header-status">
+            <div class="stat-box">👤 JUGADOR: <span id="lbl-usuario" style="color: var(--celeste);">INVITADO</span></div>
+            <div class="stat-box">🪙 ORO: <span id="lbl-monedas" style="color: var(--dorado);">0</span></div>
+            <div class="stat-box">🏆 COPAS: <span id="lbl-ranking" style="color: var(--rojo);">0</span></div>
+            
+            <button class="btn-logout-clash" onclick="cerrarSesionLocal()">🚪 SALIR</button>
+        </div>
+
+        <div class="nav-modulos">
+            <button class="btn-modulo activo" onclick="cambiarModulo('modulo-sobres', this)">🛍️ TIENDA</button>
+            <button class="btn-modulo" onclick="cambiarModulo('modulo-album', this)">📖 MI ÁLBUM</button>
+            <button class="btn-modulo" onclick="cambiarModulo('modulo-penales', this)">⚽ PENALES</button>
+            <button class="btn-modulo" onclick="cambiarModulo('modulo-timba', this)">🎰 TIMBA</button>
+        </div>
+
+        <!-- 🛍️ MÓDULO TIENDA (COFRES) -->
+        <div id="modulo-sobres" class="modulo-contenido activo">
+            <div class="caja-modulo">
+                <h2 style="color: var(--celeste); margin-top:0;">COFRE DE CARTAS LOCAL</h2>
+                <p>Elegí tu cofre ideal para gastar tus monedas en la Arena.</p>
+                
+                <div class="contenedor-tienda-cofres">
+                    
+                    <div class="tarjeta-cofre plata">
+                        <h3>🥈 Cofre de Plata</h3>
+                        <div class="cofre-icono">🪙100</div>
+                        <p class="desc-prob">Mayormente Comunes. Baja probabilidad de especiales.</p>
+                        <button class="btn-comprar" onclick="comprarSobreEspecifico('plata')">ABRIR (🪙100)</button>
+                    </div>
+
+                    <div class="tarjeta-cofre oro">
+                        <h3>🥇 Cofre de Oro</h3>
+                        <div class="cofre-icono">🪙250</div>
+                        <p class="desc-prob">Estadísticas equilibradas de todas las rarezas.</p>
+                        <button class="btn-comprar" onclick="comprarSobreEspecifico('oro')">ABRIR (🪙250)</button>
+                    </div>
+
+                    <div class="tarjeta-cofre legendario">
+                        <h3>👑 Cofre Legendario</h3>
+                        <div class="cofre-icono">🪙500</div>
+                        <p class="desc-prob">¡25% Probabilidad de Legendaria asegurada!</p>
+                        <button class="btn-comprar" onclick="comprarSobreEspecifico('legendario')">ABRIR (🪙500)</button>
+                    </div>
+
+                </div>
+
+                <div class="seccion-sobre-abierto">
+                    <div class="titulo-sobre">✨ ¡Recompensas Obtenidas! ✨</div>
+                    <div id="grid-sobre-abierto"></div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 📖 MÓDULO ÁLBUM -->
+        <div id="modulo-album" class="modulo-contenido">
+            <div class="caja-modulo">
+                <h2>📖 TU ÁLBUM MUNDIAL</h2>
+                
+                <div class="progreso-album-contenedor">
+                    <div class="progreso-texto">
+                        <span>📖 Progreso del Álbum:</span>
+                        <span id="lbl-progreso-numerico">0 / 585 (0%)</span>
+                    </div>
+                    <div class="progreso-barra-fondo">
+                        <div id="barra-progreso-llenado" class="progreso-barra-llenado"></div>
+                    </div>
+                </div>
+
+                <div id="selector-paises"></div>
+                <div class="grid-album" id="contenedor-grid-album"></div>
+            </div>
+        </div>
+
+        <!-- ⚽ MÓDULO PENALES -->
+        <div id="modulo-penales" class="modulo-contenido">
+            <div class="contenedor-penales-layout">
+                
+                <div class="caja-modulo juego-penales-principal">
+                    <h2 style="color: var(--rojo); margin-top:0;">DUELO EN EL ESTADIO</h2>
+                    
+                    <div class="contenedor-penales-juego">
+                        <div class="arco-futbol" id="escenario-penal">
+                            <div class="zona-disparo izquierda" onclick="ejecutarPenalLocal('IZQUIERDA')"></div>
+                            <div class="zona-disparo centro" onclick="ejecutarPenalLocal('CENTRO')"></div>
+                            <div class="zona-disparo derecha" onclick="ejecutarPenalLocal('DERECHA')"></div>
+                            <div id="arquero-animado" class="arquero">🧤</div>
+                            <div id="balon-animado" class="balon">⚽</div>
+                        </div>
+                    </div>
+
+                    <h3 id="resultado-penal">¡PREPARÁ EL DISPARO!</h3>
+                    
+                    <button style="width: 60%; margin-top: 10px;" onclick="iniciarDueloLocal()">⚽ PRÓXIMO TIRO</button>
+                </div>
+
+                <div class="panel-lateral-ranking">
+                    <h3 style="color: var(--dorado); margin-top: 0; margin-bottom: 15px;">🏆 TOP 10 DE LA ARENA</h3>
+                    <table class="tabla-ranking">
+                        <thead>
+                            <tr>
+                                <th>POS</th>
+                                <th>JUGADOR</th>
+                                <th>COPAS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-ranking-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🎰 MÓDULO DE LA TIMBA (LIMPIO Y SIN DUPLICADOS) -->
+        <div id="modulo-timba" class="modulo-contenido">
+            <div class="caja-modulo">
+                <h2 style="color: #ffb100; margin-top:0;">🎰 LA TIMBA DE LA ARENA</h2>
+                <p style="margin-bottom: 20px;">Estudiá las rachas de la casa y jugá tus monedas al resultado exacto.</p>
+                
+                <div class="contenedor-partido-timba">
+                    <div class="arena-versus-container">
+                        <div class="bando-equipo local">
+                            <span id="timba-bandera-local" style="font-size: 3rem; display: block;">🇦🇷</span>
+                            <span id="timba-local" style="font-size: 1.2rem; font-weight: bold; color: #fff;">ARGENTINA</span>
+                        </div>
+                        
+                        <div class="vs-circulo">VS</div>
+                        
+                        <div class="bando-equipo visitante">
+                            <span id="timba-bandera-visitante" style="font-size: 3rem; display: block;">🇧🇷</span>
+                            <span id="timba-visitante" style="font-size: 1.2rem; font-weight: bold; color: #fff;">BRASIL</span>
+                        </div>
+                    </div>
+                    
+                    <div class="inputs-apuesta-timba" style="margin-top: 25px;">
+                        <div class="monto-apuesta">
+                            <label>🪙 MONEDAS A APOSTAR:</label>
+                            <input type="number" id="input-monto-apuesta" min="10" value="50" placeholder="Monto">
+                        </div>
+
+                        <button type="button" id="btn-preparar-apuesta" onclick="prepararOpcionesApuesta()" style="background: linear-gradient(180deg, #3498db 0%, #2980b9 100%); color: white; width: 80%; font-weight: bold;">🎲 VER OPCIONES DE PRONÓSTICO</button>
+
+                        <!-- Contenedor inyectado en grilla por JS para los 4 botones de resultados mezclados -->
+                        <div id="contenedor-opciones-goles" class="grid-opciones-goles" style="display: none; margin-top: 15px;"></div>
+                    </div>
+                </div>
+
+                <div class="historial-timba-contenedor">
+                    <h4>📜 ÚLTIMOS RESULTADOS DE LA ARENA</h4>
+                    <ul id="lista-historial-timba">
+                        <li style="color: #777; list-style: none;">No hay partidos registrados en esta sesión.</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

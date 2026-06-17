@@ -1,13 +1,20 @@
 {
-  "name": "mega-album-backend",
+  "name": "nueva-carpeta-(3)",
   "version": "1.0.0",
-  "main": "server.js",
+  "description": "",
+  "main": "script.js",
   "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
   "dependencies": {
     "cors": "^2.8.6",
     "express": "^5.2.1",
-    "pg": "^8.11.3"
+    "pg": "^8.21.0",
+    "sqlite3": "^6.0.1"
   }
 }

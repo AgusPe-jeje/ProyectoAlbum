@@ -1,74 +1,67 @@
 const express = require('express');
 const cors = require('cors');
-const { Pool } = require('pg');
+const { Pool } = require('pg'); // ✨ Migrado a PostgreSQL para Neon
+const path = require('path');
 
 const app = express();
+// ✨ Render asigna el puerto dinámicamente; si no encuentra, usa el 3000
+const PORT = process.env.PORT || 3000;
+
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname)));
 
-// Conexión a la base de datos de Neon en la nube
+/* ========================================================================
+   📦 CONFIGURACIÓN Y CONEXIÓN DE BASE DE DATOS (POSTGRESQL - NEON)
+   ======================================================================== */
+// Se conecta usando la variable de entorno segura que vas a setear en Render
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_Fkl8WfbH7SgQ@ep-dark-lab-atehlsos.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require',
-  ssl: {
-    rejectUnauthorized: false
-  }
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false } // Requerido obligatoriamente por Neon
 });
 
-// Probamos la conexión
+// Verificamos la conexión al arrancar el proceso
 pool.query('SELECT NOW()', (err, res) => {
-  if (err) {
-    console.error('❌ Error al conectar a PostgreSQL en Neon:', err);
-  } else {
-    console.log('✅ Conectado con éxito a PostgreSQL en la nube');
-    inicializarBaseDeDatos();
-  }
+    if (err) console.error('❌ Error de conexión a Neon:', err.message);
+    else console.log('📦 Conectado con éxito a PostgreSQL en Neon.');
 });
 
-async function inicializarBaseDeDatos() {
+async function inicializarTablas() {
     try {
-        // TABLA DE JUGADORES
-        await pool.query(`CREATE TABLE IF NOT EXISTS jugadores (
-            id SERIAL PRIMARY KEY,
-            nombre TEXT,
-            pais TEXT,
-            bandera TEXT,
-            posicion TEXT,
-            foto TEXT,
-            rareza TEXT DEFAULT 'comun'
-        )`);
-
-        // NUEVA TABLA DE USUARIOS
+        // 1. Tabla de Usuarios (SERIAL reemplaza a AUTOINCREMENT)
         await pool.query(`CREATE TABLE IF NOT EXISTS usuarios (
             id SERIAL PRIMARY KEY,
-            username TEXT UNIQUE,
-            password TEXT
+            username VARCHAR(50) UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            monedas INTEGER DEFAULT 200,
+            puntos_ranking INTEGER DEFAULT 0,
+            ultimo_tiro VARCHAR(20) DEFAULT '',
+            tiros_hoy INTEGER DEFAULT 0
         )`);
 
-        // PROGRESO VINCULADO AL USUARIO
+        // 2. Tabla de Jugadores
+        await pool.query(`CREATE TABLE IF NOT EXISTS jugadores (
+            id SERIAL PRIMARY KEY,
+            nombre VARCHAR(100) UNIQUE NOT NULL,
+            pais VARCHAR(50) NOT NULL,
+            bandera VARCHAR(10) NOT NULL,
+            posicion VARCHAR(50) NOT NULL,
+            foto TEXT NOT NULL,
+            rareza VARCHAR(20) NOT NULL
+        )`);
+
+        // 3. Tabla de Progreso
         await pool.query(`CREATE TABLE IF NOT EXISTS usuario_progreso (
-            usuario_id INTEGER PRIMARY KEY REFERENCES usuarios(id),
-            monedas INTEGER DEFAULT 100,
-            sobres INTEGER DEFAULT 3
-        )`);
-
-        // 🏆 NUEVA TABLA: RANKING DE MINIJUEGO VINCULADO AL USUARIO
-        await pool.query(`CREATE TABLE IF NOT EXISTS ranking (
-            usuario_id INTEGER PRIMARY KEY REFERENCES usuarios(id),
-            puntos INTEGER DEFAULT 0
-        )`);
-
-        // ÁLBUM VINCULADO AL USUARIO
-        await pool.query(`CREATE TABLE IF NOT EXISTS album_usuario (
             usuario_id INTEGER REFERENCES usuarios(id),
             jugador_id INTEGER REFERENCES jugadores(id),
             cantidad INTEGER DEFAULT 1,
             PRIMARY KEY (usuario_id, jugador_id)
         )`);
 
-        // Carga inicial de jugadores (Solo si está vacía)
-        const checkJugadores = await pool.query("SELECT COUNT(*) AS total FROM jugadores");
-        if (parseInt(checkJugadores.rows[0].total) === 0) {
-            const jugadoresMundial = [
+        // Verificamos si la tabla de jugadores está vacía para meter la lista inicial
+        const checkJugadores = await pool.query("SELECT COUNT(*) as count FROM jugadores");
+        if (parseInt(checkJugadores.rows[0].count) === 0) {
+            const granListaJugadores = [
                    // --- AUSTRALIA ---
                     ['Aiden O\'Neill', 'Australia', '🇦🇺', 'Mediocampista', 'fotos/aus_oneill.jpg', 'comun'],
                     ['Alessandro Circati', 'Australia', '🇦🇺', 'Defensor', 'fotos/aus_circa.jpg', 'comun'],
@@ -123,7 +116,7 @@ async function inicializarBaseDeDatos() {
                     ['Maxim de Cuyper', 'Bélgica', 'bel', 'Mediocampista', 'fotos/bel_cuyper.jpg', 'comun'],
                     ['Zeno Debast', 'Bélgica', 'bel', 'Defensor', 'fotos/bel_debast.jpg', 'rara'],
                     ['Jeremy Doku', 'Bélgica', 'bel', 'Delantero', 'fotos/bel_doku.jpg', 'epica'],
-                    ['Romelu Lukaku', 'Bélgica', 'bel', 'Delantero', 'fotos/bel_lakaku.jpg', 'legendaria'],
+                    ['Romelu Lukaku', 'Bélgica', 'bel', 'Delantero', 'fotos/bel_lukaku.jpg', 'legendaria'],
                     ['Brandon Mechele', 'Bélgica', 'bel', 'Defensor', 'fotos/bel_mechele.jpg', 'comun'],
                     ['Thomas Meunier', 'Bélgica', 'bel', 'Defensor', 'fotos/bel_meunier.jpg', 'rara'],
                     ['Amadou Onana', 'Bélgica', 'bel', 'Arquero', 'fotos/bel_onana.jpg', 'epica'],
@@ -598,7 +591,7 @@ async function inicializarBaseDeDatos() {
                     ['Riyad Mahrez', 'Argelia', '🇩🇿', 'Delantero', 'fotos/arg_mahrez.jpg', 'legendaria'],
                     ['Aïssa Mandi', 'Argelia', '🇩🇿', 'Defensor', 'fotos/arg_mandi.jpg', 'rara'],
                     ['Nadjib Amine Tougai', 'Argelia', '🇩🇿', 'Defensor', 'fotos/arg_tougai.jpg', 'comun'],
-                    ['Ramiz Zerrouki', 'Argelia', '🇩🇿', 'Mediocampista', 'fotos/arg_zerrouki.jpg', 'comun']
+                    ['Ramiz Zerrouki', 'Argelia', '🇩🇿', 'Mediocampista', 'fotos/arg_zerrouki.jpg', 'comun'],
 
 		    // --- AUSTRIA ---
                     ['David Alaba', 'Austria', '🇦🇹', 'Defensor', 'fotos/aus_alaba.jpg', 'legendaria'],
@@ -615,7 +608,7 @@ async function inicializarBaseDeDatos() {
                     ['Alexander Schlager', 'Austria', '🇦🇹', 'Arquero', 'fotos/aus_schlager.jpg', 'comun'], // REPETIDA - COMPLETAR
                     ['Romano Schmid', 'Austria', '🇦🇹', 'Mediocampista', 'fotos/aus_schmid.jpg', 'comun'],
                     ['Nicolas Seiwald', 'Austria', '🇦🇹', 'Mediocampista', 'fotos/aus_seiwald.jpg', 'comun'],
-                    ['Patrick Wimmer', 'Austria', '🇦🇹', 'Mediocampista', 'fotos/aus_wimmer.jpg', 'comun']
+                    ['Patrick Wimmer', 'Austria', '🇦🇹', 'Mediocampista', 'fotos/aus_wimmer.jpg', 'comun'],
 
 		    // --- ARABIA SAUDITA ---
                     ['Saud Abdulhamid', 'Arabia Saudita', '🇸🇦', 'Defensor', 'fotos/ara_abdulhamid.jpg', 'rara'],
@@ -631,7 +624,7 @@ async function inicializarBaseDeDatos() {
                     ['Mohammed Al-Shamat', 'Arabia Saudita', '🇸🇦', 'Defensor', 'fotos/ara_alshamat.jpg', 'comun'],
                     ['Saleh Al-Shehri', 'Arabia Saudita', '🇸🇦', 'Delantero', 'fotos/ara_alsheri.jpg', 'epica'],
                     ['Hassan Al-Tambakti', 'Arabia Saudita', '🇸🇦', 'Defensor', 'fotos/ara_altambakti.jpg', 'rara'],
-                    ['Ayman Yahya', 'Arabia Saudita', '🇸🇦', 'Delantero', 'fotos/ara_thikri.jpg', 'comun']
+                    ['Ayman Yahya', 'Arabia Saudita', '🇸🇦', 'Delantero', 'fotos/ara_thikri.jpg', 'comun'],
 
 		    // --- REPÚBLICA DEMOCRÁTICA DEL CONGO ---
                     ['Cédric Bakambu', 'Congo', '🇨🇩', 'Delantero', 'fotos/con_bakambu.jpg', 'epica'],
@@ -648,7 +641,7 @@ async function inicializarBaseDeDatos() {
                     ['Ngal\'ayel Mukau', 'Congo', '🇨🇩', 'Mediocampista', 'fotos/con_mukau.jpg', 'comun'],
                     ['Charles Pickel', 'Congo', '🇨🇩', 'Mediocampista', 'fotos/con_pickel.jpg', 'comun'],
                     ['Axel Tuanzebe', 'Congo', '🇨🇩', 'Defensor', 'fotos/con_tuanzebe.jpg', 'rara'],
-                    ['Yoane Wissa', 'Congo', '🇨🇩', 'Delantero', 'fotos/con_wissa.jpg', 'epica']
+                    ['Yoane Wissa', 'Congo', '🇨🇩', 'Delantero', 'fotos/con_wissa.jpg', 'epica'],
 
 		    // --- EGIPTO ---
                     ['Mohamed El-Shenawy', 'Egipto', '🇪🇬', 'Arquero', 'fotos/egi_elshenawy.jpg', 'epica'],
@@ -659,7 +652,7 @@ async function inicializarBaseDeDatos() {
                     ['Ramy Rabia', 'Egipto', '🇪🇬', 'Defensor', 'fotos/egi_rabia.jpg', 'comun'],
                     ['Mohamed Salah', 'Egipto', '🇪🇬', 'Delantero', 'fotos/egi_salah.jpg', 'legendaria'],
                     ['Ramadan Sobhi', 'Egipto', '🇪🇬', 'Delantero', 'fotos/egi_sobhi.jpg', 'rara'],
-                    ['Trézéguet', 'Egipto', '🇪🇬', 'Delantero', 'fotos/egi_trezeguet.jpg', 'epica']
+                    ['Trézéguet', 'Egipto', '🇪🇬', 'Delantero', 'fotos/egi_trezeguet.jpg', 'epica'],
 
 		    // --- JORDANIA ---
                     ['Abualnadi', 'Jordania', '🇯🇴', 'Defensor', 'fotos/jor_abualnadi.jpg', 'comun'],
@@ -676,7 +669,7 @@ async function inicializarBaseDeDatos() {
                     ['Koubaib Al-Sabra', 'Jordania', '🇯🇴', 'Defensor', 'fotos/jor_sabra.jpg', 'comun'],
                     ['Mousa Al-Tamari', 'Jordania', '🇯🇴', 'Delantero', 'fotos/jor_taamari.jpg', 'epica'],
                     ['Moouath Taha', 'Jordania', '🇯🇴', 'Defensor', 'fotos/jor_taha.jpg', 'comun'],
-                    ['Mohammad Abu Zrayq', 'Jordania', '🇯🇴', 'Delantero', 'fotos/jor_zrayq.jpg', 'comun']
+                    ['Mohammad Abu Zrayq', 'Jordania', '🇯🇴', 'Delantero', 'fotos/jor_zrayq.jpg', 'comun'],
 
 
 		    // --- SUDÁFRICA ---
@@ -690,14 +683,14 @@ async function inicializarBaseDeDatos() {
                     ['Siyabonga Ngezana', 'Sudáfrica', '🇿🇦', 'Defensor', 'fotos/sud_negezana.jpg', 'rara'],
                     ['Mohau Nkota', 'Sudáfrica', '🇿🇦', 'Defensor', 'fotos/sud_nkota.jpg', 'comun'], // Nota: Basado en el archivo de Nkota/Sibisi
                     ['Iqraam Rayners', 'Sudáfrica', '🇿🇦', 'Delantero', 'fotos/sud_rayners.jpg', 'comun'],
-                    ['Ronwen Williams', 'Sudáfrica', '🇿🇦', 'Arquero', 'fotos/sud_williams.jpg', 'epica']
+                    ['Ronwen Williams', 'Sudáfrica', '🇿🇦', 'Arquero', 'fotos/sud_williams.jpg', 'epica'],
 
 		    // --- TURQUÍA ---
-                    ['Barış Alper Yılmaz', 'Turquía', '🇹🇷', 'Delantero', 'fotos/tur_akgun.jpg', 'rara'], // Nota: Basado en el archivo akgun/Yılmaz
+                    ['Bariş Alper Yilmaz', 'Turquía', '🇹🇷', 'Delantero', 'fotos/tur_akgun.jpg', 'rara'], // Nota: Basado en el archivo akgun/Yılmaz
                     ['Kerem Aktürkoğlu', 'Turquía', '🇹🇷', 'Delantero', 'fotos/tur_akturkoglu.jpg', 'epica'],
                     ['Kaan Ayhan', 'Turquía', '🇹🇷', 'Defensor', 'fotos/tur_ayhan.jpg', 'rara'],
-                    ['Abdülkerim Bardakcı', 'Turquía', '🇹🇷', 'Defensor', 'fotos/tur_bardakci.jpg', 'rara'],
-                    ['Uğurcan Çakır', 'Turquía', '🇹🇷', 'Arquero', 'fotos/tur_cakir.jpg', 'rara'],
+                    ['Abdülkerim Bardakci', 'Turquía', '🇹🇷', 'Defensor', 'fotos/tur_bardakci.jpg', 'rara'],
+                    ['Uğurcan Çakir', 'Turquía', '🇹🇷', 'Arquero', 'fotos/tur_cakir.jpg', 'rara'],
                     ['Zeki Çelik', 'Turquía', '🇹🇷', 'Defensor', 'fotos/tur_celik.jpg', 'rara'],
                     ['Merih Demiral', 'Turquía', '🇹🇷', 'Defensor', 'fotos/tur_demiral.jpg', 'epica'],
                     ['Arda Güler', 'Turquía', '🇹🇷', 'Mediocampista', 'fotos/tur_guler.jpg', 'legendaria'],
@@ -705,9 +698,9 @@ async function inicializarBaseDeDatos() {
                     ['Orkun Kökçü', 'Turquía', '🇹🇷', 'Mediocampista', 'fotos/tur_kokcu.jpg', 'epica'],
                     ['Mert Müldür', 'Turquía', '🇹🇷', 'Defensor', 'fotos/tur_muldur.jpg', 'comun'],
                     ['Çağlar Söyüncü', 'Turquía', '🇹🇷', 'Defensor', 'fotos/tur_soyuncu.jpg', 'epica'],
-                    ['Semih Kılıçsoy', 'Turquía', '🇹🇷', 'Delantero', 'fotos/tur_uzun.jpg', 'comun'], // Nota: Basado en el archivo uzun/Kılıçsoy
-                    ['Kenan Yıldız', 'Turquía', '🇹🇷', 'Delantero', 'fotos/tur_yildiz.jpg', 'legendaria'],
-                    ['Hakan Çalhanoğlu', 'Turquía', '🇹🇷', 'Mediocampista', 'fotos/tur_yilmaz.jpg', 'legendaria'] // Nota: Basado en el archivo yilmaz/Çalhanoğlu
+                    ['Semih Kiliçsoy', 'Turquía', '🇹🇷', 'Delantero', 'fotos/tur_uzun.jpg', 'comun'], // Nota: Basado en el archivo uzun/Kılıçsoy
+                    ['Kenan Yildiz', 'Turquía', '🇹🇷', 'Delantero', 'fotos/tur_yildiz.jpg', 'legendaria'],
+                    ['Hakan Çalhanoğlu', 'Turquía', '🇹🇷', 'Mediocampista', 'fotos/tur_yilmaz.jpg', 'legendaria'], // Nota: Basado en el archivo yilmaz/Çalhanoğlu
 
 		    // --- CABO VERDE ---
                     ['Patrick Andrade', 'Cabo Verde', '🇨🇻', 'Mediocampista', 'fotos/ver_andrade.jpg', 'comun'],
@@ -724,7 +717,7 @@ async function inicializarBaseDeDatos() {
                     ['Jamiro Monteiro', 'Cabo Verde', '🇨🇻', 'Mediocampista', 'fotos/ver_pina.jpg', 'rara'], // Nota: Basado en el archivo pina
                     ['Semedo', 'Cabo Verde', '🇨🇻', 'Mediocampista', 'fotos/ver_semedo.jpg', 'comun'],
                     ['Wagner Pina', 'Cabo Verde', '🇨🇻', 'Defensor', 'fotos/ver_semedo-.jpg', 'comun'], // REPETIDA - COMPLETAR
-                    ['Vozinha', 'Cabo Verde', '🇨🇻', 'Arquero', 'fotos/ver_vozinha.jpg', 'rara']
+                    ['Vozinha', 'Cabo Verde', '🇨🇻', 'Arquero', 'fotos/ver_vozinha.jpg', 'rara'],
 
 		    // --- NUEVA ZELANDA ---
                     ['Kosta Barbarouses', 'Nueva Zelanda', '🇳🇿', 'Delantero', 'fotos/zel_barbarouses.jpg', 'rara'], //
@@ -740,351 +733,409 @@ async function inicializarBaseDeDatos() {
                     ['Finn Surman', 'Nueva Zelanda', '🇳🇿', 'Defensor', 'fotos/zel_surman.jpg', 'comun'], // Nota: Basado en su archivo surman
                     ['Ryan Thomas', 'Nueva Zelanda', '🇳🇿', 'Mediocampista', 'fotos/zel_thomas.jpg', 'comun'], //
                     ['Francis de Vries', 'Nueva Zelanda', '🇳🇿', 'Defensor', 'fotos/zel_vries.jpg', 'comun'], //
-                    ['Chris Wood', 'Nueva Zelanda', '🇳🇿', 'Delantero', 'fotos/zel_wood.jpg', 'legendaria'] //
-
+                    ['Chris Wood', 'Nueva Zelanda', '🇳🇿', 'Delantero', 'fotos/zel_wood.jpg', 'legendaria'], //
             ];
 
-            for (const j of jugadoresMundial) {
+            // En Postgres usamos promesas agrupadas para insertar masivamente de forma segura
+            for (const j of granListaJugadores) {
                 await pool.query(
-                    "INSERT INTO jugadores (nombre, pais, bandera, posicion, foto, rareza) VALUES ($1, $2, $3, $4, $5, $6)",
+                    `INSERT INTO jugadores (nombre, pais, bandera, posicion, foto, rareza) 
+                     VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (nombre) DO NOTHING`,
                     [j[0], j[1], j[2], j[3], j[4], j[5]]
                 );
             }
-            console.log("🌱 Base de datos poblada con jugadores iniciales.");
+            console.log(`✅ Base de datos inicializada: ${granListaJugadores.length} jugadores cargados.`);
         }
-    } catch (error) {
-        console.error("❌ Error inicializando la base de datos:", error);
-    }
-}
-
-function obtenerRarezaAleatoria(tipo) {
-    const r = Math.random() * 100;
-    const tipoLimpio = (tipo || 'estandar').toLowerCase().trim();
-
-    if (tipoLimpio === 'oro elite' || tipoLimpio === 'elite') {
-        if (r < 20) return 'legendaria';
-        if (r < 65) return 'epica';
-        return 'rara';
-    } 
-    else if (tipoLimpio === 'premium') {
-        if (r < 5) return 'legendaria';
-        if (r < 20) return 'epica';
-        if (r < 60) return 'rara';
-        return 'comun';
-    } 
-    else {
-        if (r < 1) return 'legendaria';
-        if (r < 5) return 'epica';
-        if (r < 20) return 'rara';
-        return 'comun';
-    }
-}
-
-// ==========================================
-// ENDPOINTS DE AUTENTICACIÓN
-// ==========================================
-
-// Registro de usuario
-app.post('/api/register', async (req, res) => {
-    const { username, password } = req.body;
-    if (!username || !password) return res.status(400).json({ error: "Faltan datos" });
-
-    try {
-        // Insertamos el usuario y pedimos que nos devuelva el ID creado
-        const nuevoUsuario = await pool.query(
-            'INSERT INTO usuarios (username, password) VALUES ($1, $2) RETURNING id',
-            [username, password]
-        );
-        
-        const nuevoUsuarioId = nuevoUsuario.rows[0].id;
-
-        // Inicializamos su progreso y ranking de forma secuencial
-        await pool.query('INSERT INTO usuario_progreso (usuario_id, monedas, sobres) VALUES ($1, 100, 3)', [nuevoUsuarioId]);
-        await pool.query('INSERT INTO ranking (usuario_id, puntos) VALUES ($1, 0)', [nuevoUsuarioId]);
-
-        res.json({ mensaje: "Usuario registrado con éxito", usuario_id: nuevoUsuarioId });
     } catch (err) {
-        if (err.message.includes("unique") || err.message.includes("duplicate")) {
-            return res.status(400).json({ error: "El nombre de usuario ya existe" });
+        console.error("❌ Error al inicializar estructuras en Neon:", err.message);
+    }
+}
+
+// Ejecutamos la inicialización de tablas asíncrona
+inicializarTablas();
+
+/* ========================================================================
+   👤 ENDPOINTS DE AUTENTICACIÓN Y SISTEMA DE USUARIOS
+   ======================================================================== */
+app.post('/api/login', async (req, res) => {
+    const { username, password } = req.body;
+    try {
+        const userCheck = await pool.query("SELECT * FROM usuarios WHERE username = $1", [username]);
+        
+        if (userCheck.rows.length > 0) {
+            const user = userCheck.rows[0];
+            if (user.password === password) {
+                console.log(`🔑 [LOGIN] El usuario "${username.toUpperCase()}" ingresó a la Arena.`);
+                return res.json({ mensaje: "Login exitoso", usuario: user });
+            } else {
+                return res.status(400).json({ error: "Contraseña incorrecta" });
+            }
+        } else {
+            const nuevoUsuario = await pool.query(
+                "INSERT INTO usuarios (username, password) VALUES ($1, $2) RETURNING *", 
+                [username, password]
+            );
+            console.log(`✨ [REGISTRO] Nuevo usuario creado en la red: "${username.toUpperCase()}"`);
+            return res.json({ mensaje: "Registrado", usuario: nuevoUsuario.rows[0] });
         }
+    } catch (err) {
         return res.status(500).json({ error: err.message });
     }
 });
 
-// Login de usuario
-app.post('/api/login', (req, res) => {
-    const { username, password } = req.body;
-    pool.query('SELECT * FROM usuarios WHERE username = $1 AND password = $2', [username, password], (err, resultado) => {
-        if (err) return res.status(500).json({ error: err.message });
-        if (resultado.rows.length === 0) return res.status(400).json({ error: "Credenciales incorrectas" });
-        
-        res.json({ mensaje: "Ingreso exitoso", usuario_id: resultado.rows[0].id });
-    });
-});
-
-// ==========================================
-// RUTAS DEL JUEGO DINÁMICAS (POR USUARIO)
-// ==========================================
-
-app.get('/api/progreso', async (req, res) => {
-    const { usuario_id } = req.query;
-
-    try {
-        // 1. Traemos las monedas del usuario
-        const progresoRes = await pool.query('SELECT monedas FROM usuario_progreso WHERE usuario_id = $1', [usuario_id]);
-        if (progresoRes.rows.length === 0) return res.status(404).json({ error: "Usuario no encontrado" });
-
-        const monedas = progresoRes.rows[0].monedas;
-
-        // 2. Traemos todos los sobres reales que compramos de la nueva tabla
-        const sobresRes = await pool.query('SELECT id, tipo FROM inventario_sobres WHERE usuario_id = $1', [usuario_id]);
-        const listaSobres = sobresRes.rows; // Esto va a ser un array de objetos: [{id: 1, tipo: 'elite'}, {id: 2, tipo: 'elite'}]
-
-        // 3. Devolvemos todo sincronizado
-        res.json({
-            monedas: monedas,
-            sobres: listaSobres // Mandamos el array real con los 2 sobres Élite
-        });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error al obtener el progreso." });
+app.post('/api/logout', (req, res) => {
+    const { username } = req.body;
+    if (username) {
+        console.log(`🚪 [LOGOUT] El usuario "${username.toUpperCase()}" salió de la Arena.`);
     }
+    res.json({ success: true, mensaje: "Sesión cerrada en servidor" });
 });
 
-app.get('/api/album', (req, res) => {
-    const usuario_id = req.query.usuario_id;
-    if (!usuario_id) return res.status(400).json({ error: "Falta usuario_id" });
-
-    const query = `
-        SELECT j.*, CASE WHEN au.jugador_id IS NOT NULL THEN 1 ELSE 0 END AS obtenido 
-        FROM jugadores j
-        LEFT JOIN album_usuario au ON j.id = au.jugador_id AND au.usuario_id = $1
-    `;
-    pool.query(query, [usuario_id], (err, resultado) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(resultado.rows);
-    });
-});
-
-app.post('/api/abrir-sobre', (req, res) => {
-    // Recibimos sobre_id enviado desde tu nuevo frontend adaptado
-    const { usuario_id, sobre_id, tipo } = req.body; 
+app.post('/api/actualizar-progreso', async (req, res) => {
+    const { usuario_id, monedas, puntos } = req.body;
     
-    if (!usuario_id) return res.status(400).json({ error: "Falta usuario_id" });
-    if (!sobre_id) return res.status(400).json({ error: "Falta sobre_id" });
-
-    // Tabla de recompensas por rareza
-    const premios = {
-        'comun': 5,
-        'rara': 15,
-        'epica': 30,
-        'legendaria': 60
-    };
-
-    // 1. Verificamos que el sobre específico realmente exista en el inventario de este usuario
-    pool.query('SELECT id FROM inventario_sobres WHERE id = $1 AND usuario_id = $2', [sobre_id, usuario_id], (err, resultadoSobre) => {
-        if (err) return res.status(500).json({ error: err.message });
-        if (resultadoSobre.rows.length === 0) {
-            return res.status(400).json({ error: "El sobre solicitado no existe o ya fue abierto" });
-        }
-
-        // 2. Traemos todos los jugadores disponibles para armar el sobre
-        pool.query('SELECT * FROM jugadores', [], async (err, resultadoJugadores) => {
-            if (err) return res.status(500).json({ error: err.message });
-            
-            const todosLosJugadores = resultadoJugadores.rows;
-
-            try {
-                // 3. Borramos el sobre específico del inventario (Camino 2) antes de procesar las cartas
-                // Esto previene duplicaciones accidentales si el usuario genera múltiples llamadas rápidas
-                await pool.query('DELETE FROM inventario_sobres WHERE id = $1 AND usuario_id = $2', [sobre_id, usuario_id]);
-
-                const jugadoresElegidos = [];
-                for (let i = 0; i < 5; i++) {
-                    const rarezaBuscada = obtenerRarezaAleatoria(tipo); 
-                    let filtrados = todosLosJugadores.filter(j => j.rareza === rarezaBuscada);
-                    if (filtrados.length === 0) filtrados = todosLosJugadores.filter(j => j.rareza === 'comun');
-
-                    const elegido = filtrados[Math.floor(Math.random() * filtrados.length)];
-                    jugadoresElegidos.push({ ...elegido });
-                }
-
-                // 4. Procesamos cada carta obtenida
-                for (const j of jugadoresElegidos) {
-                    const monedasARecibir = premios[j.rareza] || 5;
-
-                    // Intentamos insertar. Si ya existe, NO la duplicamos en la DB (DO NOTHING)
-                    // pero usamos RETURNING para saber si falló el insert (era repetida)
-                    const resInsert = await pool.query(`
-                        INSERT INTO album_usuario (usuario_id, jugador_id, cantidad) 
-                        VALUES ($1, $2, 1)
-                        ON CONFLICT(usuario_id, jugador_id) 
-                        DO NOTHING
-                        RETURNING jugador_id
-                    `, [usuario_id, j.id]);
-                    
-                    // Si resInsert.rows.length es 0, significa que YA TENÍAS la carta
-                    if (resInsert.rows.length === 0) {
-                        j.repetida = true;
-                        j.monedasGanadas = monedasARecibir;
-                        
-                        // Sumamos las monedas correspondientes al usuario
-                        await pool.query(`
-                            UPDATE usuario_progreso 
-                            SET monedas = monedas + $1 
-                            WHERE usuario_id = $2
-                        `, [monedasARecibir, usuario_id]);
-                    } else {
-                        j.repetida = false;
-                        j.monedasGanadas = 0;
-                    }
-                }
-                
-                // 5. Respondemos al cliente con el set de 5 cartas procesadas
-                res.json(jugadoresElegidos);
-
-            } catch (errorPostgres) {
-                return res.status(500).json({ error: errorPostgres.message });
-            }
-        });
-    });
-});
-
-app.post('/api/tienda/entrenar', (req, res) => {
-    const { usuario_id } = req.body;
-    pool.query('UPDATE usuario_progreso SET monedas = monedas + 50 WHERE usuario_id = $1', [usuario_id], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ mensaje: "Monedas sumadas" });
-    });
-});
-
-app.post('/api/tienda/comprar-sobre', (req, res) => {
-    // Agregamos 'tipo' y 'costo' para que sea flexible
-    const { usuario_id, tipo, costo } = req.body; 
-
-    // 1. Verificamos monedas
-    pool.query('SELECT monedas FROM usuario_progreso WHERE usuario_id = $1', [usuario_id], (err, resultado) => {
-        if (err) return res.status(500).json({ error: err.message });
-        
-        if (resultado.rows.length === 0 || resultado.rows[0].monedas < costo) {
-            return res.status(400).json({ error: "Monedas insuficientes" });
-        }
-
-        // 2. Transacción: Restamos monedas E insertamos el sobre nuevo
-        // Usamos una transacción para que si algo falla, no se descuenten las monedas
-        pool.query('BEGIN', (err) => {
-            if (err) return res.status(500).json({ error: "Error iniciando transacción" });
-
-            // A. Descontamos monedas
-            pool.query('UPDATE usuario_progreso SET monedas = monedas - $1 WHERE usuario_id = $2', [costo, usuario_id], (err) => {
-                if (err) {
-                    return pool.query('ROLLBACK', () => res.status(500).json({ error: err.message }));
-                }
-
-                // B. Insertamos el sobre con su tipo
-                pool.query('INSERT INTO inventario_sobres (usuario_id, tipo) VALUES ($1, $2)', [usuario_id, tipo], (err) => {
-                    if (err) {
-                        return pool.query('ROLLBACK', () => res.status(500).json({ error: err.message }));
-                    }
-
-                    pool.query('COMMIT', (err) => {
-                        if (err) return res.status(500).json({ error: "Error finalizando transacción" });
-                        res.json({ mensaje: `Sobre ${tipo} comprado con éxito` });
-                    });
-                });
-            });
-        });
-    });
-});
-
-app.post('/api/modificar-monedas', (req, res) => {
-    const { usuario_id, cantidad } = req.body;
-    pool.query("UPDATE usuario_progreso SET monedas = monedas + $1 WHERE usuario_id = $2", [cantidad, usuario_id], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ success: true });
-    });
-});
-
-app.post('/api/comprar-sobre-tienda', async (req, res) => {
-    const { usuario_id, tipo, costo } = req.body;
+    if (!usuario_id) {
+        console.error("⚠️ Intento de actualización de progreso sin usuario_id válido.");
+        return res.status(400).json({ error: "Falta el usuario_id en la petición." });
+    }
 
     try {
-        // 1. Primero verificamos si el usuario tiene monedas suficientes
-        const resUser = await pool.query('SELECT monedas FROM usuario_progreso WHERE usuario_id = $1', [usuario_id]);
-        
-        if (resUser.rows.length === 0) return res.status(404).json({ error: "Usuario no encontrado" });
-        
-        const monedasActuales = resUser.rows[0].monedas;
-        if (monedasActuales < costo) {
-            return res.status(400).json({ error: "No tenés monedas suficientes, crack." });
-        }
-
-        // 2. Descontamos las monedas (OJO: ya NO sumamos en la columna 'sobres')
-        await pool.query('UPDATE usuario_progreso SET monedas = monedas - $1 WHERE usuario_id = $2', [costo, usuario_id]);
-
-        // 3. ¡EL CAMBIO CLAVE!: Insertamos la fila real en inventario_sobres
-        // Usamos RETURNING id para mandárselo al frontend de inmediato
-        const resSobre = await pool.query(`
-            INSERT INTO inventario_sobres (usuario_id, tipo) 
-            VALUES ($1, $2) 
-            RETURNING id
-        `, [usuario_id, tipo.toLowerCase().trim()]);
-
-        const nuevoSobreId = resSobre.rows[0].id;
-
-        // 4. Respondemos al frontend con el ID real de la base de datos
-        res.json({ 
-            exito: true, 
-            nuevoSobreId: nuevoSobreId 
-        });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error interno del servidor al comprar sobre." });
+        await pool.query(
+            `UPDATE usuarios SET monedas = monedas + $1, puntos_ranking = puntos_ranking + $2 WHERE id = $3`, 
+            [monedas, puntos, usuario_id]
+        );
+        const result = await pool.query("SELECT monedas, puntos_ranking FROM usuarios WHERE id = $1", [usuario_id]);
+        return res.json({ datos: result.rows[0] });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
     }
 });
 
-// ==========================================
-// 🏆 ENDPOINTS PARA EL RANKING GLOBAL
-// ==========================================
-
-app.post('/api/actualizar-ranking', (req, res) => {
-    const { usuario_id, puntos } = req.body;
-    if (!usuario_id || puntos === undefined) return res.status(400).json({ error: "Faltan datos obligatorios." });
-
+/* ========================================================================
+   📖 ENDPOINTS DEL ÁLBUM PANINI Y TIENDA DE COFRES
+   ======================================================================== */
+app.get('/api/album/:usuarioId', async (req, res) => {
+    const usuarioId = req.params.usuarioId;
     const query = `
-        INSERT INTO ranking (usuario_id, puntos) 
-        VALUES ($1, $2)
-        ON CONFLICT(usuario_id) 
-        DO UPDATE SET puntos = ranking.puntos + $3
+        SELECT j.*, COALESCE(up.cantidad, 0) as obtenido 
+        FROM jugadores j
+        LEFT JOIN usuario_progreso up ON j.id = up.jugador_id AND up.usuario_id = $1
+        ORDER BY j.pais ASC, j.id ASC
     `;
-
-    pool.query(query, [usuario_id, puntos, puntos], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ success: true, mensaje: "¡Puntos sumados al ranking con éxito!" });
-    });
+    try {
+        const result = await pool.query(query, [usuarioId]);
+        return res.json({ album: result.rows });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
 });
 
-app.get('/api/obtener-ranking', (req, res) => {
+app.post('/api/comprar-sobre', async (req, res) => {
+    const { usuario_id, tipoCofre } = req.body;
+
+    let costo = 250;
+    let probLegendaria = 0.05; 
+    let probEpica = 0.15;      
+    let probEspecial = 0.30;   
+
+    if (tipoCofre === 'plata') {
+        costo = 100;
+        probLegendaria = 0.005; 
+        probEpica = 0.05;       
+        probEspecial = 0.20;    
+    } else if (tipoCofre === 'legendario') {
+        costo = 500;
+        probLegendaria = 0.25;  
+        probEpica = 0.40;       
+        probEspecial = 0.35;    
+    }
+
+    try {
+        const userCheck = await pool.query("SELECT monedas FROM usuarios WHERE id = $1", [usuario_id]);
+        if (userCheck.rows.length === 0) return res.status(404).json({ error: "Usuario no encontrado" });
+        
+        const usuario = userCheck.rows[0];
+        if (usuario.monedas < costo) return res.json({ error_oro: true, mensaje: "🪙 No tenés suficiente Oro." });
+
+        const jugadoresCheck = await pool.query("SELECT * FROM jugadores");
+        const todosLosJugadores = jugadoresCheck.rows;
+        if (todosLosJugadores.length === 0) return res.status(400).json({ error: "No hay jugadores en la DB" });
+
+        let sobreAbierto = [];
+        for (let i = 0; i < 3; i++) {
+            let rand = Math.random();
+            let rarezaElegida = 'comun';
+
+            if (rand < probLegendaria) rarezaElegida = 'legendaria';
+            else if (rand < probLegendaria + probEpica) rarezaElegida = 'epica';
+            else if (rand < probLegendaria + probEpica + probEspecial) rarezaElegida = 'especial';
+
+            let poolFiltrado = todosLosJugadores.filter(j => j.rareza === rarezaElegida);
+            if (poolFiltrado.length === 0) poolFiltrado = todosLosJugadores.filter(j => j.rareza === 'comun');
+            
+            let elegido = poolFiltrado[Math.floor(Math.random() * poolFiltrado.length)];
+            sobreAbierto.push({ ...elegido });
+        }
+
+        const nuevoOro = usuario.monedas - costo;
+        await pool.query("UPDATE usuarios SET monedas = $1 WHERE id = $2", [nuevoOro, usuario_id]);
+
+        // Guardamos las figuritas obtenidas impactando las relaciones en la DB remota
+        for (let jugador of sobreAbierto) {
+            const progCheck = await pool.query(
+                "SELECT cantidad FROM usuario_progreso WHERE usuario_id = $1 AND jugador_id = $2", 
+                [usuario_id, jugador.id]
+            );
+            if (progCheck.rows.length > 0) {
+                await pool.query(
+                    "UPDATE usuario_progreso SET cantidad = cantidad + 1 WHERE usuario_id = $1 AND jugador_id = $2", 
+                    [usuario_id, jugador.id]
+                );
+                jugador.obtenido = progCheck.rows[0].cantidad + 1;
+            } else {
+                await pool.query(
+                    "INSERT INTO usuario_progreso (usuario_id, jugador_id, cantidad) VALUES ($1, $2, 1)", 
+                    [usuario_id, jugador.id]
+                );
+                jugador.obtenido = 1;
+            }
+        }
+
+        return res.json({ success: true, sobre: sobreAbierto, monedas: nuevoOro });
+
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+/* ========================================================================
+   ⚽ ENDPOINTS DEL MÓDULO DE PENALES (ESTADIO) Y RANKING
+   ======================================================================== */
+app.get('/api/tiros-restantes/:usuarioId', async (req, res) => {
+    const usuarioId = req.params.usuarioId;
+    const hoy = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Argentina/Buenos_Aires' });
+
+    try {
+        const result = await pool.query("SELECT ultimo_tiro, tiros_hoy FROM usuarios WHERE id = $1", [usuarioId]);
+        if (result.rows.length === 0) return res.json({ tiros: 10 });
+
+        const usuario = result.rows[0];
+        let tirosHoy = usuario.tiros_hoy;
+        if (usuario.ultimo_tiro !== hoy) {
+            tirosHoy = 0;
+        }
+        return res.json({ tiros: 10 - tirosHoy });
+    } catch (err) {
+        return res.json({ tiros: 10 });
+    }
+});
+
+app.post('/api/jugar-penal', async (req, res) => {
+    const { usuario_id, gano } = req.body;
+    const hoy = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Argentina/Buenos_Aires' });
+
+    try {
+        const result = await pool.query("SELECT monedas, puntos_ranking, ultimo_tiro, tiros_hoy FROM usuarios WHERE id = $1", [usuario_id]);
+        if (result.rows.length === 0) return res.status(404).json({ error: "Usuario no encontrado" });
+
+        const usuario = result.rows[0];
+        let tirosHoy = usuario.tiros_hoy;
+        if (usuario.ultimo_tiro !== hoy) {
+            tirosHoy = 0;
+        }
+
+        if (tirosHoy >= 10) {
+            return res.json({ 
+                error_limite: true, 
+                mensaje: "❌ Ya jugaste tus 10 penales de hoy. ¡Volvé mañana! 🛌" 
+            });
+        }
+
+        tirosHoy += 1;
+        let monedasGanadas = 0;
+        let puntosGanados = 0;
+
+        if (gano) {
+            monedasGanadas = 100;
+            puntosGanados = 15;
+        }
+
+        const nuevasMonedas = usuario.monedas + monedasGanadas;
+        const nuevosPuntos = usuario.puntos_ranking + puntosGanados;
+
+        await pool.query(
+            `UPDATE usuarios SET monedas = $1, puntos_ranking = $2, ultimo_tiro = $3, tiros_hoy = $4 WHERE id = $5`,
+            [nuevasMonedas, nuevosPuntos, hoy, tirosHoy, usuario_id]
+        );
+        
+        return res.json({
+            success: true,
+            tiros_restantes: 10 - tirosHoy,
+            datos: { monedas: nuevasMonedas, puntos_ranking: nuevosPuntos }
+        });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/ranking', async (req, res) => {
     const query = `
-        SELECT u.username AS nombre, r.puntos 
-        FROM ranking r
-        JOIN usuarios u ON r.usuario_id = u.id
-        ORDER BY r.puntos DESC
+        SELECT username, puntos_ranking 
+        FROM usuarios 
+        ORDER BY puntos_ranking DESC 
         LIMIT 10
     `;
-
-    pool.query(query, [], (err, resultado) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(resultado.rows);
-    });
+    try {
+        const result = await pool.query(query);
+        return res.json({ ranking: result.rows });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
 });
 
-// ==========================================
-// APERTURA DEL SERVIDOR (ADAPTADO PARA RENDER) 🚀
-// ==========================================
-const PORT = process.env.PORT || 3000;
+/* ========================================================================
+   🎰 MÓDULO DE LA TIMBA SEGURO E INHACKEABLE
+   ======================================================================== */
+const apuestasActivasServidor = {};
+
+function generarGolesServidor() {
+    const r = Math.random();
+    if (r < 0.25) return 0;
+    if (r < 0.55) return 1;
+    if (r < 0.80) return 2;
+    if (r < 0.93) return 3;
+    return Math.floor(Math.random() * 3) + 4;
+}
+
+app.post('/api/timba/preparar', (req, res) => {
+    const { usuario_id, montoApuesta } = req.body;
+    
+    if (!usuario_id || !montoApuesta || montoApuesta <= 0) {
+        return res.status(400).json({ ok: false, mensaje: "Datos inválidos." });
+    }
+
+    const golesLReal = generarGolesServidor();
+    const golesVReal = generarGolesServidor();
+    const signoReal = golesLReal > golesVReal ? 'L' : (golesLReal < golesVReal ? 'V' : 'E');
+
+    const combinacionesUsadas = new Set();
+    combinacionesUsadas.add(`${golesLReal}-${golesVReal}`);
+
+    const poolOpciones = [
+        { label: `${golesLReal} - ${golesVReal}`, tipo: 'exacto' }
+    ];
+
+    for (let i = 0; i < 2; i++) {
+        let glSigno = generarGolesServidor();
+        let gvSigno = generarGolesServidor();
+        let combo = `${glSigno}-${gvSigno}`;
+        let signoOpc = glSigno > gvSigno ? 'L' : (glSigno < gvSigno ? 'V' : 'E');
+        let intentos = 0;
+
+        while ((combinacionesUsadas.has(combo) || signoOpc !== signoReal) && intentos < 30) {
+            glSigno = generarGolesServidor();
+            gvSigno = generarGolesServidor();
+            if (intentos > 15) {
+                if (signoReal === 'L') { glSigno = golesLReal + 1; gvSigno = golesVReal; }
+                else if (signoReal === 'V') { glSigno = golesLReal; gvSigno = golesVReal + 1; }
+                else { glSigno = golesLReal + 1; gvSigno = golesVReal + 1; }
+            }
+            combo = `${glSigno}-${gvSigno}`;
+            signoOpc = glSigno > gvSigno ? 'L' : (glSigno < gvSigno ? 'V' : 'E');
+            intentos++;
+        }
+        combinacionesUsadas.add(combo);
+        poolOpciones.push({ label: `${glSigno} - ${gvSigno}`, tipo: 'signo' });
+    }
+
+    for (let i = 0; i < 3; i++) {
+        let glErr = generarGolesServidor();
+        let gvErr = generarGolesServidor();
+        let combo = `${glErr}-${gvErr}`;
+        let signoOpc = glErr > gvErr ? 'L' : (glErr < gvErr ? 'V' : 'E');
+        let intentos = 0;
+
+        while ((combinacionesUsadas.has(combo) || signoOpc === signoReal) && intentos < 30) {
+            glErr = generarGolesServidor();
+            gvErr = generarGolesServidor();
+            if (intentos > 15) {
+                if (signoReal === 'L' || signoReal === 'E') { glErr = 0; gvErr = i + 1; } 
+                else { glErr = i + 1; gvErr = 0; }
+            }
+            combo = `${glErr}-${gvErr}`;
+            signoOpc = glErr > gvErr ? 'L' : (glErr < gvErr ? 'V' : 'E');
+            intentos++;
+        }
+        combinacionesUsadas.add(combo);
+        poolOpciones.push({ label: `${glErr} - ${gvErr}`, tipo: 'error' });
+    }
+
+    const poolParaCliente = poolOpciones.map((opc, index) => ({
+        idOpcion: index,
+        label: opc.label
+    })).sort(() => Math.random() - 0.5);
+
+    apuestasActivasServidor[usuario_id] = {
+        golesLReal,
+        golesVReal,
+        montoApuesta,
+        mapeoOpciones: poolOpciones
+    };
+
+    res.json({ ok: true, opciones: poolParaCliente });
+});
+
+app.post('/api/timba/procesar', async (req, res) => {
+    const { usuario_id, idOpcionElegida } = req.body;
+    const apuesta = apuestasActivasServidor[usuario_id];
+
+    if (!apuesta) {
+        return res.status(400).json({ ok: false, mensaje: "No hay una apuesta activa preparada para este jugador." });
+    }
+
+    const { golesLReal, golesVReal, montoApuesta, mapeoOpciones } = apuesta;
+    const opcionReal = mapeoOpciones[idOpcionElegida];
+
+    let balanceMonedas = 0;
+    let mensajeResultado = "";
+    let puntosAsignados = 0;
+
+    if (opcionReal.tipo === 'exacto') {
+        balanceMonedas = montoApuesta * 2;
+        puntosAsignados = 20;
+        mensajeResultado = `¡QUÉ ANIMAL! Elegiste el resultado exacto (${golesLReal}-${golesVReal}).\nGanaste: ${montoApuesta * 2} monedas (Total devuelto: ${montoApuesta * 3})`;
+    } else if (opcionReal.tipo === 'signo') {
+        balanceMonedas = Math.round(montoApuesta * 0.5);
+        mensajeResultado = `¡BIEN AHÍ! Acertaste el ganador/empate (Elegiste ${opcionReal.label}). El resultado real fue ${golesLReal}-${golesVReal}.\nGanaste: ${balanceMonedas} monedas (Total devuelto: ${montoApuesta + balanceMonedas})`;
+    } else {
+        balanceMonedas = -montoApuesta;
+        mensajeResultado = `¡ERRASTE! El partido terminó ${golesLReal}-${golesVReal} y vos elegiste ${opcionReal.label}.\nPerdiste: ${montoApuesta} monedas.`;
+    }
+
+    try {
+        await pool.query(
+            `UPDATE usuarios SET monedas = monedas + $1, puntos_ranking = puntos_ranking + $2 WHERE id = $3`, 
+            [balanceMonedas, puntosAsignados, usuario_id]
+        );
+        const userCheck = await pool.query("SELECT monedas, puntos_ranking FROM usuarios WHERE id = $1", [usuario_id]);
+        
+        delete apuestasActivasServidor[usuario_id];
+
+        return res.json({
+            ok: true,
+            mensajeResultado,
+            golesLReal,
+            golesVReal,
+            datos: userCheck.rows[0]
+        });
+    } catch (err) {
+        return res.status(500).json({ ok: false, mensaje: "Error en DB." });
+    }
+});
+
+/* ========================================================================
+   🚀 INICIALIZACIÓN DEL SERVIDOR
+   ======================================================================== */
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Servidor del Álbum corriendo en el puerto ${PORT}`);
+    console.log(`🚀 Servidor en la Nube / Red Local activo en puerto ${PORT}`);
 });
