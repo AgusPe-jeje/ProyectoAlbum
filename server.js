@@ -4,6 +4,9 @@ const { Pool } = require('pg'); // ✨ Migrado a PostgreSQL para Neon
 const path = require('path');
 
 const app = express();
+// ✨ Clave para leer la IP real del cliente detrás del proxy de Render
+app.set('trust proxy', true);
+
 // ✨ Render asigna el puerto dinámicamente; si no encuentra, usa el 3000
 const PORT = process.env.PORT || 3000;
 
@@ -28,7 +31,7 @@ pool.query('SELECT NOW()', (err, res) => {
 
 async function inicializarTablas() {
     try {
-        // 1. Tabla de Usuarios (Actualizada con TIMESTAMP para el reloj por hora)
+        // 1. Tabla de Usuarios (Actualizada con TIMESTAMP y columna ip_registro)
         await pool.query(`CREATE TABLE IF NOT EXISTS usuarios (
             id SERIAL PRIMARY KEY,
             username VARCHAR(50) UNIQUE NOT NULL,
@@ -36,7 +39,8 @@ async function inicializarTablas() {
             monedas INTEGER DEFAULT 200,
             puntos_ranking INTEGER DEFAULT 0,
             ultimo_tiro_timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-            tiros_hoy INTEGER DEFAULT 10
+            tiros_hoy INTEGER DEFAULT 10,
+            ip_registro VARCHAR(45) DEFAULT ''
         )`);
 
         // 2. Tabla de Jugadores
@@ -780,21 +784,32 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// 2. CREAR USUARIO (Solo registra si el nombre está libre)
+// 2. CREAR USUARIO (Con restricción estricta de una cuenta por IP)
 app.post('/api/registro', async (req, res) => {
     const { username, password } = req.body;
+    const ipCliente = req.ip; // Captura la IP del dispositivo o router
+
     try {
+        // A. Verificamos si ya existe alguien con ese nombre
         const userCheck = await pool.query("SELECT * FROM usuarios WHERE username = $1", [username]);
-        
         if (userCheck.rows.length > 0) {
             return res.status(400).json({ error: "❌ Ese nombre de usuario ya está ocupado." });
         }
 
+        // B. Verificamos si esa IP ya registró una cuenta anteriormente
+        if (ipCliente && ipCliente !== '::1' && ipCliente !== '127.0.0.1') {
+            const ipCheck = await pool.query("SELECT * FROM usuarios WHERE ip_registro = $1", [ipCliente]);
+            if (ipCheck.rows.length > 0) {
+                return res.status(400).json({ error: "❌ Límite excedido: Ya se creó una cuenta desde esta conexión a Internet." });
+            }
+        }
+
+        // C. Si está libre el nombre y la IP, creamos la cuenta guardando su IP
         const nuevoUsuario = await pool.query(
-            "INSERT INTO usuarios (username, password) VALUES ($1, $2) RETURNING *", 
-            [username, password]
+            "INSERT INTO usuarios (username, password, ip_registro) VALUES ($1, $2, $3) RETURNING *", 
+            [username, password, ipCliente]
         );
-        console.log(`✨ [REGISTRO] Nuevo usuario creado: "${username.toUpperCase()}"`);
+        console.log(`✨ [REGISTRO] Nuevo usuario creado: "${username.toUpperCase()}" desde la IP: ${ipCliente}`);
         return res.json({ mensaje: "Registrado con éxito", usuario: nuevoUsuario.rows[0] });
 
     } catch (err) {
@@ -942,7 +957,6 @@ function calcularTirosActuales(usuario) {
     const ultimoTiro = new Date(usuario.ultimo_tiro_timestamp);
     const tiempoTranscurrido = ahora - ultimoTiro;
 
-    // Aquí "tiros_hoy" almacena cuántos tiros le quedaban al usuario la última vez que interactuó
     const tirosRegenerados = Math.floor(tiempoTranscurrido / MILISEGUNDOS_POR_TIRO);
     let tirosActuales = usuario.tiros_hoy + tirosRegenerados;
 
@@ -994,7 +1008,6 @@ app.post('/api/jugar-penal', async (req, res) => {
         const nuevasMonedas = usuario.monedas + monedasGanadas;
         const nuevosPuntos = usuario.puntos_ranking + puntosGanados;
 
-        // Guardamos el estado y reseteamos el timestamp al momento exacto de este tiro
         await pool.query(
             `UPDATE usuarios SET monedas = $1, puntos_ranking = $2, ultimo_tiro_timestamp = $3, tiros_hoy = $4 WHERE id = $5`,
             [nuevasMonedas, nuevosPuntos, ahora, nuevosTirosGuardados, usuario_id]
