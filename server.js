@@ -1102,82 +1102,127 @@ function generarGolesServidor() {
     return Math.floor(Math.random() * 3) + 4;
 }
 
-app.post('/api/timba/preparar', (req, res) => {
+app.post('/api/timba/preparar', async (req, res) => { // 👈 Le agregamos 'async'
     const { usuario_id, montoApuesta } = req.body;
     
     if (!usuario_id || !montoApuesta || montoApuesta <= 0) {
         return res.status(400).json({ ok: false, mensaje: "Datos inválidos." });
     }
 
-    const golesLReal = generarGolesServidor();
-    const golesVReal = generarGolesServidor();
-    const signoReal = golesLReal > golesVReal ? 'L' : (golesLReal < golesVReal ? 'V' : 'E');
+    try {
+        // ✨ CONTROL DE ENERGÍA: Traemos los datos de timba del usuario
+        const userCheck = await pool.query("SELECT monedas, ultimo_giro_timestamp, timbas_hoy FROM usuarios WHERE id = $1", [usuario_id]);
+        if (userCheck.rows.length === 0) return res.status(404).json({ ok: false, mensaje: "Usuario no encontrado" });
 
-    const combinacionesUsadas = new Set();
-    combinacionesUsadas.add(`${golesLReal}-${golesVReal}`);
+        const usuario = userCheck.rows[0];
 
-    const poolOpciones = [
-        { label: `${golesLReal} - ${golesVReal}`, tipo: 'exacto' }
-    ];
-
-    for (let i = 0; i < 2; i++) {
-        let glSigno = generarGolesServidor();
-        let gvSigno = generarGolesServidor();
-        let combo = `${glSigno}-${gvSigno}`;
-        let signoOpc = glSigno > gvSigno ? 'L' : (glSigno < gvSigno ? 'V' : 'E');
-        let intentos = 0;
-
-        while ((combinacionesUsadas.has(combo) || signoOpc !== signoReal) && intentos < 30) {
-            glSigno = generarGolesServidor();
-            gvSigno = generarGolesServidor();
-            if (intentos > 15) {
-                if (signoReal === 'L') { glSigno = golesLReal + 1; gvSigno = golesVReal; }
-                else if (signoReal === 'V') { glSigno = golesLReal; gvSigno = golesVReal + 1; }
-                else { glSigno = golesLReal + 1; gvSigno = golesVReal + 1; }
-            }
-            combo = `${glSigno}-${gvSigno}`;
-            signoOpc = glSigno > gvSigno ? 'L' : (glSigno < gvSigno ? 'V' : 'E');
-            intentos++;
+        // Validamos si tiene oro suficiente
+        if (usuario.monedas < montoApuesta) {
+            return res.json({ ok: false, error_oro: true, mensaje: "🪙 No tenés suficiente Oro para bancar esa apuesta." });
         }
-        combinacionesUsadas.add(combo);
-        poolOpciones.push({ label: `${glSigno} - ${gvSigno}`, tipo: 'signo' });
-    }
 
-    for (let i = 0; i < 3; i++) {
-        let glErr = generarGolesServidor();
-        let gvErr = generarGolesServidor();
-        let combo = `${glErr}-${gvErr}`;
-        let signoOpc = glErr > gvErr ? 'L' : (glErr < gvErr ? 'V' : 'E');
-        let intentos = 0;
+        // Calculamos sus tiros disponibles de timba
+        let { timbasActuales, tiempoParaSiguienteTimba } = calcularTimbasActuales(usuario);
 
-        while ((combinacionesUsadas.has(combo) || signoOpc === signoReal) && intentos < 30) {
-            glErr = generarGolesServidor();
-            gvErr = generarGolesServidor();
-            if (intentos > 15) {
-                if (signoReal === 'L' || signoReal === 'E') { glErr = 0; gvErr = i + 1; } 
-                else { glErr = i + 1; gvErr = 0; }
-            }
-            combo = `${glErr}-${gvErr}`;
-            signoOpc = glErr > gvErr ? 'L' : (glErr < gvErr ? 'V' : 'E');
-            intentos++;
+        if (timbasActuales <= 0) {
+            return res.json({ 
+                ok: false,
+                error_limite: true, 
+                mensaje: "❌ ¡Te quedaste sin energía para apostar! Esperá a que recargue el cronómetro de la banca. ⏱️" 
+            });
         }
-        combinacionesUsadas.add(combo);
-        poolOpciones.push({ label: `${glErr} - ${gvErr}`, tipo: 'error' });
+
+        // Restamos un tiro de timba en las variables
+        const nuevasTimbasGuardadas = timbasActuales - 1;
+        const ahora = new Date();
+
+        // Guardamos el descuento del tiro y actualizamos el timestamp en Neon
+        await pool.query(
+            `UPDATE usuarios SET ultimo_giro_timestamp = $1, timbas_hoy = $2 WHERE id = $3`,
+            [ahora, nuevasTimbasGuardadas, usuario_id]
+        );
+
+        // --- Acá sigue toda tu lógica original de generación de goles ---
+        const golesLReal = generarGolesServidor();
+        const golesVReal = generarGolesServidor();
+        const signoReal = golesLReal > golesVReal ? 'L' : (golesLReal < golesVReal ? 'V' : 'E');
+
+        const combinacionesUsadas = new Set();
+        combinacionesUsadas.add(`${golesLReal}-${golesVReal}`);
+
+        const poolOpciones = [
+            { label: `${golesLReal} - ${golesVReal}`, tipo: 'exacto' }
+        ];
+
+        for (let i = 0; i < 2; i++) {
+            let glSigno = generarGolesServidor();
+            let gvSigno = generarGolesServidor();
+            let combo = `${glSigno}-${gvSigno}`;
+            let signoOpc = glSigno > gvSigno ? 'L' : (glSigno < gvSigno ? 'V' : 'E');
+            let intentos = 0;
+
+            while ((combinacionesUsadas.has(combo) || signoOpc !== signoReal) && intentos < 30) {
+                glSigno = generarGolesServidor();
+                gvSigno = generarGolesServidor();
+                if (intentos > 15) {
+                    if (signoReal === 'L') { glSigno = golesLReal + 1; gvSigno = golesVReal; }
+                    else if (signoReal === 'V') { glSigno = golesLReal; gvSigno = golesVReal + 1; }
+                    else { glSigno = golesLReal + 1; gvSigno = golesVReal + 1; }
+                }
+                combo = `${glSigno}-${gvSigno}`;
+                signoOpc = glSigno > gvSigno ? 'L' : (glSigno < gvSigno ? 'V' : 'E');
+                intentos++;
+            }
+            combinacionesUsadas.add(combo);
+            poolOpciones.push({ label: `${glSigno} - ${gvSigno}`, tipo: 'signo' });
+        }
+
+        for (let i = 0; i < 3; i++) {
+            let glErr = generarGolesServidor();
+            let gvErr = generarGolesServidor();
+            let combo = `${glErr}-${gvErr}`;
+            let signoOpc = glErr > gvErr ? 'L' : (glErr < gvErr ? 'V' : 'E');
+            let intentos = 0;
+
+            while ((combinacionesUsadas.has(combo) || signoOpc === signoReal) && intentos < 30) {
+                glErr = generarGolesServidor();
+                gvErr = generarGolesServidor();
+                if (intentos > 15) {
+                    if (signoReal === 'L' || signoReal === 'E') { glErr = 0; gvErr = i + 1; } 
+                    else { glErr = i + 1; gvErr = 0; }
+                }
+                combo = `${glErr}-${gvErr}`;
+                signoOpc = glErr > gvErr ? 'L' : (glErr < gvErr ? 'V' : 'E');
+                intentos++;
+            }
+            combinacionesUsadas.add(combo);
+            poolOpciones.push({ label: `${glErr} - ${gvErr}`, tipo: 'error' });
+        }
+
+        const poolParaCliente = poolOpciones.map((opc, index) => ({
+            idOpcion: index,
+            label: opc.label
+        })).sort(() => Math.random() - 0.5);
+
+        apuestasActivasServidor[usuario_id] = {
+            golesLReal,
+            golesVReal,
+            montoApuesta,
+            mapeoOpciones: poolOpciones
+        };
+
+        // Devolvemos las opciones, los tiros restantes de timba y el tiempo para que el JS frontend lo controle
+        const tiempoActualizado = nuevasTimbasGuardadas >= MAX_TIMBAS ? 0 : MILISEGUNDOS_POR_TIMBA;
+        res.json({ 
+            ok: true, 
+            opciones: poolParaCliente,
+            timbas_restantes: nuevasTimbasGuardadas,
+            siguienteIn: tiempoActualizado
+        });
+
+    } catch (err) {
+        return res.status(500).json({ ok: false, mensaje: "Error en el servidor al procesar energía de timba." });
     }
-
-    const poolParaCliente = poolOpciones.map((opc, index) => ({
-        idOpcion: index,
-        label: opc.label
-    })).sort(() => Math.random() - 0.5);
-
-    apuestasActivasServidor[usuario_id] = {
-        golesLReal,
-        golesVReal,
-        montoApuesta,
-        mapeoOpciones: poolOpciones
-    };
-
-    res.json({ ok: true, opciones: poolParaCliente });
 });
 
 app.post('/api/timba/procesar', async (req, res) => {
@@ -1227,6 +1272,35 @@ app.post('/api/timba/procesar', async (req, res) => {
         return res.status(500).json({ ok: false, mensaje: "Error en DB." });
     }
 });
+
+/* ========================================================================
+   🎰 CONFIGURACIÓN DE ENERGÍA PARA LA TIMBA
+   ======================================================================== */
+const MAX_TIMBAS = 10; // Máximo de apuestas acumulables
+const MILISEGUNDOS_POR_TIMBA = 6 * 60 * 1000; // ⏱️ Igual que los penales: 1 tiro por hora (60 min)
+
+function calcularTimbasActuales(usuario) {
+    const ahora = new Date();
+    
+    if (!usuario.ultimo_giro_timestamp) {
+        return { timbasActuales: MAX_TIMBAS, tiempoParaSiguienteTimba: 0 };
+    }
+
+    const ultimoGiro = new Date(usuario.ultimo_giro_timestamp);
+    const tiempoTranscurrido = ahora - ultimoGiro;
+
+    const timbasRegeneradas = Math.floor(tiempoTranscurrido / MILISEGUNDOS_POR_TIMBA);
+    let timbasActuales = usuario.timbas_hoy + timbasRegeneradas;
+
+    if (timbasActuales >= MAX_TIMBAS) {
+        return { timbasActuales: MAX_TIMBAS, tiempoParaSiguienteTimba: 0 };
+    }
+
+    const tiempoConsumidoEnEsteGiro = tiempoTranscurrido % MILISEGUNDOS_POR_TIMBA;
+    const tiempoParaSiguienteTimba = MILISEGUNDOS_POR_TIMBA - tiempoConsumidoEnEsteGiro;
+
+    return { timbasActuales, tiempoParaSiguienteTimba };
+}
 
 /* ========================================================================
    🚀 INICIALIZACIÓN DEL SERVIDOR
