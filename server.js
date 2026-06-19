@@ -1269,6 +1269,7 @@ app.post('/api/timba/procesar', async (req, res) => {
 
     try {
         if (tipoApuesta === "monedas") {
+            // LÓGICA DE MONEDAS TRADICIONAL
             if (opcionReal.tipo === 'exacto') {
                 balanceMonedas = montoApuesta * 3; puntosAsignados = 20;
                 mensajeResultado = `¡QUÉ ANIMAL! Acertaste el resultado exacto (${golesLReal}-${golesVReal}).\nGanaste: ${montoApuesta * 3} monedas.`;
@@ -1286,41 +1287,71 @@ app.post('/api/timba/procesar', async (req, res) => {
             );
 
         } else {
+            // 🃏 LÓGICA DE LA TIMBA DE CROMOS REFORMADA
             const cardQuery = await pool.query("SELECT nombre, rareza FROM jugadores WHERE id = $1", [jugadorIdApostado]);
             const cromoApostado = cardQuery.rows[0];
+            const rarezaOriginal = cromoApostado.rareza.toLowerCase();
 
-            if (opcionReal.tipo === 'exacto') {
-                await pool.query("UPDATE usuario_progreso SET cantidad = cantidad - 1 WHERE usuario_id = $1 AND jugador_id = $2", [usuario_id, jugadorIdApostado]);
+            // Evaluamos el tipo de acierto según la opción elegida
+            if (opcionReal.tipo === 'exacto' || opcionReal.tipo === 'signo') {
                 
-                let rarezaPremio = "especial";
-                if (cromoApostado.rareza === "especial" || cromoApostado.rareza === "rara") rarezaPremio = "epica";
-                else if (cromoApostado.rareza === "epica" || cromoApostado.rareza === "legendaria") rarezaPremio = "legendaria";
+                // CASO A: Si apostó una LEGENDARIA, el premio es ORO PURO
+                if (rarezaOriginal === "legendaria") {
+                    let oroPremio = opcionReal.tipo === 'exacto' ? 10000 : 5000;
+                    puntosAsignados = opcionReal.tipo === 'exacto' ? 40 : 20;
 
-                const poolPremio = await pool.query("SELECT id, nombre FROM jugadores WHERE rareza = $1 ORDER BY RANDOM() LIMIT 1", [rarezaPremio]);
-                const cromoGanado = poolPremio.rows[0];
+                    await pool.query("UPDATE usuario_progreso SET cantidad = cantidad - 1 WHERE usuario_id = $1 AND jugador_id = $2", [usuario_id, jugadorIdApostado]);
+                    await pool.query("UPDATE usuarios SET monedas = monedas + $1, puntos_ranking = puntos_ranking + $2 WHERE id = $3", [oroPremio, puntosAsignados, usuario_id]);
 
-                const checkProg = await pool.query("SELECT cantidad FROM usuario_progreso WHERE usuario_id = $1 AND jugador_id = $2", [usuario_id, cromoGanado.id]);
-                if (checkProg.rows.length > 0) {
-                    await pool.query("UPDATE usuario_progreso SET cantidad = cantidad + 1 WHERE usuario_id = $1 AND jugador_id = $2", [usuario_id, cromoGanado.id]);
+                    if (opcionReal.tipo === 'exacto') {
+                        mensajeResultado = `👑 ¡DIOS SANTO PE! Apostaste a ${cromoApostado.nombre.toUpperCase()} Legendario y la clavaste al ángulo (${golesLReal}-${golesVReal}).\n\n💰 ¡LA CASA TE PAGA 🪙10.000 MONEDAS!`;
+                    } else {
+                        mensajeResultado = `💰 ¡BIEN AHÍ! Acertaste el ganador con tu Legendario (${golesLReal}-${golesVReal}).\n\n🎁 ¡Te llevás 🪙5.000 monedas!`;
+                    }
+
                 } else {
-                    await pool.query("INSERT INTO usuario_progreso (usuario_id, jugador_id, cantidad) VALUES ($1, $2, 1)", [usuario_id, cromoGanado.id]);
+                    // CASO B: CROMOS COMUNES/RAROS/EPICOS -> Premio es otro Cromo
+                    await pool.query("UPDATE usuario_progreso SET cantidad = cantidad - 1 WHERE usuario_id = $1 AND jugador_id = $2", [usuario_id, jugadorIdApostado]);
+                    
+                    let rarezaPremio = rarezaOriginal; // Signo -> Misma rareza
+
+                    if (opcionReal.tipo === 'exacto') {
+                        // Exacto -> Escala rareza
+                        if (rarezaOriginal === "comun") rarezaPremio = "especial";
+                        else if (rarezaOriginal === "especial" || rarezaOriginal === "rara") rarezaPremio = "epica";
+                        else if (rarezaOriginal === "epica") rarezaPremio = "legendaria";
+                    }
+
+                    const poolPremio = await pool.query("SELECT id, nombre, rareza FROM jugadores WHERE rareza = $1 ORDER BY RANDOM() LIMIT 1", [rarezaPremio]);
+                    const cromoGanado = poolPremio.rows[0];
+
+                    const checkProg = await pool.query("SELECT cantidad FROM usuario_progreso WHERE usuario_id = $1 AND jugador_id = $2", [usuario_id, cromoGanado.id]);
+                    if (checkProg.rows.length > 0) {
+                        await pool.query("UPDATE usuario_progreso SET cantidad = cantidad + 1 WHERE usuario_id = $1 AND jugador_id = $2", [usuario_id, cromoGanado.id]);
+                    } else {
+                        await pool.query("INSERT INTO usuario_progreso (usuario_id, jugador_id, cantidad) VALUES ($1, $2, 1)", [usuario_id, cromoGanado.id]);
+                    }
+
+                    puntosAsignados = opcionReal.tipo === 'exacto' ? 30 : 15;
+                    await pool.query("UPDATE usuarios SET puntos_ranking = puntos_ranking + $1 WHERE id = $2", [puntosAsignados, usuario_id]);
+
+                    if (opcionReal.tipo === 'exacto') {
+                        mensajeResultado = `🔥 ¡PRO DISPARO! Acertaste el exacto (${golesLReal}-${golesVReal}).\n🎁 ¡EVOLUCIÓN! Te ganaste un cromo SUPERIOR: ${cromoGanado.nombre.toUpperCase()} [${cromoGanado.rareza.toUpperCase()}]`;
+                    } else {
+                        mensajeResultado = `⚽ ¡GOOOL! Acertaste el ganador. El partido terminó ${golesLReal}-${golesVReal}.\n🃏 La banca te devuelve otro cromo: ${cromoGanado.nombre.toUpperCase()} [${cromoGanado.rareza.toUpperCase()}]`;
+                    }
                 }
 
-                puntosAsignados = 30;
-                await pool.query("UPDATE usuarios SET puntos_ranking = puntos_ranking + $1 WHERE id = $2", [puntosAsignados, usuario_id]);
-
-                mensajeResultado = `🔥 ¡PRO DISPARO! Arriesgaste a ${cromoApostado.nombre.toUpperCase()} y pegaste el resultado exacto (${golesLReal}-${golesVReal}).\n\n🎁 ¡LA BANCA TE REGALA A: ${cromoGanado.nombre.toUpperCase()} [${rarezaPremio.toUpperCase()}]!`;
-
             } else {
+                // ERRASTE TODO EL PRONÓSTICO
                 await pool.query("UPDATE usuario_progreso SET cantidad = cantidad - 1 WHERE usuario_id = $1 AND jugador_id = $2", [usuario_id, jugadorIdApostado]);
-                mensajeResultado = `❌ ¡CROMO PERDIDO! El partido terminó ${golesLReal}-${golesVReal} y tu opción fue ${opcionReal.label}.\nPerdiste 1 copia de ${cromoApostado.nombre.toUpperCase()} de tu álbum.`;
+                mensajeResultado = `❌ ¡CROMO PERDIDO! El partido terminó ${golesLReal}-${golesVReal} y tu opción fue ${opcionReal.label}.\nPerdiste 1 copia de ${cromoApostado.nombre.toUpperCase()}.`;
             }
         }
 
         const userCheck = await pool.query("SELECT monedas, puntos_ranking FROM usuarios WHERE id = $1", [usuario_id]);
         delete apuestasActivasServidor[usuario_id];
 
-        // ✨ CORRECCIÓN CLAVE: Devolvemos siempre golesLReal y golesVReal para limpiar el undefined
         return res.json({
             ok: true,
             mensajeResultado,
