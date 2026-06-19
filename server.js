@@ -10,48 +10,52 @@ app.set('trust proxy', true);
 // ✨ Render asigna el puerto dinámicamente; si no encuentra, usa el 3000
 const PORT = process.env.PORT || 3000;
 
+// IMPORTANTE: Habilitamos CORS y JSON arriba de todo para que el filtro pueda leer los datos
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname)));
 
 /* ========================================================================
    🛠️ CONFIGURACIÓN DE MODO MANTENIMIENTO / MODO SOLO YO
    ======================================================================== */
-// 🚨 Pasalo a true para cerrar el juego y quedarte probando vos solo.
-// Cuando quieras volver a jugar con los pibes, lo pasás a false.
 const MODO_MANTENIMIENTO = true; 
 
 app.use((req, res, next) => {
-    // Si el mantenimiento está apagado, el juego fluye normal para todos
     if (!MODO_MANTENIMIENTO) {
         return next();
     }
 
-    // Permitimos descargar siempre los archivos estáticos de la interfaz
+    // A. Permitimos descargar los archivos estáticos para que cargue la interfaz visual
     if (req.method === 'GET' && (req.path === '/' || req.path.endsWith('.html') || req.path.endsWith('.css') || req.path.endsWith('.js') || req.path.endsWith('.png'))) {
         return next();
     }
 
-    // Capturamos el username de las peticiones de autenticación
-    const { username } = req.body;
-
-    // ✨ CONTROL DE ACCESO: Si es tu cuenta, te deja pasar sin trabas
-    if (username && username.toLowerCase() === "aguspe") {
-        return next();
-    }
-
-    // Para el login o registro de cualquiera que NO seas vos, rebota de una
-    if (req.path.startsWith('/api/login') || req.path.startsWith('/api/registro')) {
+    // B. Filtro estricto para las rutas de autenticación
+    if (req.path.startsWith('/api/login')) {
+        const { username } = req.body;
+        // Solo dejamos que avance al endpoint real si el usuario es exactamente el tuyo
+        if (username && username.toLowerCase() === "aguspe") {
+            return next();
+        }
+        // Si es cualquier otra cuenta, rebota acá antes de tocar Neon
         return res.status(503).json({ 
-            error: "🛠️ La Arena está en mantenimiento por reformas de infraestructura. ¡Volvé más tarde!" 
+            error: "🛠️ La Arena está en mantenimiento por reformas de infraestructura. ¡Volvé más tarde! 🏗️" 
         });
     }
 
-    // Para el resto de las llamadas internas de la API (cofres, penales, timba),
-    // si un usuario común ya tenía la sesión abierta de antes, lo frena acá también.
-    // (A vos te deja fluir porque tus llamadas de juego no van a pasar por las rutas de login/registro bloqueadas)
+    // Bloqueamos el registro por completo para que nadie intente crearse cuentas clones mientras probás
+    if (req.path.startsWith('/api/registro')) {
+        return res.status(503).json({ 
+            error: "🛠️ La Arena está en mantenimiento. El registro de nuevas cuentas está cerrado por el momento." 
+        });
+    }
+
+    // C. Si la petición ya viene de adentro del juego (figuritas, timba, penales), dejamos pasar
+    // porque tus amigos nunca van a poder pasar de la pantalla de Login para generar estas llamadas.
     next();
 });
+
+// RECIÉN ACÁ ABAJO SE CONFIGURA LA CARPETA ESTÁTICA
+app.use(express.static(path.join(__dirname)));
 
 /* ========================================================================
    📦 CONFIGURACIÓN Y CONEXIÓN DE BASE DE DATOS (POSTGRESQL - NEON)
