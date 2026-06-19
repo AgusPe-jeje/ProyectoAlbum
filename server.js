@@ -83,7 +83,9 @@ async function inicializarTablas() {
             puntos_ranking INTEGER DEFAULT 0,
             ultimo_tiro_timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             tiros_hoy INTEGER DEFAULT 10,
-            ip_registro VARCHAR(45) DEFAULT ''
+            ip_registro VARCHAR(45) DEFAULT '',
+            ultimo_giro_timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            timbas_hoy INTEGER DEFAULT 10
         )`);
 
         // 2. Tabla de Jugadores
@@ -992,7 +994,7 @@ app.post('/api/comprar-sobre', async (req, res) => {
    ⚽ ENDPOINTS DEL MÓDULO DE PENALES (SISTEMA DE ENERGÍA POR HORA)
    ======================================================================== */
 const MAX_TIROS = 10;
-const MILISEGUNDOS_POR_TIRO = 6 * 60 * 1000; // ⏱️ 1 Hora en milisegundos
+const MILISEGUNDOS_POR_TIRO = 6 * 60 * 1000; // ⏱️ 6 min por tiro para testeo rápido
 
 function calcularTirosActuales(usuario) {
     const ahora = new Date();
@@ -1089,6 +1091,35 @@ app.get('/api/ranking', async (req, res) => {
 });
 
 /* ========================================================================
+   🎰 CONFIGURACIÓN DE ENERGÍA PARA LA TIMBA (MOVIDA ARRIBA)
+   ======================================================================== */
+const MAX_TIMBAS = 10; 
+const MILISEGUNDOS_POR_TIMBA = 6 * 60 * 1000; 
+
+function calcularTimbasActuales(usuario) {
+    const ahora = new Date();
+    
+    if (!usuario.ultimo_giro_timestamp) {
+        return { timbasActuales: MAX_TIMBAS, tiempoParaSiguienteTimba: 0 };
+    }
+
+    const ultimoGiro = new Date(usuario.ultimo_giro_timestamp);
+    const tiempoTranscurrido = ahora - ultimoGiro;
+
+    const timbasRegeneradas = Math.floor(tiempoTranscurrido / MILISEGUNDOS_POR_TIMBA);
+    let timbasActuales = usuario.timbas_hoy + timbasRegeneradas;
+
+    if (timbasActuales >= MAX_TIMBAS) {
+        return { timbasActuales: MAX_TIMBAS, tiempoParaSiguienteTimba: 0 };
+    }
+
+    const tiempoConsumidoEnEsteGiro = tiempoTranscurrido % MILISEGUNDOS_POR_TIMBA;
+    const tiempoParaSiguienteTimba = MILISEGUNDOS_POR_TIMBA - tiempoConsumidoEnEsteGiro;
+
+    return { timbasActuales, tiempoParaSiguienteTimba };
+}
+
+/* ========================================================================
    🎰 MÓDULO DE LA TIMBA SEGURO E INHACKEABLE
    ======================================================================== */
 const apuestasActivasServidor = {};
@@ -1102,7 +1133,21 @@ function generarGolesServidor() {
     return Math.floor(Math.random() * 3) + 4;
 }
 
-app.post('/api/timba/preparar', async (req, res) => { // 👈 Le agregamos 'async'
+// ✨ AGREGADO: Endpoint GET indispensable que pedía tu script.js para activar el cronómetro visual
+app.get('/api/timbas-restantes/:usuarioId', async (req, res) => {
+    const usuarioId = req.params.usuarioId;
+    try {
+        const result = await pool.query("SELECT ultimo_giro_timestamp, timbas_hoy FROM usuarios WHERE id = $1", [usuarioId]);
+        if (result.rows.length === 0) return res.json({ timbas: MAX_TIMBAS, siguienteIn: 0 });
+
+        const { timbasActuales, tiempoParaSiguienteTimba } = calcularTimbasActuales(result.rows[0]);
+        return res.json({ timbas: timbasActuales, siguienteIn: tiempoParaSiguienteTimba });
+    } catch (err) {
+        return res.json({ timbas: MAX_TIMBAS, siguienteIn: 0 });
+    }
+});
+
+app.post('/api/timba/preparar', async (req, res) => { 
     const { usuario_id, montoApuesta } = req.body;
     
     if (!usuario_id || !montoApuesta || montoApuesta <= 0) {
@@ -1110,18 +1155,15 @@ app.post('/api/timba/preparar', async (req, res) => { // 👈 Le agregamos 'asyn
     }
 
     try {
-        // ✨ CONTROL DE ENERGÍA: Traemos los datos de timba del usuario
         const userCheck = await pool.query("SELECT monedas, ultimo_giro_timestamp, timbas_hoy FROM usuarios WHERE id = $1", [usuario_id]);
         if (userCheck.rows.length === 0) return res.status(404).json({ ok: false, mensaje: "Usuario no encontrado" });
 
         const usuario = userCheck.rows[0];
 
-        // Validamos si tiene oro suficiente
         if (usuario.monedas < montoApuesta) {
             return res.json({ ok: false, error_oro: true, mensaje: "🪙 No tenés suficiente Oro para bancar esa apuesta." });
         }
 
-        // Calculamos sus tiros disponibles de timba
         let { timbasActuales, tiempoParaSiguienteTimba } = calcularTimbasActuales(usuario);
 
         if (timbasActuales <= 0) {
@@ -1132,17 +1174,14 @@ app.post('/api/timba/preparar', async (req, res) => { // 👈 Le agregamos 'asyn
             });
         }
 
-        // Restamos un tiro de timba en las variables
         const nuevasTimbasGuardadas = timbasActuales - 1;
         const ahora = new Date();
 
-        // Guardamos el descuento del tiro y actualizamos el timestamp en Neon
         await pool.query(
             `UPDATE usuarios SET ultimo_giro_timestamp = $1, timbas_hoy = $2 WHERE id = $3`,
             [ahora, nuevasTimbasGuardadas, usuario_id]
         );
 
-        // --- Acá sigue toda tu lógica original de generación de goles ---
         const golesLReal = generarGolesServidor();
         const golesVReal = generarGolesServidor();
         const signoReal = golesLReal > golesVReal ? 'L' : (golesLReal < golesVReal ? 'V' : 'E');
@@ -1211,7 +1250,6 @@ app.post('/api/timba/preparar', async (req, res) => { // 👈 Le agregamos 'asyn
             mapeoOpciones: poolOpciones
         };
 
-        // Devolvemos las opciones, los tiros restantes de timba y el tiempo para que el JS frontend lo controle
         const tiempoActualizado = nuevasTimbasGuardadas >= MAX_TIMBAS ? 0 : MILISEGUNDOS_POR_TIMBA;
         res.json({ 
             ok: true, 
@@ -1272,35 +1310,6 @@ app.post('/api/timba/procesar', async (req, res) => {
         return res.status(500).json({ ok: false, mensaje: "Error en DB." });
     }
 });
-
-/* ========================================================================
-   🎰 CONFIGURACIÓN DE ENERGÍA PARA LA TIMBA
-   ======================================================================== */
-const MAX_TIMBAS = 10; // Máximo de apuestas acumulables
-const MILISEGUNDOS_POR_TIMBA = 6 * 60 * 1000; // ⏱️ Igual que los penales: 1 tiro por hora (60 min)
-
-function calcularTimbasActuales(usuario) {
-    const ahora = new Date();
-    
-    if (!usuario.ultimo_giro_timestamp) {
-        return { timbasActuales: MAX_TIMBAS, tiempoParaSiguienteTimba: 0 };
-    }
-
-    const ultimoGiro = new Date(usuario.ultimo_giro_timestamp);
-    const tiempoTranscurrido = ahora - ultimoGiro;
-
-    const timbasRegeneradas = Math.floor(tiempoTranscurrido / MILISEGUNDOS_POR_TIMBA);
-    let timbasActuales = usuario.timbas_hoy + timbasRegeneradas;
-
-    if (timbasActuales >= MAX_TIMBAS) {
-        return { timbasActuales: MAX_TIMBAS, tiempoParaSiguienteTimba: 0 };
-    }
-
-    const tiempoConsumidoEnEsteGiro = tiempoTranscurrido % MILISEGUNDOS_POR_TIMBA;
-    const tiempoParaSiguienteTimba = MILISEGUNDOS_POR_TIMBA - tiempoConsumidoEnEsteGiro;
-
-    return { timbasActuales, tiempoParaSiguienteTimba };
-}
 
 /* ========================================================================
    🚀 INICIALIZACIÓN DEL SERVIDOR
