@@ -182,22 +182,23 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
 #balon-animado {
     position: absolute;
     bottom: 20px;
-    left: 50px;
-    /* Forzamos el tamaño real aquí ignorando el tamaño de la imagen original */
-    width: 100px !important; 
-    height: 100px !important;
+    left: 50%;
+    margin-left: -40px; /* Ajuste fino para centrar */
+    width: 80px;        /* 🚀 Agrandado aquí */
+    height: 80px;
     z-index: 10;
-    transition: transform 0.5s ease-out;
+    transition: transform 0.45s cubic-bezier(0.15, 0.85, 0.35, 1);
 }
 
 #arquero-animado {
     position: absolute;
     top: 90px;
-    left: 45px;
-    width: 120px !important;
-    height: 120px !important;
+    left: 50%;
+    margin-left: -50px; /* Ajuste fino para centrar */
+    width: 100px;       /* 🚀 Agrandado aquí */
+    height: 100px;
     z-index: 5;
-    transition: transform 0.5s ease-out;
+    transition: transform 0.45s cubic-bezier(0.15, 0.85, 0.35, 1);
 }
 
 .marcador-alerta-tv { font-family: 'Oswald', sans-serif; font-size: 1.5rem; margin: 15px 0 5px 0; }
