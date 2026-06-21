@@ -24,8 +24,12 @@
     --shadow-legendaria: 0 0 30px rgba(255, 153, 0, 0.6), 0 8px 20px rgba(0,0,0,0.7);
 }
 
+/* ========================================================================
+   🖼️ REPARACIÓN DE RUTAS DE IMÁGENES (.JPG RE-FIX)
+   ======================================================================== */
 body.ambiente-mundial {
-    background: linear-gradient(rgba(7, 10, 15, 0.85), rgba(7, 10, 15, 0.85)), url('static/fondo.jpg') no-repeat center center fixed;
+    /* Agregamos el punto relativo './' para asegurar que Render encuentre la carpeta static */
+    background: linear-gradient(rgba(7, 10, 15, 0.85), rgba(7, 10, 15, 0.85)), url('./static/fondo.jpg') no-repeat center center fixed;
     background-size: cover;
     color: var(--texto);
     font-family: 'Khand', sans-serif;
@@ -36,6 +40,10 @@ body.ambiente-mundial {
     align-items: center;
     letter-spacing: 0.5px;
 }
+
+.banner-tienda { background: url('./static/sobres.jpg') no-repeat center center; background-size: cover; }
+.banner-penales { background: url('./static/penales.jpg') no-repeat center center; background-size: cover; }
+.banner-casino { background: url('./static/casino.jpg') no-repeat center center; background-size: cover; }
 
 /* ========================================================================
    👑 ENCABEZADOS Y ELEMENTOS INTERACTIVOS (UI DEL ESTADIO)
