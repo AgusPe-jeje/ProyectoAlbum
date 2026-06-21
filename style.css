@@ -418,7 +418,7 @@ input:focus, .select-estadio-custom:focus {
     text-shadow: 2px 2px 0px #000;
     margin-bottom: 15px;
 }
-#grid-sobre-abierto { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+#grid-sobre-abierto { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
 
 /* ========================================================================
    🃏 5. CARTAS COLECTIBLES (GRID & VERTICAL FIX)
