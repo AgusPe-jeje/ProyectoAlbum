@@ -183,10 +183,10 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
     position: absolute;
     bottom: 20px;
     left: 50%;
-    /* Reducimos el tamaño a 3rem (un 50% del anterior) */
-    font-size: 3rem; 
-    /* Ajustamos el margin-left para que se mantenga centrado con el nuevo tamaño */
-    margin-left: -24px; 
+    /* Tamaño reducido a la mitad de la anterior */
+    font-size: 1.5rem; 
+    /* Ajuste de margen para centrar el nuevo tamaño (12px es la mitad de 24px) */
+    margin-left: -12px; 
     z-index: 10;
     transition: transform 0.5s ease-out;
 }
@@ -195,9 +195,10 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
     position: absolute;
     top: 90px;
     left: 50%;
-    /* Reducimos el tamaño a 4rem */
-    font-size: 4rem; 
-    margin-left: -32px; 
+    /* Tamaño reducido a la mitad de la anterior */
+    font-size: 2rem; 
+    /* Ajuste de margen para centrar (16px es la mitad de 32px) */
+    margin-left: -16px; 
     z-index: 5;
     transition: transform 0.5s ease-out;
 }
