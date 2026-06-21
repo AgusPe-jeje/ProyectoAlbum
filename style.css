@@ -2,8 +2,8 @@
    🏆 MUNDIAL ARENA - ESTILO DE TRANSMISIÓN OFICIAL (STADIUM PREMIUM)
    ======================================================================== */
 :root {
-    --bg-principal: #070a0f;
-    --bg-card: rgba(18, 24, 38, 0.92);
+    --bg-principal: #050811;
+    --bg-card: rgba(13, 19, 33, 0.90);
     --bg-card-solid: #121826;
     --dorado: #ffb100;
     --celeste: #00ccff;
@@ -24,12 +24,8 @@
     --shadow-legendaria: 0 0 30px rgba(255, 153, 0, 0.6), 0 8px 20px rgba(0,0,0,0.7);
 }
 
-/* ========================================================================
-   🖼️ REPARACIÓN DE RUTAS DE IMÁGENES (.JPG RE-FIX)
-   ======================================================================== */
 body.ambiente-mundial {
-    /* Agregamos el punto relativo './' para asegurar que Render encuentre la carpeta static */
-    background: linear-gradient(rgba(7, 10, 15, 0.85), rgba(7, 10, 15, 0.85)), url('./static/fondo.jpg') no-repeat center center fixed;
+    background: linear-gradient(rgba(5, 8, 17, 0.88), rgba(5, 8, 17, 0.88)), url('./static/fondo.jpg') no-repeat center center fixed;
     background-size: cover;
     color: var(--texto);
     font-family: 'Khand', sans-serif;
@@ -40,10 +36,6 @@ body.ambiente-mundial {
     align-items: center;
     letter-spacing: 0.5px;
 }
-
-.banner-tienda { background: url('./static/sobres.jpg') no-repeat center center; background-size: cover; }
-.banner-penales { background: url('./static/penales.jpg') no-repeat center center; background-size: cover; }
-.banner-casino { background: url('./static/casino.jpg') no-repeat center center; background-size: cover; }
 
 /* ========================================================================
    👑 ENCABEZADOS Y ELEMENTOS INTERACTIVOS (UI DEL ESTADIO)
@@ -105,12 +97,12 @@ input:focus, .select-estadio-custom:focus {
     background: #2a3142 !important;
     color: #5d6b88 !important;
     box-shadow: 0 4px 0 #151922 !important;
-    cursor: not-allowed !important;
+    cursor: not-allowed !important; /* 🔥 CORREGIDO: Sintaxis limpia y válida */
     transform: none !important;
 }
 
 /* ========================================================================
-   📦 CONTENEDOR PRINCIPAL INTERFAZ-JUEGO (FIX COMPLETO)
+   📦 CONTENEDOR PRINCIPAL INTERFAZ-JUEGO
    ======================================================================== */
 #interfaz-juego {
     display: none; 
@@ -123,14 +115,74 @@ input:focus, .select-estadio-custom:focus {
     gap: 15px; 
 }
 
-/* Forzar que la botonera de navegación sea horizontal en PC */
+/* ========================================================================
+   🎴 NUEVA NAVEGACIÓN: MOSAICOS PREMIUM DE SELECCIÓN (ESTILO EA SPORTS / FIFA)
+   ======================================================================== */
 .nav-modulos-estadio {
-    display: flex !important;
-    flex-direction: row !important; 
-    gap: 10px;
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important; 
+    gap: 12px;
     width: 100%;
     max-width: 900px;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.tile-modulo-fifa {
+    height: 125px;
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid #232d45;
+    background-position: center;
+    background-size: cover;
+    cursor: pointer;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s, box-shadow 0.25s;
+}
+
+/* Vinculamos tus imágenes directo a los mosaicos del menú */
+.tile-modulo-fifa.tile-tienda { background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.6)), url('./static/sobres.jpg'); }
+.tile-modulo-fifa.tile-album { background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.6)), url('./static/fondo.jpg'); }
+.tile-modulo-fifa.tile-penales { background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.6)), url('./static/penales.jpg'); }
+.tile-modulo-fifa.tile-timba { background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.6)), url('./static/casino.jpg'); }
+
+.tile-fifa-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    background: linear-gradient(to top, rgba(5, 8, 17, 0.95) 15%, transparent 85%);
+}
+.tile-fifa-tag {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: #94a3b8;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+}
+.tile-fifa-titulo {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.35rem;
+    margin: 2px 0 0 0;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Efectos Dinámicos de Consola */
+.tile-modulo-fifa:hover {
+    transform: translateY(-5px) scale(1.02);
+    border-color: var(--celeste);
+    box-shadow: 0 0 15px rgba(0, 204, 255, 0.35);
+}
+.tile-modulo-fifa.activo {
+    border-color: var(--dorado);
+    box-shadow: 0 0 20px rgba(255, 177, 0, 0.45);
+}
+.tile-modulo-fifa.activo .tile-fifa-titulo {
+    color: var(--dorado);
 }
 
 /* Forzar que el Scoreboard superior sea horizontal en PC */
@@ -233,40 +285,6 @@ input:focus, .select-estadio-custom:focus {
     color: #fff;
 }
 
-/* Navegación del Estadio */
-.nav-modulos-estadio {
-    display: flex;
-    gap: 8px;
-    width: 100%;
-    max-width: 900px;
-    margin-bottom: 20px;
-}
-.btn-modulo-match {
-    flex: 1;
-    background: #121826;
-    color: #64748b;
-    border: 2px solid #1f293d;
-    padding: 14px;
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.2rem;
-    font-weight: 700;
-    border-radius: 10px;
-    cursor: pointer;
-    text-transform: uppercase;
-    box-shadow: 0 4px 0 #090d16;
-    transition: all 0.15s ease;
-}
-.btn-modulo-match:hover {
-    color: #fff;
-    background: #1a2233;
-}
-.btn-modulo-match.activo {
-    background: var(--celeste);
-    color: #000;
-    border-color: #fff;
-    box-shadow: 0 4px 0 #0088cc, 0 0 15px rgba(0, 204, 255, 0.4);
-}
-
 .modulo-contenido { display: none; width: 100%; max-width: 900px; }
 .modulo-contenido.activo { display: block; }
 
@@ -279,46 +297,6 @@ input:focus, .select-estadio-custom:focus {
     backdrop-filter: blur(8px);
     box-sizing: border-box;
     width: 100%;
-}
-
-/* ========================================================================
-   🖼️ 3. BANNERS GRÁFICOS DINÁMICOS POR SECCIÓN (.JPG FIX)
-   ======================================================================== */
-.banner-modulo-imagen {
-    width: 100%;
-    height: 140px;
-    border-radius: 14px;
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 20px;
-    border: 1px solid rgba(255,255,255,0.1);
-}
-.banner-tienda { background: url('static/sobres.jpg') no-repeat center center; background-size: cover; }
-.banner-penales { background: url('static/penales.jpg') no-repeat center center; background-size: cover; }
-.banner-casino { background: url('static/casino.jpg') no-repeat center center; background-size: cover; }
-
-.overlay-banner-texto {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: linear-gradient(90deg, rgba(9,13,22,0.95) 30%, rgba(9,13,22,0.4) 100%);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    padding-left: 30px;
-    box-sizing: border-box;
-}
-.overlay-banner-texto h2 {
-    font-family: 'Oswald', sans-serif;
-    font-size: 2rem;
-    margin: 0;
-    color: #fff;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-}
-.overlay-banner-texto p {
-    margin: 4px 0 0 0;
-    color: #94a3b8;
-    font-size: 1.1rem;
 }
 
 /* ========================================================================
@@ -794,11 +772,10 @@ input:focus, .select-estadio-custom:focus {
     .btn-logout-kick { width: 100%; margin-top: 5px; padding: 8px; }
     
     .nav-modulos-estadio {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
         gap: 6px;
     }
-    .btn-modulo-match { padding: 10px; font-size: 1.05rem; }
     
     .contenedor-tienda-cofres { flex-direction: column; align-items: center; }
     .tarjeta-cofre-match { width: 100%; max-width: 320px; }
@@ -837,13 +814,10 @@ input:focus, .select-estadio-custom:focus {
 /* ========================================================================
    🔥 CLASES ACTIVADORAS DE VISIBILIDAD (EL MOTOR VISUAL)
    ======================================================================== */
-
-/* Fuerza a la interfaz a mostrarse en vertical cuando el JS da el visto bueno */
 #interfaz-juego.mostrar {
     display: flex !important;
 }
 
-/* Por si las dudas, aseguramos que el login se vea si no hay sesión */
 #seccion-login {
     display: block;
     margin: 20px auto;
