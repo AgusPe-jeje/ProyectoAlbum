@@ -3,7 +3,7 @@
    ======================================================================== */
 :root {
     --bg-principal: #070a0f;
-    --bg-card: rgba(18, 24, 38, 0.90);
+    --bg-card: rgba(18, 24, 38, 0.92);
     --bg-card-solid: #121826;
     --dorado: #ffb100;
     --celeste: #00ccff;
@@ -99,6 +99,41 @@ input:focus, .select-estadio-custom:focus {
     box-shadow: 0 4px 0 #151922 !important;
     cursor: not-allowed !important;
     transform: none !important;
+}
+
+/* ========================================================================
+   📦 CONTENEDOR PRINCIPAL INTERFAZ-JUEGO (FIX COMPLETO)
+   ======================================================================== */
+#interfaz-juego {
+    display: none; 
+    flex-direction: column !important; 
+    align-items: center !important;    
+    width: 100% !important;
+    max-width: 1000px;
+    margin: 0 auto;
+    box-sizing: border-box;
+    gap: 15px; 
+}
+
+/* Forzar que la botonera de navegación sea horizontal en PC */
+.nav-modulos-estadio {
+    display: flex !important;
+    flex-direction: row !important; 
+    gap: 10px;
+    width: 100%;
+    max-width: 900px;
+    margin-bottom: 10px;
+}
+
+/* Forzar que el Scoreboard superior sea horizontal en PC */
+.header-status-scoreboard {
+    display: flex !important;
+    flex-direction: row !important; 
+    align-items: center;
+    justify-content: space-around;
+    width: 100%;
+    max-width: 900px;
+    padding: 12px 25px;
 }
 
 /* ========================================================================
@@ -235,10 +270,11 @@ input:focus, .select-estadio-custom:focus {
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     backdrop-filter: blur(8px);
     box-sizing: border-box;
+    width: 100%;
 }
 
 /* ========================================================================
-   🖼️ 3. BANNERS GRÁFICOS DINÁMICOS POR SECCIÓN
+   🖼️ 3. BANNERS GRÁFICOS DINÁMICOS POR SECCIÓN (.JPG FIX)
    ======================================================================== */
 .banner-modulo-imagen {
     width: 100%;
@@ -249,7 +285,7 @@ input:focus, .select-estadio-custom:focus {
     margin-bottom: 20px;
     border: 1px solid rgba(255,255,255,0.1);
 }
-.banner-tienda { background: url('static/sobre.jpg') no-repeat center center; background-size: cover; }
+.banner-tienda { background: url('static/sobres.jpg') no-repeat center center; background-size: cover; }
 .banner-penales { background: url('static/penales.jpg') no-repeat center center; background-size: cover; }
 .banner-casino { background: url('static/casino.jpg') no-repeat center center; background-size: cover; }
 
@@ -363,20 +399,30 @@ input:focus, .select-estadio-custom:focus {
 #grid-sobre-abierto { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
 
 /* ========================================================================
-   🃏 5. CARTAS COLECTIBLES (PANINI UI FINISHED LOOK)
+   🃏 5. CARTAS COLECTIBLES (GRID & VERTICAL FIX)
    ======================================================================== */
-.grid-album-match { display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; margin-top: 15px; }
+.grid-album-match, .grid-album, .grid-sobre { 
+    display: grid !important; 
+    grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)) !important;
+    justify-content: center; 
+    gap: 20px; 
+    margin-top: 15px; 
+    width: 100%;
+    box-sizing: border-box;
+}
 
 .carta-clash {
-    width: 145px;
-    height: 205px;
+    width: 145px !important;
+    height: 205px !important;
     border-radius: 12px;
     position: relative;
     box-sizing: border-box;
     background: #04060a;
     cursor: pointer;
+    overflow: visible;
     transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s;
     animation: aparecerCarta 0.4s ease-out backwards;
+    margin: 0 auto;
 }
 .carta-clash:hover {
     transform: translateY(-8px) scale(1.03);
@@ -398,7 +444,7 @@ input:focus, .select-estadio-custom:focus {
 
 .rareza-vertical {
     position: absolute;
-    bottom: 10px;
+    bottom: 12px;
     left: 6px;
     writing-mode: vertical-rl;
     transform: rotate(180deg);
@@ -407,12 +453,14 @@ input:focus, .select-estadio-custom:focus {
     text-transform: uppercase;
     letter-spacing: 1.2px;
     color: #fff;
-    background: rgba(0, 0, 0, 0.75);
-    padding: 5px 3px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 6px 3px;
     border-radius: 4px;
     border-left: 2px solid transparent;
     z-index: 5;
     pointer-events: none;
+    line-height: 1 !important; 
+    white-space: nowrap;
 }
 
 /* Marcos Neon según Rareza */
@@ -496,6 +544,8 @@ input:focus, .select-estadio-custom:focus {
     border-radius: 12px;
     padding: 15px;
     margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 .progreso-texto-tv {
     display: flex;
@@ -662,6 +712,8 @@ input:focus, .select-estadio-custom:focus {
     border: 2px solid #1f293d;
     border-radius: 12px;
     padding: 15px;
+    width: 100%;
+    box-sizing: border-box;
 }
 .historial-timba-banca-tv h4 {
     margin: 0 0 10px 0;
@@ -743,8 +795,12 @@ input:focus, .select-estadio-custom:focus {
     .contenedor-tienda-cofres { flex-direction: column; align-items: center; }
     .tarjeta-cofre-match { width: 100%; max-width: 320px; }
     
-    .grid-album-match { grid-template-columns: repeat(3, 1fr); gap: 8px; display: grid; }
-    .carta-clash { width: 100%; height: auto; aspect-ratio: 2 / 3; }
+    .grid-album-match, .grid-album, .grid-sobre { 
+        grid-template-columns: repeat(3, 1fr) !important; 
+        gap: 8px !important; 
+        display: grid !important; 
+    }
+    .carta-clash { width: 100% !important; height: auto !important; aspect-ratio: 2 / 3 !important; }
     .rareza-vertical { font-size: 0.5rem; left: 3px; bottom: 6px; padding: 3px 1px; }
     .badge-repetidas { font-size: 0.75rem; padding: 1px 5px; }
 
@@ -761,7 +817,7 @@ input:focus, .select-estadio-custom:focus {
 /* ========================================================================
    🎬 11. ANIMACIONES DE INTERFAZ
    ======================================================================== */
-@keyframes aparecerCarta { 
+@keyframes abrirSobre { 
     from { opacity: 0; transform: translateY(20px) scale(0.9); } 
     to { opacity: 1; transform: translateY(0) scale(1); } 
 }
