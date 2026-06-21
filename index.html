@@ -4,24 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🏆 Virtual Album Mundial 🏆</title>
-    <!-- 🏟️ Tipografías Oficiales de la Arena (Marcador de Fútbol y UI de Elite) -->
     <link href="https://fonts.googleapis.com/css2?family=Khand:wght@500;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="ambiente-mundial">
     
-    <!-- ⏳ OVERLAY DE CARGA (SPINNER GLOBAL) -->
     <div id="pantalla-carga">
         <div class="spinner-arena"></div>
         <div id="texto-carga-dinamico" class="texto-carga">Conectando con la Arena...</div>
     </div>     
 
-    <!-- 👑 Encabezado Épico del Torneo -->
     <header class="header-principal-mundial">
         <h1 class="titulo-copa-pe">🏆 ÁLBUM MUNDIAL PE 🏆</h1>
     </header>
 
-    <!-- 👤 SECCIÓN LOGIN (Estilo Entrada al Estadio) -->
     <div id="seccion-login" class="login-card-estadio">
         <div class="login-decoracion"></div>
         <h2>ACCESO A LA ARENA</h2>
@@ -36,204 +32,199 @@
         </div>
     </div>
 
-    <!-- 🎮 INTERFAZ PRINCIPAL DE JUEGO -->
     <main id="interfaz-juego" style="display: none;">
         
-        <!-- 📊 Marcador de Estado de la Transmisión (TV Scoreboard) -->
-        <div class="header-status-scoreboard">
-            <div class="stat-box-tv">
-                <span class="stat-label">👤 JUGADOR</span>
-                <span id="lbl-usuario" class="stat-valor valor-celeste">INVITADO</span>
-            </div>
-            <div class="stat-box-tv">
-                <span class="stat-label">🪙 ORO</span>
-                <span id="lbl-monedas" class="stat-valor valor-dorado">0</span>
-            </div>
-            <div class="stat-box-tv">
-                <span class="stat-label">🏆 COPAS</span>
-                <span id="lbl-ranking" class="stat-valor valor-rojo">0</span>
-            </div>
-            <button class="btn-logout-kick" onclick="cerrarSesionLocal()">🚪 SALIR</button>
+        <div class="columna-izquierda-nav">
+            <h2>MUNDIAL 2026</h2>
+            <nav class="nav-modulos-estadio">
+                <button class="btn-modulo-match activo" onclick="cambiarModulo('modulo-sobres', this)">🛍️ TIENDA</button>
+                <button class="btn-modulo-match" onclick="cambiarModulo('modulo-album', this)">📖 MI ÁLBUM</button>
+                <button class="btn-modulo-match" onclick="cambiarModulo('modulo-penales', this)">⚽ PENALES</button>
+                <button class="btn-modulo-match" onclick="cambiarModulo('modulo-timba', this)">🎰 TIMBA</button>
+            </nav>
         </div>
 
-        <!-- 🧭 Selector de Canchas (Módulos) -->
-        <nav class="nav-modulos-estadio">
-            <button class="btn-modulo-match activo" onclick="cambiarModulo('modulo-sobres', this)">🛍️ TIENDA</button>
-            <button class="btn-modulo-match" onclick="cambiarModulo('modulo-album', this)">📖 MI ÁLBUM</button>
-            <button class="btn-modulo-match" onclick="cambiarModulo('modulo-penales', this)">⚽ PENALES</button>
-            <button class="btn-modulo-match" onclick="cambiarModulo('modulo-timba', this)">🎰 TIMBA</button>
-        </nav>
+        <div class="columna-central-contenido">
 
-        <!-- 🛍️ MÓDULO TIENDA (BANNERS DE COFRES) -->
-        <div id="modulo-sobres" class="modulo-contenido activo">
-            <div class="caja-modulo-estadio">
-                <!-- Banner dinámico con la imagen 'sobre' de fondo -->
-                <div class="banner-modulo-imagen banner-tienda">
-                    <div class="overlay-banner-texto">
-                        <h2>COFRE DE CARTAS LOCAL</h2>
-                        <p>Elegí tu cofre ideal para gastar tus monedas en la Arena.</p>
-                    </div>
-                </div>
-                
-                <div class="contenedor-tienda-cofres">
-                    <div class="tarjeta-cofre-match plata">
-                        <div class="tarjeta-brillo"></div>
-                        <h3>🥈 Cofre de Plata</h3>
-                        <div class="cofre-icono-pack">🪙100</div>
-                        <p class="desc-prob-text">Mayormente Comunes. Baja probabilidad de especiales.</p>
-                        <button class="btn-comprar-pack" onclick="comprarSobreEspecifico('plata')">ABRIR (🪙100)</button>
-                    </div>
-
-                    <div class="tarjeta-cofre-match oro">
-                        <div class="tarjeta-brillo"></div>
-                        <h3>🥇 Cofre de Oro</h3>
-                        <div class="cofre-icono-pack">🪙250</div>
-                        <p class="desc-prob-text">Estadísticas equilibradas de todas las rarezas.</p>
-                        <button class="btn-comprar-pack" onclick="comprarSobreEspecifico('oro')">ABRIR (🪙250)</button>
-                    </div>
-
-                    <div class="tarjeta-cofre-match legendario">
-                        <div class="tarjeta-brillo"></div>
-                        <h3>👑 Cofre Legendario</h3>
-                        <div class="cofre-icono-pack">🪙500</div>
-                        <p class="desc-prob-text">¡25% Probabilidad de Legendaria asegurada!</p>
-                        <button class="btn-comprar-pack" onclick="comprarSobreEspecifico('legendario')">ABRIR (🪙500)</button>
-                    </div>
-                </div>
-
-                <div class="seccion-sobre-abierto-arena">
-                    <div class="titulo-sobre-loot">✨ ¡Recompensas Obtenidas! ✨</div>
-                    <div id="grid-sobre-abierto"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 📖 MÓDULO ÁLBUM -->
-        <div id="modulo-album" class="modulo-contenido">
-            <div class="caja-modulo-estadio">
-                <h2 class="subtitulo-modulo-tv">📖 TU ÁLBUM MUNDIAL</h2>
-                
-                <div class="progreso-album-scoreboard">
-                    <div class="progreso-texto-tv">
-                        <span>📖 Progreso del Álbum:</span>
-                        <span id="lbl-progreso-numerico">0 / 585 (0%)</span>
-                    </div>
-                    <div class="progreso-barra-estadio-fondo">
-                        <div id="barra-progreso-llenado" class="progreso-barra-estadio-llenado"></div>
-                    </div>
-                </div>
-
-                <div id="selector-paises" class="custom-scrollbar-paises"></div>
-                <div class="grid-album-match" id="contenedor-grid-album"></div>
-            </div>
-        </div>
-
-        <!-- ⚽ MÓDULO PENALES -->
-        <div id="modulo-penales" class="modulo-contenido">
-            <div class="contenedor-penales-layout-estadio">
-                
-                <div class="caja-modulo-estadio juego-penales-principal">
-                    <!-- Banner dinámico con la imagen 'penales' de fondo -->
-                    <div class="banner-modulo-imagen banner-penales">
+            <div id="modulo-sobres" class="modulo-contenido activo">
+                <div class="caja-modulo-estadio">
+                    <div class="banner-modulo-imagen banner-tienda">
                         <div class="overlay-banner-texto">
-                            <h2>DUELO EN EL ESTADIO</h2>
+                            <h2>COFRE DE CARTAS LOCAL</h2>
+                            <p>Elegí tu cofre ideal para gastar tus monedas en la Arena.</p>
                         </div>
                     </div>
                     
-                    <div class="contenedor-penales-juego-canvas">
-                        <div class="arco-futbol-stadium" id="escenario-penal">
-                            <div class="zona-disparo-target izquierda" onclick="ejecutarPenalLocal('IZQUIERDA')"></div>
-                            <div class="zona-disparo-target centro" onclick="ejecutarPenalLocal('CENTRO')"></div>
-                            <div class="zona-disparo-target derecha" onclick="ejecutarPenalLocal('DERECHA')"></div>
-                            <div id="arquero-animado" class="arquero-stadium">🧤</div>
-                            <div id="balon-animado" class="balon-stadium">⚽</div>
+                    <div class="contenedor-tienda-cofres">
+                        <div class="tarjeta-cofre-match plata">
+                            <div class="tarjeta-brillo"></div>
+                            <h3>🥈 Cofre de Plata</h3>
+                            <div class="cofre-icono-pack">🪙100</div>
+                            <p class="desc-prob-text">Mayormente Comunes. Baja probabilidad de especiales.</p>
+                            <button class="btn-comprar-pack" onclick="comprarSobreEspecifico('plata')">ABRIR (🪙100)</button>
+                        </div>
+
+                        <div class="tarjeta-cofre-match oro">
+                            <div class="tarjeta-brillo"></div>
+                            <h3>🥇 Cofre de Oro</h3>
+                            <div class="cofre-icono-pack">🪙250</div>
+                            <p class="desc-prob-text">Estadísticas equilibradas de todas las rarezas.</p>
+                            <button class="btn-comprar-pack" onclick="comprarSobreEspecifico('oro')">ABRIR (🪙250)</button>
+                        </div>
+
+                        <div class="tarjeta-cofre-match legendario">
+                            <div class="tarjeta-brillo"></div>
+                            <h3>👑 Cofre Legendario</h3>
+                            <div class="cofre-icono-pack">🪙500</div>
+                            <p class="desc-prob-text">¡25% Probabilidad de Legendaria asegurada!</p>
+                            <button class="btn-comprar-pack" onclick="comprarSobreEspecifico('legendario')">ABRIR (🪙500)</button>
                         </div>
                     </div>
 
-                    <h3 id="resultado-penal" class="marcador-alerta-tv">¡PREPARÁ EL DISPARO!</h3>
-                    <p id="cronometro-tiros" class="badge-reloj-energia"></p>
-                    <button class="btn-estadio btn-next-shot" onclick="iniciarDueloLocal()">⚽ PRÓXIMO TIRO</button>
-                </div>
-
-                <div class="panel-lateral-ranking-tv">
-                    <h3 class="titulo-tabla-tv">🏆 TOP 10 DE LA ARENA</h3>
-                    <table class="tabla-ranking-stadium">
-                        <thead>
-                            <tr>
-                                <th>POS</th>
-                                <th>JUGADOR</th>
-                                <th>COPAS</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla-ranking-body"></tbody>
-                    </table>
+                    <div class="seccion-sobre-abierto-arena">
+                        <div class="titulo-sobre-loot">✨ ¡Recompensas Obtenidas! ✨</div>
+                        <div id="grid-sobre-abierto"></div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- 🎰 MÓDULO DE LA TIMBA MULTI-MODAL -->
-        <div id="modulo-timba" class="modulo-contenido">
-            <div class="caja-modulo-estadio">
-                <!-- Banner dinámico con la imagen 'casino' de fondo -->
-                <div class="banner-modulo-imagen banner-casino">
-                    <div class="overlay-banner-texto">
-                        <h2>🎰 LA TIMBA DE LA ARENA</h2>
-                        <p>Estudiá las rachas de la casa y jugá tus monedas al resultado exacto.</p>
+            <div id="modulo-album" class="modulo-contenido">
+                <div class="caja-modulo-estadio">
+                    <h2 class="subtitulo-modulo-tv">📖 TU ÁLBUM MUNDIAL</h2>
+                    
+                    <div class="progreso-album-scoreboard">
+                        <div class="progreso-texto-tv">
+                            <span>📖 Progreso del Álbum:</span>
+                            <span id="lbl-progreso-numerico">0 / 585 (0%)</span>
+                        </div>
+                        <div class="progreso-barra-estadio-fondo">
+                            <div id="barra-progreso-llenado" class="progreso-barra-estadio-llenado"></div>
+                        </div>
                     </div>
+
+                    <div id="selector-paises" class="custom-scrollbar-paises"></div>
+                    <div class="grid-album-match" id="contenedor-grid-album"></div>
                 </div>
-                
-                <div class="contenedor-partido-timba-tv">
-                    <div class="arena-versus-scoreboard">
-                        <div class="bando-equipo-stadium local">
-                            <span id="timba-bandera-local" class="bandera-flag">🇦🇷</span>
-                            <span id="timba-local" class="nombre-seleccion">ARGENTINA</span>
+            </div>
+
+            <div id="modulo-penales" class="modulo-contenido">
+                <div class="contenedor-penales-layout-estadio">
+                    <div class="caja-modulo-estadio juego-penales-principal">
+                        <div class="banner-modulo-imagen banner-penales">
+                            <div class="overlay-banner-texto">
+                                <h2>DUELO EN EL ESTADIO</h2>
+                            </div>
                         </div>
                         
-                        <div class="vs-circulo-match">VS</div>
-                        
-                        <div class="bando-equipo-stadium visitante">
-                            <span id="timba-bandera-visitante" class="bandera-flag">🇧🇷</span>
-                            <span id="timba-visitante" class="nombre-seleccion">BRASIL</span>
+                        <div class="contenedor-penales-juego-canvas">
+                            <div class="arco-futbol-stadium" id="escenario-penal">
+                                <div class="zona-disparo-target izquierda" onclick="ejecutarPenalLocal('IZQUIERDA')"></div>
+                                <div class="zona-disparo-target centro" onclick="ejecutarPenalLocal('CENTRO')"></div>
+                                <div class="zona-disparo-target derecha" onclick="ejecutarPenalLocal('DERECHA')"></div>
+                                <div id="arquero-animado" class="arquero-stadium">🧤</div>
+                                <div id="balon-animado" class="balon-stadium">⚽</div>
+                            </div>
+                        </div>
+
+                        <h3 id="resultado-penal" class="marcador-alerta-tv">¡PREPARÁ EL DISPARO!</h3>
+                        <p id="cronometro-tiros" class="badge-reloj-energia"></p>
+                        <button class="btn-estadio btn-next-shot" onclick="iniciarDueloLocal()">⚽ PRÓXIMO TIRO</button>
+                    </div>
+
+                    <div class="panel-lateral-ranking-tv">
+                        <h3 class="titulo-tabla-tv">🏆 TOP 10 DE LA ARENA</h3>
+                        <table class="tabla-ranking-stadium">
+                            <thead>
+                                <tr>
+                                    <th>POS</th>
+                                    <th>JUGADOR</th>
+                                    <th>COPAS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-ranking-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="modulo-timba" class="modulo-contenido">
+                <div class="caja-modulo-estadio">
+                    <div class="banner-modulo-imagen banner-casino">
+                        <div class="overlay-banner-texto">
+                            <h2>🎰 LA TIMBA DE LA ARENA</h2>
+                            <p>Estudiá las rachas de la casa y jugá tus monedas al resultado exacto.</p>
                         </div>
                     </div>
                     
-                    <div class="inputs-apuesta-timba-stadium">
-                        <div id="cronometro-timba" class="banca-reloj-status">
-                            🔋 Cargando energía de la banca...
+                    <div class="contenedor-partido-timba-tv">
+                        <div class="arena-versus-scoreboard">
+                            <div class="bando-equipo-stadium local">
+                                <span id="timba-bandera-local" class="bandera-flag">🇦🇷</span>
+                                <span id="timba-local" class="nombre-seleccion">ARGENTINA</span>
+                            </div>
+                            
+                            <div class="vs-circulo-match">VS</div>
+                            
+                            <div class="bando-equipo-stadium visitante">
+                                <span id="timba-bandera-visitante" class="bandera-flag">🇧🇷</span>
+                                <span id="timba-visitante" class="nombre-seleccion">BRASIL</span>
+                            </div>
                         </div>
                         
-                        <div class="monto-apuesta-row">
-                            <label class="label-tv">🎰 ¿QUÉ VAS A JUGAR?</label>
-                            <select id="select-tipo-apuesta" onchange="conmutarControlesTimbaUI()" class="select-estadio-custom">
-                                <option value="monedas">🪙 MONEDAS DE ORO</option>
-                                <option value="cromo">🃏 FIGURITA REPETIDA</option>
-                            </select>
+                        <div class="inputs-apuesta-timba-stadium">
+                            <div id="cronometro-timba" class="banca-reloj-status">
+                                🔋 Cargando energía de la banca...
+                            </div>
+                            
+                            <div class="monto-apuesta-row">
+                                <label class="label-tv">🎰 ¿QUÉ VAS A JUGAR?</label>
+                                <select id="select-tipo-apuesta" onchange="conmutarControlesTimbaUI()" class="select-estadio-custom">
+                                    <option value="monedas">🪙 MONEDAS DE ORO</option>
+                                    <option value="cromo">🃏 FIGURITA REPETIDA</option>
+                                </select>
+                            </div>
+
+                            <div id="wrapper-apuesta-monedas" class="monto-apuesta-row">
+                                <label class="label-tv">🪙 MONEDAS A APOSTAR:</label>
+                                <input type="number" id="input-monto-apuesta" min="10" value="50" placeholder="Monto" class="input-estadio-numeric">
+                            </div>
+
+                            <div id="wrapper-apuesta-cromo" class="monto-apuesta-row" style="display: none;">
+                                <label class="label-tv">🃏 ELEGÍ TU CROMO REPETIDO:</label>
+                                <select id="select-cromo-repetido" class="select-estadio-custom select-cromo-wide"></select>
+                            </div>
+
+                            <button type="button" id="btn-preparar-apuesta" onclick="prepararOpcionesApuesta()" class="btn-estadio btn-bet-action">🎲 VER OPCIONES DE PRONÓSTICO</button>
+                            <div id="contenedor-opciones-goles" class="grid-opciones-goles-match" style="display: none;"></div>
                         </div>
+                    </div>
 
-                        <!-- 🪙 Panel Monedas -->
-                        <div id="wrapper-apuesta-monedas" class="monto-apuesta-row">
-                            <label class="label-tv">🪙 MONEDAS A APOSTAR:</label>
-                            <input type="number" id="input-monto-apuesta" min="10" value="50" placeholder="Monto" class="input-estadio-numeric">
-                        </div>
-
-                        <!-- 🃏 Panel Figuritas Repetidas -->
-                        <div id="wrapper-apuesta-cromo" class="monto-apuesta-row" style="display: none;">
-                            <label class="label-tv">🃏 ELEGÍ TU CROMO REPETIDO:</label>
-                            <select id="select-cromo-repetido" class="select-estadio-custom select-cromo-wide"></select>
-                        </div>
-
-                        <button type="button" id="btn-preparar-apuesta" onclick="prepararOpcionesApuesta()" class="btn-estadio btn-bet-action">🎲 VER OPCIONES DE PRONÓSTICO</button>
-
-                        <div id="contenedor-opciones-goles" class="grid-opciones-goles-match" style="display: none;"></div>
+                    <div class="historial-timba-banca-tv">
+                        <h4>📜 ÚLTIMOS RESULTADOS DE LA ARENA</h4>
+                        <ul id="lista-historial-timba" class="lista-banca-scrollbar">
+                            <li style="color: #64748b; list-style: none; text-align: center; font-size: 0.9rem;">No hay partidos registrados en esta sesión.</li>
+                        </ul>
                     </div>
                 </div>
+            </div>
 
-                <div class="historial-timba-banca-tv">
-                    <h4>📜 ÚLTIMOS RESULTADOS DE LA ARENA</h4>
-                    <ul id="lista-historial-timba" class="lista-banca-scrollbar">
-                        <li style="color: #64748b; list-style: none; text-align: center; font-size: 0.9rem;">No hay partidos registrados en esta sesión.</li>
-                    </ul>
+        </div>
+
+        <div class="columna-derecha-perfil">
+            <div class="header-status-scoreboard">
+                <div class="stat-box-tv">
+                    <span class="stat-label">👤 JUGADOR</span>
+                    <span id="lbl-usuario" class="stat-valor valor-celeste">INVITADO</span>
                 </div>
+                <div class="stat-box-tv">
+                    <span class="stat-label">🪙 ORO</span>
+                    <span id="lbl-monedas" class="stat-valor valor-dorado">0</span>
+                </div>
+                <div class="stat-box-tv">
+                    <span class="stat-label">🏆 COPAS</span>
+                    <span id="lbl-ranking" class="stat-valor valor-rojo">0</span>
+                </div>
+                <button class="btn-logout-kick" onclick="cerrarSesionLocal()">🚪 SALIR</button>
             </div>
         </div>
 

@@ -3,7 +3,7 @@
    ======================================================================== */
 :root {
     --bg-principal: #070a0f;
-    --bg-card: rgba(18, 24, 38, 0.92);
+    --bg-card: rgba(18, 24, 38, 0.85);
     --bg-card-solid: #121826;
     --dorado: #ffb100;
     --celeste: #00ccff;
@@ -24,11 +24,7 @@
     --shadow-legendaria: 0 0 30px rgba(255, 153, 0, 0.6), 0 8px 20px rgba(0,0,0,0.7);
 }
 
-/* ========================================================================
-   🖼️ REPARACIÓN DE RUTAS DE IMÁGENES (.JPG RE-FIX)
-   ======================================================================== */
 body.ambiente-mundial {
-    /* Agregamos el punto relativo './' para asegurar que Render encuentre la carpeta static */
     background: linear-gradient(rgba(7, 10, 15, 0.85), rgba(7, 10, 15, 0.85)), url('./static/fondo.jpg') no-repeat center center fixed;
     background-size: cover;
     color: var(--texto);
@@ -41,25 +37,22 @@ body.ambiente-mundial {
     letter-spacing: 0.5px;
 }
 
-.banner-tienda { background: url('./static/sobres.jpg') no-repeat center center; background-size: cover; }
-.banner-penales { background: url('./static/penales.jpg') no-repeat center center; background-size: cover; }
-.banner-casino { background: url('./static/casino.jpg') no-repeat center center; background-size: cover; }
-
 /* ========================================================================
    👑 ENCABEZADOS Y ELEMENTOS INTERACTIVOS (UI DEL ESTADIO)
    ======================================================================== */
 .header-principal-mundial {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     text-align: center;
+    width: 100%;
 }
 .titulo-copa-pe {
     font-family: 'Oswald', sans-serif;
-    font-size: 3rem;
+    font-size: 2.5rem;
     font-weight: 700;
     text-transform: uppercase;
     margin: 0;
     color: #ffffff;
-    text-shadow: 0 4px 0 #000, 0 0 25px rgba(0, 204, 255, 0.4);
+    text-shadow: 0 3px 0 #000, 0 0 20px rgba(0, 204, 255, 0.3);
 }
 
 /* Inputs de Texto estilo Consola de Transmisión */
@@ -82,7 +75,7 @@ input:focus, .select-estadio-custom:focus {
     box-shadow: 0 0 10px rgba(0, 204, 255, 0.3);
 }
 
-/* Botones con Estructura de Click Física */
+/* Botones Estilo Físico Match */
 .btn-estadio {
     background: var(--dorado);
     color: #000;
@@ -110,219 +103,165 @@ input:focus, .select-estadio-custom:focus {
 }
 
 /* ========================================================================
-   📦 CONTENEDOR PRINCIPAL INTERFAZ-JUEGO (FIX COMPLETO)
+   📦 REESTRUCTURACIÓN COMPLETA: LAYOUT DE 3 COLUMNAS PREMIUM (DASHBOARD)
    ======================================================================== */
-#interfaz-juego {
-    display: none; 
-    flex-direction: column !important; 
-    align-items: center !important;    
+#interfaz-juego.mostrar {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center;
+    align-items: flex-start;
     width: 100% !important;
-    max-width: 1000px;
+    max-width: 1300px;
     margin: 0 auto;
+    gap: 20px;
     box-sizing: border-box;
-    gap: 15px; 
 }
 
-/* Forzar que la botonera de navegación sea horizontal en PC */
-.nav-modulos-estadio {
-    display: flex !important;
-    flex-direction: row !important; 
-    gap: 10px;
-    width: 100%;
-    max-width: 900px;
-    margin-bottom: 10px;
+/* 📲 Forzamos que las columnas no colapsen en PC */
+.columna-izquierda-nav {
+    flex: 0 0 240px;
+    background: var(--bg-card);
+    border: 2px solid #232d45;
+    border-radius: 16px;
+    padding: 20px 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    backdrop-filter: blur(8px);
+    box-sizing: border-box;
 }
 
-/* Forzar que el Scoreboard superior sea horizontal en PC */
-.header-status-scoreboard {
-    display: flex !important;
-    flex-direction: row !important; 
-    align-items: center;
-    justify-content: space-around;
-    width: 100%;
-    max-width: 900px;
-    padding: 12px 25px;
+.columna-central-contenido {
+    flex: 1;
+    min-width: 0; /* Evita desborde de Grids */
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.columna-derecha-perfil {
+    flex: 0 0 280px;
+    background: var(--bg-card);
+    border: 2px solid #232d45;
+    border-radius: 16px;
+    padding: 20px 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    box-sizing: border-box;
 }
 
 /* ========================================================================
-   👤 ACCESO Y PANELES MUNDIALISTAS (SCOREBOARD)
+   🧭 MENÚ LATERAL IZQUIERDO (REFACTORIZADO)
    ======================================================================== */
-.login-card-estadio {
-    background: var(--bg-card);
-    border: 2px solid #232d45;
-    padding: 30px;
-    border-radius: 16px;
-    width: 100%;
-    max-width: 400px;
-    text-align: center;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-    backdrop-filter: blur(8px);
-}
-.login-card-estadio h2 {
+.columna-izquierda-nav h2 {
     font-family: 'Oswald', sans-serif;
     color: var(--dorado);
-    margin-top: 0;
-    letter-spacing: 1px;
-}
-.wrapper-inputs-estadio {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 15px;
-}
-.contenedor-botones-login {
-    display: flex;
-    gap: 10px;
-}
-.btn-login-match { flex: 1; }
-.btn-registro-match {
-    flex: 1;
-    background: var(--verde-match);
-    box-shadow: 0 4px 0 #00b35f;
-}
-
-/* Tablero de Estado de Transmisión Directa (Scoreboard de TV) */
-.header-status-scoreboard {
-    background: #090d16;
-    border: 3px solid #1f293d;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    padding: 12px 25px;
-    width: 100%;
-    max-width: 900px;
-    box-sizing: border-box;
-    margin-bottom: 20px;
-    box-shadow: 0 8px 0 #04060a;
-}
-.stat-box-tv {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-.stat-label {
-    font-size: 0.8rem;
-    color: #64748b;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
-.stat-valor {
-    font-family: 'Oswald', sans-serif;
     font-size: 1.5rem;
-    font-weight: 700;
-    text-shadow: 2px 2px 0px #000;
-}
-.valor-celeste { color: var(--celeste); }
-.valor-dorado { color: var(--dorado); }
-.valor-rojo { color: var(--rojo); }
-
-.btn-logout-kick {
-    background: #1a2233;
-    color: var(--rojo);
-    border: 1px solid var(--rojo);
-    padding: 6px 14px;
-    font-family: inherit;
-    font-weight: 700;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.btn-logout-kick:hover {
-    background: var(--rojo);
-    color: #fff;
-}
-
-/* Navegación del Estadio */
-.nav-modulos-estadio {
-    display: flex;
-    gap: 8px;
-    width: 100%;
-    max-width: 900px;
+    text-align: center;
+    margin-top: 0;
     margin-bottom: 20px;
+    text-transform: uppercase;
+    border-bottom: 2px solid #232d45;
+    padding-bottom: 10px;
 }
+
+.nav-modulos-estadio {
+    display: flex !important;
+    flex-direction: column !important; /* Vertical en menú izquierdo */
+    gap: 10px !important;
+    width: 100% !important;
+    margin-bottom: 0 !important;
+}
+
 .btn-modulo-match {
-    flex: 1;
-    background: #121826;
+    width: 100%;
+    background: #0f1322;
     color: #64748b;
     border: 2px solid #1f293d;
-    padding: 14px;
+    padding: 12px 15px;
     font-family: 'Oswald', sans-serif;
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     font-weight: 700;
-    border-radius: 10px;
+    border-radius: 8px;
     cursor: pointer;
     text-transform: uppercase;
-    box-shadow: 0 4px 0 #090d16;
+    text-align: left;
+    box-shadow: 0 3px 0 #090d16;
     transition: all 0.15s ease;
 }
 .btn-modulo-match:hover {
     color: #fff;
     background: #1a2233;
+    transform: translateX(3px);
 }
 .btn-modulo-match.activo {
-    background: var(--celeste);
-    color: #000;
-    border-color: #fff;
-    box-shadow: 0 4px 0 #0088cc, 0 0 15px rgba(0, 204, 255, 0.4);
+    background: var(--celeste) !important;
+    color: #000 !important;
+    border-color: #fff !important;
+    box-shadow: 0 3px 0 #0088cc, 0 0 15px rgba(0, 204, 255, 0.4) !important;
 }
 
-.modulo-contenido { display: none; width: 100%; max-width: 900px; }
-.modulo-contenido.activo { display: block; }
+/* ========================================================================
+   📊 TABLERO DE ESTADO DERECHO (MONEDAS/PERFIL GLASS)
+   ======================================================================== */
+.header-status-scoreboard {
+    background: #090d16 !important;
+    border: 2px solid #1f293d !important;
+    border-radius: 12px !important;
+    display: flex !important;
+    flex-direction: column !important; /* Apilado prolijo a la derecha */
+    gap: 12px !important;
+    padding: 15px !important;
+    width: 100% !important;
+    margin-bottom: 0 !important;
+    box-shadow: 0 4px 0 #04060a !important;
+    box-sizing: border-box;
+}
+.stat-box-tv {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0,0,0,0.3);
+    padding: 8px 12px;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+.stat-label {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+.stat-valor {
+    font-size: 1.3rem !important;
+}
+.btn-logout-kick {
+    width: 100%;
+    padding: 10px;
+    text-align: center;
+}
 
+/* ========================================================================
+   🖼️ BANNERS GRÁFICOS CENTRALES
+   ======================================================================== */
 .caja-modulo-estadio {
     background: var(--bg-card);
-    border-radius: 20px;
-    padding: 25px;
+    border-radius: 16px;
+    padding: 20px;
     border: 2px solid #232d45;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     backdrop-filter: blur(8px);
     box-sizing: border-box;
     width: 100%;
 }
-
-/* ========================================================================
-   🖼️ 3. BANNERS GRÁFICOS DINÁMICOS POR SECCIÓN (.JPG FIX)
-   ======================================================================== */
 .banner-modulo-imagen {
     width: 100%;
-    height: 140px;
-    border-radius: 14px;
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 20px;
-    border: 1px solid rgba(255,255,255,0.1);
-}
-.banner-tienda { background: url('static/sobres.jpg') no-repeat center center; background-size: cover; }
-.banner-penales { background: url('static/penales.jpg') no-repeat center center; background-size: cover; }
-.banner-casino { background: url('static/casino.jpg') no-repeat center center; background-size: cover; }
-
-.overlay-banner-texto {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: linear-gradient(90deg, rgba(9,13,22,0.95) 30%, rgba(9,13,22,0.4) 100%);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    padding-left: 30px;
-    box-sizing: border-box;
-}
-.overlay-banner-texto h2 {
-    font-family: 'Oswald', sans-serif;
-    font-size: 2rem;
-    margin: 0;
-    color: #fff;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-}
-.overlay-banner-texto p {
-    margin: 4px 0 0 0;
-    color: #94a3b8;
-    font-size: 1.1rem;
+    height: 150px;
+    border-radius: 12px;
 }
 
 /* ========================================================================
-   🛍️ 4. CONTENEDORES TIENDA Y RECOMPENSAS
+   🛍️ TIENDA, COFRES Y RECOMPENSAS
    ======================================================================== */
 .contenedor-tienda-cofres {
     display: flex;
@@ -335,516 +274,87 @@ input:focus, .select-estadio-custom:focus {
     border: 2px solid #1f293d;
     border-radius: 14px;
     padding: 20px;
-    width: 240px;
+    width: 210px;
     text-align: center;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 6px 12px rgba(0,0,0,0.4);
-    transition: transform 0.2s ease, border-color 0.2s;
 }
-.tarjeta-cofre-match:hover {
-    transform: translateY(-5px);
-    border-color: var(--celeste);
-}
-.tarjeta-cofre-match h3 {
-    font-family: 'Oswald', sans-serif;
-    margin: 0 0 10px 0;
-    font-size: 1.3rem;
-}
-.cofre-icono-pack {
-    font-family: 'Oswald', sans-serif;
-    font-size: 2rem;
-    font-weight: 700;
-    color: #fff;
-    margin: 15px 0;
-    text-shadow: 0 0 10px rgba(255,255,255,0.2);
-}
-.desc-prob-text {
-    font-size: 0.95rem;
-    color: #64748b;
-    min-height: 45px;
-    margin: 0 0 15px 0;
-}
-.btn-comprar-pack {
-    width: 100%;
-    background: var(--verde-match);
-    color: #000;
-    border: none;
-    padding: 10px;
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.1rem;
-    font-weight: 700;
-    border-radius: 6px;
-    cursor: pointer;
-    box-shadow: 0 3px 0 #00b35f;
-}
-.btn-comprar-pack:active { transform: translateY(3px); box-shadow: none; }
-
-.tarjeta-cofre-match.plata h3 { color: #cbd5e1; }
-.tarjeta-cofre-match.oro h3 { color: var(--dorado); }
-.tarjeta-cofre-match.legendario h3 { color: #f97316; }
-.tarjeta-cofre-match.legendario .btn-comprar-pack {
-    background: #f97316;
-    box-shadow: 0 3px 0 #c2410c;
-}
-
-/* Loot del sobre */
-.seccion-sobre-abierto-arena {
-    margin-top: 30px;
-    padding: 20px;
-    background: #090d16;
-    border-radius: 16px;
-    border: 2px dashed #1f293d;
-}
-.titulo-sobre-loot {
-    font-family: 'Oswald', sans-serif;
-    color: var(--dorado);
-    font-size: 1.5rem;
-    text-transform: uppercase;
-    text-shadow: 2px 2px 0px #000;
-    margin-bottom: 15px;
-}
-#grid-sobre-abierto { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
 
 /* ========================================================================
-   🃏 5. CARTAS COLECTIBLES (GRID & VERTICAL FIX)
+   🃏 CARTAS COLECCIONABLES PANINI (GRID ULTRA CORREGIDO)
    ======================================================================== */
 .grid-album-match, .grid-album, .grid-sobre { 
     display: grid !important; 
-    grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)) !important;
+    grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)) !important;
     justify-content: center; 
-    gap: 20px; 
+    gap: 15px; 
     margin-top: 15px; 
     width: 100%;
     box-sizing: border-box;
 }
-
 .carta-clash {
-    width: 145px !important;
-    height: 205px !important;
+    width: 135px !important;
+    height: 190px !important;
     border-radius: 12px;
-    position: relative;
-    box-sizing: border-box;
-    background: #04060a;
-    cursor: pointer;
-    overflow: visible;
-    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s;
-    animation: aparecerCarta 0.4s ease-out backwards;
-    margin: 0 auto;
-}
-.carta-clash:hover {
-    transform: translateY(-8px) scale(1.03);
-    z-index: 10;
-}
-.carta-foto {
-    width: 100%;
-    height: 100%;
-    object-fit: fill;
-    border-radius: 12px;
-    display: block;
-}
-.carta-clash.bloqueada {
-    filter: grayscale(100%) brightness(25%);
-    opacity: 0.5;
-    box-shadow: none !important;
-    border-color: #1f293d !important;
-}
-
-.rareza-vertical {
-    position: absolute;
-    bottom: 12px;
-    left: 6px;
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-    font-size: 0.65rem;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 1.2px;
-    color: #fff;
-    background: rgba(0, 0, 0, 0.8);
-    padding: 6px 3px;
-    border-radius: 4px;
-    border-left: 2px solid transparent;
-    z-index: 5;
-    pointer-events: none;
-    line-height: 1 !important; 
-    white-space: nowrap;
-}
-
-/* Marcos Neon según Rareza */
-.carta-clash.comun { border: 2px solid var(--color-comun); box-shadow: var(--shadow-comun); }
-.carta-clash.comun .rareza-vertical { border-left-color: var(--color-comun); }
-
-.carta-clash.rara { border: 2px solid var(--color-rara); box-shadow: var(--shadow-rara); }
-.carta-clash.rara .rareza-vertical { border-left-color: var(--color-rara); text-shadow: 0 0 5px var(--color-rara); }
-
-.carta-clash.epica { border: 2px solid var(--color-epica); box-shadow: var(--shadow-epica); }
-.carta-clash.epica .rareza-vertical { border-left-color: var(--color-epica); text-shadow: 0 0 5px var(--color-epica); }
-
-.carta-clash.legendaria { border: 2px solid var(--color-legendaria); box-shadow: var(--shadow-legendaria); }
-.carta-clash.legendaria .rareza-vertical { border-left-color: var(--color-legendaria); text-shadow: 0 0 8px var(--color-legendaria); }
-
-.badge-repetidas {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    background: #ff0055;
-    color: #fff;
-    font-family: 'Oswald', sans-serif;
-    font-size: 0.85rem;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 10px;
-    border: 2px solid #fff;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-    z-index: 12;
 }
 
 /* ========================================================================
-   🌍 6. SECTOR ÁLBUM Y SCROLLBAR DE SELECCIONES
+   🌍 SECTOR ÁLBUM Y FILTROS
    ======================================================================== */
 .custom-scrollbar-paises {
     display: flex;
     gap: 6px;
     overflow-x: auto;
-    padding: 5px 5px 12px 5px;
-    margin-bottom: 15px;
-    width: 100%;
-}
-.custom-scrollbar-paises::-webkit-scrollbar { height: 6px; }
-.custom-scrollbar-paises::-webkit-scrollbar-track { background: #090d16; border-radius: 10px; }
-.custom-scrollbar-paises::-webkit-scrollbar-thumb { background: #232d45; border-radius: 10px; }
-
-.btn-pais {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: #0f1322;
-    color: #64748b;
-    border: 2px solid #1f293d;
-    padding: 8px 14px;
-    font-size: 0.95rem;
-    font-weight: 700;
-    border-radius: 20px;
-    cursor: pointer;
-    font-family: inherit;
-    flex-shrink: 0;
-    transition: all 0.15s;
-}
-.btn-pais:hover { background: #161c30; color: #fff; }
-.btn-pais.activo {
-    background: var(--celeste);
-    color: #000;
-    border-color: #fff;
-    box-shadow: 0 0 12px rgba(0,204,255,0.4);
-}
-.btn-pais.pais-completo {
-    border: 2px solid var(--dorado) !important;
-    background: linear-gradient(180deg, #241d08 0%, #0f0d05 100%) !important;
-    color: var(--dorado) !important;
-    animation: brilloOro 2s infinite ease-in-out;
-}
-
-/* Scoreboard del Progreso */
-.progreso-album-scoreboard {
-    background: #090d16;
-    border: 2px solid #1f293d;
-    border-radius: 12px;
-    padding: 15px;
-    margin-bottom: 20px;
-    width: 100%;
-    box-sizing: border-box;
-}
-.progreso-texto-tv {
-    display: flex;
-    justify-content: space-between;
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.1rem;
-    color: #fff;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-}
-.progreso-barra-estadio-fondo { background: #161c30; height: 14px; border-radius: 10px; padding: 2px; }
-.progreso-barra-estadio-llenado {
-    background: linear-gradient(90deg, #00ff66 0%, #00aa44 100%);
-    height: 100%;
-    width: 0%;
-    border-radius: 10px;
-    transition: width 0.5s ease-out;
+    padding-bottom: 10px;
 }
 
 /* ========================================================================
-   ⚽ 7. ARCO DE PENALES Y TABLA DE COPAS (LEADERBOARD)
+   ⚽ JUEGO DE PENALES Y MINIJUEGOS
    ======================================================================== */
 .contenedor-penales-layout-estadio {
     display: flex;
+    flex-direction: column; /* Cambiado a columna para el layout centralizado */
     gap: 20px;
     width: 100%;
 }
-.juego-penales-principal { flex: 2; }
-.panel-lateral-ranking-tv {
-    flex: 1;
-    background: var(--bg-card);
-    border: 2px solid #232d45;
-    border-radius: 20px;
-    padding: 20px;
-    box-sizing: border-box;
-}
-.titulo-tabla-tv {
-    font-family: 'Oswald', sans-serif;
-    color: var(--dorado);
-    margin: 0 0 15px 0;
-    text-align: center;
-    font-size: 1.3rem;
-    letter-spacing: 0.5px;
-}
-.tabla-ranking-stadium { width: 100%; border-collapse: collapse; font-size: 1.05rem; }
-.tabla-ranking-stadium th { background: #090d16; color: #64748b; padding: 10px; font-weight: 700; text-transform: uppercase; }
-.tabla-ranking-stadium td { padding: 12px 10px; border-bottom: 1px solid #1f293d; text-align: center; font-weight: 700; }
-
-.tabla-ranking-stadium tr:nth-child(1) td:nth-child(1) { color: #ffcc00; font-size: 1.4rem; }
-.tabla-ranking-stadium tr:nth-child(2) td:nth-child(1) { color: #cbd5e1; font-size: 1.3rem; }
-.tabla-ranking-stadium tr:nth-child(3) td:nth-child(1) { color: #ff7733; font-size: 1.2rem; }
-.fila-usuario-actual { background: rgba(0, 204, 255, 0.1) !important; color: var(--celeste); }
-
 .arco-futbol-stadium {
-    width: 100%;
     max-width: 450px;
-    height: 200px;
-    border: 6px solid #fff;
-    border-bottom: none;
-    margin: 20px auto;
-    position: relative;
-    background: radial-gradient(circle at 50% 100%, #1e3a2f 0%, #090d16 100%);
-    border-radius: 8px 8px 0 0;
-    box-shadow: inset 0 -20px 50px rgba(0,0,0,0.6);
-    overflow: hidden;
-}
-.zona-disparo-target { position: absolute; top: 0; height: 100%; cursor: crosshair; z-index: 6; }
-.zona-disparo-target:hover { background: rgba(0, 204, 255, 0.08); }
-.izquierda { left: 0; width: 33%; }
-.centro { left: 33%; width: 34%; }
-.derecha { right: 0; width: 33%; }
-
-#balon-animado { position: absolute; bottom: 10px; left: 47%; font-size: 2.2rem; transition: transform 0.5s ease-out; z-index: 8; }
-.arquero-stadium { position: absolute; top: 35px; left: 45%; font-size: 2.8rem; transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); z-index: 7; }
-
-.marcador-alerta-tv { font-family: 'Oswald', sans-serif; font-size: 1.5rem; margin: 15px 0 5px 0; }
-.badge-reloj-energia { color: var(--dorado); font-weight: 700; font-size: 1.1rem; margin: 0; }
-
-/* ========================================================================
-   🎰 8. TIMBA VERSUS ELECTRÓNICO (SCOREBOARD MATCH)
-   ======================================================================== */
-.arena-versus-scoreboard {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #090d16;
-    border: 2px solid var(--dorado);
-    border-radius: 16px;
-    padding: 20px;
-    width: 100%;
-    max-width: 550px;
-    margin: 0 auto;
-    box-sizing: border-box;
-}
-.bando-equipo-stadium {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-}
-.bandera-flag { font-size: 3.5rem; line-height: 1; }
-.nombre-seleccion { font-family: 'Oswald', sans-serif; font-size: 1.4rem; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
-.vs-circulo-match {
-    background: var(--rojo);
-    color: #fff;
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.3rem;
-    font-weight: 700;
-    width: 46px; height: 46px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 3px solid #fff;
-    box-shadow: 0 0 15px rgba(255, 51, 68, 0.4);
-}
-
-.inputs-apuesta-timba-stadium {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-    margin-top: 20px;
-    width: 100%;
-}
-.monto-apuesta-row {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    width: 100%;
-    max-width: 300px;
-}
-.label-tv { font-size: 1rem; font-weight: 700; color: var(--dorado); letter-spacing: 0.5px; }
-
-.grid-opciones-goles-match {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    width: 100%;
-    max-width: 550px;
-    margin-top: 15px;
-}
-.btn-opcion-resultado {
-    background: #0f1322;
-    color: #fff;
-    border: 2px solid var(--celeste) !important;
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.4rem !important;
-    padding: 8px !important;
-    border-radius: 8px;
-    box-shadow: 0 4px 0 #0088cc !important;
-}
-.btn-opcion-resultado:hover {
-    background: #161c30;
-    box-shadow: 0 0 12px rgba(0,204,255,0.4) !important;
-}
-
-/* Historial inferior estilo Monitor de Apuestas */
-.historial-timba-banca-tv {
-    margin-top: 25px;
-    background: #090d16;
-    border: 2px solid #1f293d;
-    border-radius: 12px;
-    padding: 15px;
-    width: 100%;
-    box-sizing: border-box;
-}
-.historial-timba-banca-tv h4 {
-    margin: 0 0 10px 0;
-    color: var(--dorado);
-    font-family: 'Oswald', sans-serif;
-    font-size: 1rem;
-    letter-spacing: 0.5px;
-}
-.item-historial-partido {
-    list-style: none;
-    font-size: 1.05rem;
-    font-weight: 700;
-    padding: 8px 12px;
-    border-bottom: 1px solid #1f293d;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    height: 190px;
 }
 
 /* ========================================================================
-   ⏳ 9. SCREEN LOADING OVERLAY & SPINNERS
+   📱 RESPONSIVE ADAPTATION (MOBILE BREAKPOINT)
    ======================================================================== */
-#pantalla-carga {
-    position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(4, 6, 10, 0.85);
-    backdrop-filter: blur(4px);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 99999;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease;
-}
-#pantalla-carga.activo { opacity: 1; pointer-events: auto; }
-
-.spinner-arena {
-    width: 55px; height: 55px;
-    border: 5px solid rgba(255, 255, 255, 0.05);
-    border-top: 5px solid var(--celeste);
-    border-radius: 50%;
-    animation: girarSpinner 0.7s linear infinite;
-}
-@keyframes girarSpinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-.texto-carga {
-    color: #fff;
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.2rem;
-    margin-top: 15px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-/* ========================================================================
-   📱 10. RESPONSIVE COMPLETO (MOBILE FIRST DESIGN)
-   ======================================================================== */
-@media (max-width: 768px) {
-    body { padding: 10px; }
-    .titulo-copa-pe { font-size: 2.1rem; }
-    
-    .header-status-scoreboard {
-        flex-direction: column;
-        gap: 10px;
-        padding: 15px;
+@media (max-width: 992px) {
+    #interfaz-juego.mostrar {
+        flex-direction: column !important; /* Colapsa a vertical en celulares */
+        padding: 5px;
     }
-    .stat-box-tv { width: 100%; flex-direction: row; justify-content: space-between; border-bottom: 1px solid #1f293d; padding: 4px 0; }
-    .btn-logout-kick { width: 100%; margin-top: 5px; padding: 8px; }
-    
+    .columna-izquierda-nav, 
+    .columna-central-contenido, 
+    .columna-derecha-perfil {
+        flex: 1 1 100%;
+        width: 100% !important;
+    }
     .nav-modulos-estadio {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 6px;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important; /* Grid de 2x2 en celu */
     }
-    .btn-modulo-match { padding: 10px; font-size: 1.05rem; }
-    
-    .contenedor-tienda-cofres { flex-direction: column; align-items: center; }
-    .tarjeta-cofre-match { width: 100%; max-width: 320px; }
-    
+    .btn-modulo-match {
+        text-align: center;
+    }
+    .header-status-scoreboard {
+        flex-direction: row !important;
+        flex-wrap: wrap;
+    }
+    .stat-box-tv {
+        width: 48%;
+    }
     .grid-album-match, .grid-album, .grid-sobre { 
         grid-template-columns: repeat(3, 1fr) !important; 
         gap: 8px !important; 
-        display: grid !important; 
     }
     .carta-clash { width: 100% !important; height: auto !important; aspect-ratio: 2 / 3 !important; }
-    .rareza-vertical { font-size: 0.5rem; left: 3px; bottom: 6px; padding: 3px 1px; }
-    .badge-repetidas { font-size: 0.75rem; padding: 1px 5px; }
-
-    .contenedor-penales-layout-estadio { flex-direction: column; }
-    .arco-futbol-stadium { max-width: 320px; height: 150px; }
-    .arquero-stadium { font-size: 2.2rem; top: 20px; }
-    #balon-animado { font-size: 1.7rem; }
-
-    .bandera-flag { font-size: 2.6rem; }
-    .nombre-seleccion { font-size: 1.1rem; }
-    .grid-opciones-goles-match { grid-template-columns: 1fr 1fr; }
 }
 
-/* ========================================================================
-   🎬 11. ANIMACIONES DE INTERFAZ
-   ======================================================================== */
-@keyframes abrirSobre { 
-    from { opacity: 0; transform: translateY(20px) scale(0.9); } 
-    to { opacity: 1; transform: translateY(0) scale(1); } 
-}
-@keyframes brilloOro { 
-    0%, 100% { box-shadow: 0 0 5px rgba(255,177,0,0.2); } 
-    50% { box-shadow: 0 0 20px rgba(255,177,0,0.55); } 
-}
-
-/* ========================================================================
-   🔥 CLASES ACTIVADORAS DE VISIBILIDAD (EL MOTOR VISUAL)
-   ======================================================================== */
-
-/* Fuerza a la interfaz a mostrarse en vertical cuando el JS da el visto bueno */
-#interfaz-juego.mostrar {
-    display: flex !important;
-}
-
-/* Por si las dudas, aseguramos que el login se vea si no hay sesión */
-#seccion-login {
-    display: block;
-    margin: 20px auto;
-}
+/* Secciones bases e interfaz complementaria */
+#seccion-login { display: block; margin: 20px auto; }
+.btn-login-match { flex: 1; } .btn-registro-match { flex: 1; background: var(--verde-match); box-shadow: 0 4px 0 #00b35f; }
