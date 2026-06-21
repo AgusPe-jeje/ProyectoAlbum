@@ -163,14 +163,19 @@
                         </div>
                     </div>
                     
-                    <div class="contenedor-penales-juego-canvas">
-                        <div class="arco-futbol-stadium" id="escenario-penal">
-                            <div class="zona-disparo-target izquierda" onclick="ejecutarPenalLocal('IZQUIERDA')"></div>
-                            <div class="zona-disparo-target centro" onclick="ejecutarPenalLocal('CENTRO')"></div>
-                            <div class="zona-disparo-target derecha" onclick="ejecutarPenalLocal('DERECHA')"></div>
-                            <div id="arquero-animado" class="arquero-stadium">🧤</div>
-                            <div id="balon-animado" class="balon-stadium">⚽</div>
-                        </div>
+                    <div class="arco-futbol-stadium" id="escenario-penal">
+                        <!-- 🔼 FILA SUPERIOR (AL ÁNGULO) -->
+                        <div class="zona-disparo-target sup-izq" onclick="ejecutarPenalLocal('SUP_IZQUIERDA')"></div>
+                        <div class="zona-disparo-target sup-cen" onclick="ejecutarPenalLocal('SUP_CENTRO')"></div>
+                        <div class="zona-disparo-target sup-der" onclick="ejecutarPenalLocal('SUP_DERECHA')"></div>
+                        
+                        <!-- 🔽 FILA INFERIOR (RASANTE) -->
+                        <div class="zona-disparo-target inf-izq" onclick="ejecutarPenalLocal('INF_IZQUIERDA')"></div>
+                        <div class="zona-disparo-target inf-cen" onclick="ejecutarPenalLocal('INF_CENTRO')"></div>
+                        <div class="zona-disparo-target inf-der" onclick="ejecutarPenalLocal('INF_DERECHA')"></div>
+
+                        <div id="arquero-animado" class="arquero-stadium">🧤</div>
+                        <div id="balon-animado" class="balon-stadium">⚽</div>
                     </div>
 
                     <h3 id="resultado-penal" class="marcador-alerta-tv">¡PREPARÁ EL DISPARO!</h3>

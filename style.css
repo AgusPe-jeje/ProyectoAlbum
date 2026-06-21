@@ -624,24 +624,36 @@ input:focus, .select-estadio-custom:focus {
 .tabla-ranking-stadium tr:nth-child(3) td:nth-child(1) { color: #ff7733; font-size: 1.2rem; }
 .fila-usuario-actual { background: rgba(0, 204, 255, 0.1) !important; color: var(--celeste); }
 
+/* ========================================================================
+   ⚽ REFACTORIZACIÓN ARCO 6 DIRECCIONES (GRID INTERACTIVO)
+   ======================================================================== */
 .arco-futbol-stadium {
-    width: 100%;
-    max-width: 450px;
-    height: 200px;
-    border: 6px solid #fff;
-    border-bottom: none;
-    margin: 20px auto;
     position: relative;
-    background: radial-gradient(circle at 50% 100%, #1e3a2f 0%, #090d16 100%);
-    border-radius: 8px 8px 0 0;
-    box-shadow: inset 0 -20px 50px rgba(0,0,0,0.6);
-    overflow: hidden;
+    /* Tu estilo actual (ancho, alto, bordes, etc.) se mantiene */
 }
-.zona-disparo-target { position: absolute; top: 0; height: 100%; cursor: crosshair; z-index: 6; }
-.zona-disparo-target:hover { background: rgba(0, 204, 255, 0.08); }
-.izquierda { left: 0; width: 33%; }
-.centro { left: 33%; width: 34%; }
-.derecha { right: 0; width: 33%; }
+
+/* Base de los objetivos invisibles de tiro */
+.zona-disparo-target {
+    position: absolute;
+    width: 33.33%;
+    height: 50%; /* Ocupan la mitad del alto del arco */
+    z-index: 6;
+    cursor: crosshair;
+    transition: background 0.2s;
+}
+.zona-disparo-target:hover {
+    background: rgba(0, 204, 255, 0.15); /* Feedback visual al apuntar */
+    box-shadow: inset 0 0 15px rgba(0, 204, 255, 0.2);
+}
+
+/* Posiciones exactas del nuevo mapa de tiro */
+.sup-izq { top: 0; left: 0; }
+.sup-cen { top: 0; left: 33.33%; }
+.sup-der { top: 0; left: 66.66%; }
+
+.inf-izq { bottom: 0; left: 0; }
+.inf-cen { bottom: 0; left: 33.33%; }
+.inf-der { bottom: 0; left: 66.66%; }
 
 #balon-animado { position: absolute; bottom: 10px; left: 47%; font-size: 2.2rem; transition: transform 0.5s ease-out; z-index: 8; }
 .arquero-stadium { position: absolute; top: 35px; left: 45%; font-size: 2.8rem; transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); z-index: 7; }
