@@ -38,6 +38,7 @@ body.ambiente-mundial {
 .banner-tienda { background: url('./static/sobres.jpg') no-repeat center center; background-size: cover; }
 .banner-penales { background: url('./static/penales.jpg') no-repeat center center; background-size: cover; }
 .banner-casino { background: url('./static/casino.jpg') no-repeat center center; background-size: cover; }
+.banner-mundial { background: url('./static/mundial.jpg') no-repeat center center; background-size: cover; } /* 🔥 Vinculación del nuevo banner */
 
 .header-principal-mundial { margin-bottom: 15px; text-align: center; }
 .titulo-copa-pe { font-family: 'Oswald', sans-serif; font-size: 3rem; font-weight: 700; text-transform: uppercase; margin: 0; color: #ffffff; text-shadow: 0 4px 0 #000, 0 0 25px rgba(0, 204, 255, 0.4); }
