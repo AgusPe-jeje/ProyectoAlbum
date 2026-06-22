@@ -1083,6 +1083,26 @@ app.get('/api/ranking', async (req, res) => {
 });
 
 /* ========================================================================
+   🏆 RANKING EXCLUSIVO DEL MINIMUNDIAL
+   ======================================================================== */
+app.get('/api/ranking-mundiales', async (req, res) => {
+    // Filtramos para que solo aparezcan usuarios con copas_mundiales > 0
+    const query = `
+        SELECT username, copas_mundiales 
+        FROM usuarios 
+        WHERE copas_mundiales > 0
+        ORDER BY copas_mundiales DESC, puntos_ranking DESC 
+        LIMIT 10
+    `;
+    try {
+        const result = await pool.query(query);
+        return res.json({ ranking: result.rows });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+/* ========================================================================
    🎰 CONFIGURACIÓN DE ENERGÍA PARA LA TIMBA
    ======================================================================== */
 const MAX_TIMBAS = 10; 

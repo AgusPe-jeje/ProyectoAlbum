@@ -231,7 +231,7 @@
                 </div>
             </div>
 
-            <!-- 🏆 MÓDULO MINIMUNDIAL (NUEVO) -->
+            <!-- 🏆 MÓDULO MINIMUNDIAL -->
             <div id="modulo-minimundial" class="modulo-contenido">
                 <div class="caja-modulo-estadio">
                     <div class="banner-modulo-imagen banner-mundial">
@@ -240,13 +240,29 @@
                             <p>Superá la clasificación, armá tu tridente táctico y competí en las llaves por la copa mundial.</p>
                         </div>
                     </div>
+
+                    <!-- 👑 SALÓN DE LA FAMA EXCLUSIVO (Solo campeones) -->
+                    <div class="contenedor-ranking-mundiales-layout" style="margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 1px solid #1a2436;">
+                        <h3 class="titulo-tabla-tv" style="color: var(--dorado); text-align: center; font-family: 'Oswald'; font-size: 1.3rem; margin-bottom: 12px;">🌟 SALÓN DE LA FAMA - REYES DEL MUNDO 👑</h3>
+                        <table class="tabla-ranking-stadium" style="width: 100%; margin: 0 auto; max-width: 600px;">
+                            <thead>
+                                <tr style="color: #64748b; font-size: 0.9rem;">
+                                    <th style="width: 20%;">POS</th>
+                                    <th style="text-align: left; padding-left: 15px;">CAMPEÓN</th>
+                                    <th style="width: 30%;">TÍTULOS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-ranking-mundiales-body">
+                                <!-- Se inyecta dinámicamente con JavaScript -->
+                            </tbody>
+                        </table>
                     </div>
 
                     <!-- FASE 1: INSCRIPCIÓN Y COOLDOWN -->
                     <div id="fase-inscripcion-mundial" class="inputs-apuesta-timba-stadium" style="text-align: center; padding: 20px;">
                         <div id="cronometro-mundial" class="banca-reloj-status" style="margin-bottom: 15px;">⏱️ Verificando estado del vestuario...</div>
                         
-                        <!-- Contenedor dinámico que se limpia solo si hay penalización de tiempo activa -->
+                        <!-- Contenedor dinámico de países disponibles -->
                         <div id="zona-eleccion-pais-mundial" style="margin: 20px 0; display: flex; justify-content: center; flex-wrap: wrap;"></div>
                         
                         <button type="button" id="btn-preparar-mundial" onclick="prepararInscripcionMundial()" class="btn-estadio btn-bet-action" style="max-width: 320px; margin: 0 auto;">
