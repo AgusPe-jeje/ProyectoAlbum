@@ -1669,6 +1669,24 @@ app.post('/api/mundial/jugar', async (req, res) => {
 });
 
 /* ========================================================================
+   🚨 CONFIGURACIÓN Y ENDPOINT SEGURO DE ANUNCIOS GLOBAL
+   ======================================================================== */
+// Esta configuración vive en el servidor, nadie la puede tocar desde el navegador
+const CONFIG_ANUNCIO_SERVIDOR = {
+    activo: true,       // true = encendido | false = apagado
+    tipo: "video",      // "texto" | "imagen" | "video"
+    titulo: "¡ACTUALIZACIÓN DE TEMPORADA!",
+    texto: "Prendete a los nuevos torneos en vivo. Calibramos el MiniMundial para que sea más justo.",
+    urlImagen: "https://proyectoalbum.onrender.com/assets/novedad.png", 
+    urlVideo: "https://www.youtube.com/embed/dQw4w9WgXcQ" 
+};
+
+// Endpoint público para que el juego consulte el anuncio
+app.get('/api/anuncio-actual', (req, res) => {
+    return res.json(CONFIG_ANUNCIO_SERVIDOR);
+});
+
+/* ========================================================================
    🚀 INICIALIZACIÓN DEL SERVIDOR
    ======================================================================== */
 app.listen(PORT, '0.0.0.0', () => {
