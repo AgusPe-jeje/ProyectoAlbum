@@ -1678,7 +1678,7 @@ const CONFIG_ANUNCIO_SERVIDOR = {
     titulo: "¡ACTUALIZACIÓN DE TEMPORADA!",
     texto: "Prendete a los nuevos torneos en vivo. Calibramos el MiniMundial para que sea más justo.",
     urlImagen: "https://proyectoalbum.onrender.com/assets/novedad.png", 
-    urlVideo: "https://www.youtube.com/watch?v=8_XLwAwB9F4" 
+    urlVideo: "https://www.youtube.com/embed/8_XLwAwB9F4" 
 };
 
 // Endpoint público para que el juego consulte el anuncio
