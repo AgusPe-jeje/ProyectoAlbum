@@ -107,24 +107,7 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
 
 .seccion-sobre-abierto-arena { margin-top: 30px; padding: 20px; background: rgba(5, 8, 14, 0.6); border-radius: 16px; border: 2px dashed #1f293d; }
 .titulo-sobre-loot { font-family: 'Oswald', sans-serif; color: var(--dorado); font-size: 1.5rem; text-transform: uppercase; text-shadow: 2px 2px 0px #000; margin-bottom: 15px; }
-#grid-sobre-abierto {
-    position: relative;
-    display: block; /* Cambiamos de flex/grid a block para controlar el encimado absoluto */
-    width: 100%;
-    max-width: 450px; /* Espacio controlado para que entren apiladas */
-    height: 240px;    /* Altura suficiente para que no tape el botón Siguiente */
-    margin: 20px auto;
-}
-
-/* Las cartas que van apareciendo en el mazo */
-.carta-en-baraja {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    /* Usamos transform para centrar la carta base y manejar la animación de entrada */
-    transform-origin: bottom center;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
-}
+#grid-sobre-abierto { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
 
 .grid-album-match, .grid-album, .grid-sobre { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)) !important; justify-content: center; gap: 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
 .carta-clash { width: 145px !important; height: 205px !important; border-radius: 12px; position: relative; box-sizing: border-box; background: #04060a; cursor: pointer; overflow: visible; transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s; animation: aparecerCarta 0.4s ease-out backwards; margin: 0 auto; }
