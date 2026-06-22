@@ -17,7 +17,7 @@ app.use(express.json());
 /* ========================================================================
    🛠️ CONFIGURACIÓN DE MODO MANTENIMIENTO / MODO SOLO YO
    ======================================================================== */
-const MODO_MANTENIMIENTO = true; 
+const MODO_MANTENIMIENTO = false; 
 
 app.use((req, res, next) => {
     if (!MODO_MANTENIMIENTO) {
@@ -1475,7 +1475,16 @@ app.post('/api/mundial/preparar', async (req, res) => {
     }
 });
 
-// C. ENDPOINT: Simular Torneo Completo (Clasificación + Llaves de playoffs)
+// Actualizá tu lista de selecciones globales (¡Ahora son 40 países!)
+const SELECCIONES_BOTS = [
+    "Francia", "Brasil", "Alemania", "España", "Italia", "Inglaterra", 
+    "Países Bajos", "Portugal", "Uruguay", "Croacia", "Bélgica", "Marruecos", 
+    "Japón", "Senegal", "Estados Unidos", "Colombia", "México", "Argentina",
+    "Ecuador", "Perú", "Chile", "Paraguay", "Venezuela", "Canadá", "Costa Rica",
+    "Nigeria", "Egipto", "Argelia", "Túnez", "Ghana", "Corea del Sur", "Australia",
+    "Arabia Saudita", "Irán", "Suiza", "Dinamarca", "Suecia", "Polonia", "Ucrania", "Austria"
+];
+
 app.post('/api/mundial/jugar', async (req, res) => {
     const { usuario_id, seleccionElegida, rivalClasificacion, jugadorIds } = req.body;
 
@@ -1491,7 +1500,7 @@ app.post('/api/mundial/jugar', async (req, res) => {
         );
 
         if (jCheck.rows.length !== 3) {
-            return res.json({ ok: false, mensaje: "❌ Uno o más jugadores seleccionados no están disponibles en tu inventario." });
+            return res.json({ ok: false, mensaje: "❌ Uno o más jugadores seleccionados no están disponibles." });
         }
 
         // 2. Calcular las estrellas del equipo según promedio de rareza
@@ -1504,12 +1513,10 @@ app.post('/api/mundial/jugar', async (req, res) => {
         else if (promedio >= 70) estrellas = 3;
         else if (promedio >= 62) estrellas = 2;
 
-        // Base probabilística base de victoria por cada estrella (62% a 88%)
         const chanceVictoria = 0.56 + (estrellas * 0.065); 
 
         // 3. SIMULACIÓN FASE 1: Partido único de Clasificación
         if (Math.random() > chanceVictoria) {
-            // Perdió clasificación: se quema el cooldown y queda afuera
             await pool.query("UPDATE usuarios SET ultima_timba_mundial = NOW() WHERE id = $1", [usuario_id]);
             return res.json({
                 ok: true,
@@ -1518,66 +1525,127 @@ app.post('/api/mundial/jugar', async (req, res) => {
             });
         }
 
-        // 4. SIMULACIÓN FASE 2: Play-offs Estilo Bracket (Octavos, Cuartos, Semi, Final)
-        // Filtramos competidores para armar el cuadro limpio
-        let botsRestantes = SELECCIONES_BOTS.filter(s => s !== seleccionElegida);
-        botsRestantes = mezclarArray(botsRestantes);
+        // 4. SIMULACIÓN FASE 2: FASE DE GRUPOS (Tu grupo de 4 equipos)
+        let botsDisponibles = SELECCIONES_BOTS.filter(s => s !== seleccionElegida);
+        botsDisponibles = mezclarArray(botsDisponibles);
 
-        const rivalOctavos = botsRestantes[0];
-        const rivalCuartos = botsRestantes[1];
-        const rivalSemi = botsRestantes[2];
-        const rivalFinal = botsRestantes[3];
+        // Definimos los 3 rivales de tu grupo (Grupo de 4 selecciones en total)
+        const rivalGrupo1 = botsDisponibles[0];
+        const rivalGrupo2 = botsDisponibles[1];
+        const rivalGrupo3 = botsDisponibles[2];
+        const integrantesGrupo = [seleccionElegida, rivalGrupo1, rivalGrupo2, rivalGrupo3];
 
-        const llavesTorneo = [
-            { ronda: "Octavos de Final", rival: rivalOctavos },
-            { ronda: "Cuartos de Final", rival: rivalCuartos },
-            { ronda: "Semifinal", rival: rivalSemi },
-            { ronda: "Gran Final del Mundo", rival: rivalFinal }
-        ];
+        let bitacoraGrupo = [];
+        
+        // Función auxiliar interna para simular goles e impacto de puntos
+        function simularMatchCompleto(eq1, eq2, esUsuario) {
+            let g1 = Math.floor(Math.random() * 3);
+            let g2 = Math.floor(Math.random() * 3);
+            if (esUsuario) {
+                if (Math.random() <= chanceVictoria && g1 <= g2) g1 = g2 + Math.floor(Math.random() * 2) + 1;
+                else if (Math.random() > chanceVictoria && g2 <= g1) g2 = g1 + Math.floor(Math.random() * 2) + 1;
+            }
+            return { goles1: g1, goles2: g2 };
+        }
 
-        let faseAlcanzada = "Clasificación";
-        let campeon = true;
-        let bitacoraPartidos = [];
+        // Fecha 1: Vos vs Rival1 | Rival2 vs Rival3
+        let f1_m1 = simularMatchCompleto(seleccionElegida, rivalGrupo1, true);
+        let f1_m2 = simularMatchCompleto(rivalGrupo2, rivalGrupo3, false);
+        bitacoraGrupo.push({ fecha: 1, local: seleccionElegida, visitante: rivalGrupo1, gL: f1_m1.goles1, gV: f1_m1.goles2, botL: rivalGrupo2, botV: rivalGrupo3, gBL: f1_m2.goles1, gBV: f1_m2.goles2 });
 
-        for (let llave of llavesTorneo) {
-            faseAlcanzada = llave.ronda;
-            // Simulamos el partido de la llave
-            if (Math.random() <= chanceVictoria) {
-                bitacoraPartidos.push({ ronda: llave.ronda, rival: llave.rival, resultado: "Ganaste ✅" });
-            } else {
-                campeon = false;
-                bitacoraPartidos.push({ ronda: llave.ronda, rival: llave.rival, resultado: "Perdiste ❌" });
-                break; // Queda eliminado en esta instancia
+        // Fecha 2: Vos vs Rival2 | Rival1 vs Rival3
+        let f2_m1 = simularMatchCompleto(seleccionElegida, rivalGrupo2, true);
+        let f2_m2 = simularMatchCompleto(rivalGrupo1, rivalGrupo3, false);
+        bitacoraGrupo.push({ fecha: 2, local: seleccionElegida, visitante: rivalGrupo2, gL: f2_m1.goles1, gV: f2_m1.goles2, botL: rivalGrupo1, botV: rivalGrupo3, gBL: f2_m2.goles1, gBV: f2_m2.goles2 });
+
+        // Fecha 3: Vos vs Rival3 | Rival1 vs Rival2
+        let f3_m1 = simularMatchCompleto(seleccionElegida, rivalGrupo3, true);
+        let f3_m2 = simularMatchCompleto(rivalGrupo1, rivalGrupo2, false);
+        bitacoraGrupo.push({ fecha: 3, local: seleccionElegida, visitante: rivalGrupo3, gL: f3_m1.goles1, gV: f3_m1.goles2, botL: rivalGrupo1, botV: rivalGrupo2, gBL: f3_m2.goles1, gBV: f3_m2.goles2 });
+
+        // Procesar matemáticamente la tabla de posiciones final en el servidor
+        let tablaPuntos = {};
+        integrantesGrupo.forEach(p => { tablaPuntos[p] = { pais: p, pts: 0, gf: 0, gc: 0 }; });
+
+        function acumular(loc, vis, gl, gv) {
+            tablaPuntos[loc].gf += gl; tablaPuntos[loc].gc += gv;
+            tablaPuntos[vis].gf += gv; tablaPuntos[vis].gc += gl;
+            if (gl > gv) tablaPuntos[loc].pts += 3;
+            else if (gl < gv) tablaPuntos[vis].pts += 3;
+            else { tablaPuntos[loc].pts += 1; tablaPuntos[vis].pts += 1; }
+        }
+
+        bitacoraGrupo.forEach(f => {
+            acumular(f.local, f.visitante, f.gL, f.gV);
+            acumular(f.botL, f.botV, f.gBL, f.gBV);
+        });
+
+        // Ordenamos la tabla por puntos y diferencia de gol
+        let tablaOrdenada = Object.values(tablaPuntos).sort((a,b) => {
+            if (b.pts !== a.pts) return b.pts - a.pts;
+            return (b.gf - b.gc) - (a.gf - a.gc);
+        });
+
+        // Averiguamos en qué posición terminó el usuario
+        let posicionUsuario = tablaOrdenada.findIndex(r => r.pais === seleccionElegida) + 1;
+        let clasificaALlaves = posicionUsuario <= 2; // Pasan los dos primeros
+
+        // 5. SIMULACIÓN FASE 3: PLAY-OFFS (Octavos, Cuartos, Semi, Final)
+        let bitacoraPlayoffs = [];
+        let campeon = false;
+        let faseAlcanzada = "Fase de Grupos";
+
+        if (clasificaALlaves) {
+            faseAlcanzada = "Octavos de Final";
+            const rivalOctavos = botsDisponibles[3];
+            const rivalCuartos = botsDisponibles[4];
+            const rivalSemi = botsDisponibles[5];
+            const rivalFinal = botsDisponibles[6];
+
+            const llaves = [
+                { ronda: "Octavos de Final", rival: rivalOctavos },
+                { ronda: "Cuartos de Final", rival: rivalCuartos },
+                { ronda: "Semifinal", rival: rivalSemi },
+                { ronda: "Gran Final del Mundo", rival: rivalFinal }
+            ];
+
+            campeon = true;
+            for (let llave of llaves) {
+                faseAlcanzada = llave.ronda;
+                if (Math.random() <= chanceVictoria) {
+                    bitacoraPlayoffs.push({ ronda: llave.ronda, rival: llave.rival, resultado: "Ganaste ✅" });
+                } else {
+                    campeon = false;
+                    bitacoraPlayoffs.push({ ronda: llave.ronda, rival: llave.rival, resultado: "Perdiste ❌" });
+                    break;
+                }
             }
         }
 
-        // 5. Procesar Recompensas y cobrar inscripción de 500 monedas
+        // 6. Guardar base de datos y otorgar premios si corresponde
         const ahora = new Date();
         if (campeon) {
-            // Resta 500 de inscripción y suma 5000 por campeonar (+4500 netos)
             await pool.query(
                 "UPDATE usuarios SET monedas = monedas - 500 + 5000, copas_mundiales = copas_mundiales + 1, puntos_ranking = puntos_ranking + 50, ultima_timba_mundial = $1 WHERE id = $2",
                 [ahora, usuario_id]
             );
         } else {
-            // Pierde el torneo: Resta las 500 monedas de la inscripción y activa cooldown
-            await pool.query(
-                "UPDATE usuarios SET monedas = monedas - 500, ultima_timba_mundial = $1 WHERE id = $2",
-                [ahora, usuario_id]
-            );
+            await pool.query("UPDATE usuarios SET monedas = monedas - 500, ultima_timba_mundial = $1 WHERE id = $2", [ahora, usuario_id]);
         }
 
-        // Buscamos los datos finales actualizados de la billetera para refrescar la UI al cliente
         const userFinal = await pool.query("SELECT monedas, puntos_ranking, copas_mundiales FROM usuarios WHERE id = $1", [usuario_id]);
 
         return res.json({
             ok: true,
             progreso: {
                 ganoClasificacion: true,
+                integrantesGrupo, // Mandamos quiénes integran tu grupo
+                bitacoraGrupo,     // Goles exactos minuto a minuto
+                clasifico: clasificaALlaves,
+                posicionFinalGrupo: posicionUsuario,
                 campeon: campeon,
                 faseAlcanzada: faseAlcanzada,
-                estrellasCalculadas: estrellas,
-                bitacora: bitacoraPartidos
+                bitacoraPlayoffs
             },
             datosActualizados: userFinal.rows[0]
         });
