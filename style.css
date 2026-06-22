@@ -400,40 +400,41 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
 }
 
 /* ========================================================================
-   ❓ BOTÓN DE AYUDA PREMIUM CALIBRADO CON EL BOTÓN SALIR
+   ❓ BOTÓN DE AYUDA PREMIUM (ESTILO TRANSMISIÓN TV)
    ======================================================================== */
 .btn-ayuda-arena {
-    background: #0ea5e9 !important; /* Mismo fondo sólido que el original de tu captura */
-    border: 2px solid #0ea5e9 !important;
-    color: #000000 !important; /* Texto oscuro para que resalte impecable sobre el celeste */
-    box-shadow: 0 0 15px rgba(14, 165, 233, 0.4) !important;
+    /* Fondo transparente con un toque sutil oscuro igual al de Salir */
+    background: #0f172a !important; 
+    border: 1px solid var(--celeste) !important; /* Borde fino de 1px */
+    color: var(--celeste) !important; /* Texto celeste nativo del juego */
     
-    /* 📐 Copia exacta del layout y bordes del botón SALIR */
+    /* Copia exacta del tamaño y la forma redondeada de image_8db7c2.png */
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    height: 100% !important; /* Se estira igual que su hermano */
-    min-height: 42px; /* Ajuste estimado según tu captura */
-    padding: 0 20px !important;
-    border-radius: 12px !important; /* Redondeado idéntico al de Salir en image_8db30d.png */
+    padding: 8px 24px !important;
+    border-radius: 12px !important; /* Redondeado idéntico al de Salir */
     
-    /* Fuentes */
+    /* Tipografía alineada con el marcador */
     font-family: 'Oswald', sans-serif !important;
     font-weight: 700 !important;
     font-size: 1rem !important;
     letter-spacing: 1px !important;
+    text-transform: uppercase;
+    
     cursor: pointer;
     transition: all 0.2s ease-in-out !important;
+    box-shadow: 0 0 10px rgba(14, 165, 233, 0.15) !important; /* Brillo neón sutil */
 }
 
-/* Hover dinámico al pasar el cursor */
+/* Efecto al pasar el cursor (Hover) */
 .btn-ayuda-arena:hover {
-    background: #0284c7 !important;
-    border-color: #0284c7 !important;
-    box-shadow: 0 0 20px #0ea5e9 !important;
-    transform: scale(1.03);
+    background: rgba(14, 165, 233, 0.1) !important; /* Se ilumina levemente por dentro */
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.4) !important; /* Incrementa el neón */
+    transform: scale(1.02);
 }
 
+/* Efecto al hacer clic */
 .btn-ayuda-arena:active {
-    transform: scale(0.97);
+    transform: scale(0.98);
 }
