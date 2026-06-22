@@ -1422,7 +1422,7 @@ app.get('/api/mundial/estado/:usuarioId', async (req, res) => {
     }
 });
 
-// B. ENDPOINT: Preparar Torneo, validar requerimientos y devolver rivales
+// B. ENDPOINT: Preparar Torneo, filtrar países con stock >= 3 y dar terna
 app.post('/api/mundial/preparar', async (req, res) => {
     const { usuario_id } = req.body;
     try {
@@ -1433,32 +1433,38 @@ app.post('/api/mundial/preparar', async (req, res) => {
         if (userCheck.rows[0].ultima_timba_mundial) {
             const transcurrido = new Date() - new Date(userCheck.rows[0].ultima_timba_mundial);
             if (transcurrido < COOLDOWN_MUNDIAL_MS) {
-                const faltanteMs = COOLDOWN_MUNDIAL_MS - transcurrido;
-                const minutos = Math.ceil(faltanteMs / 60 / 1000);
-                return res.json({ ok: false, mensaje: `⏳ El vestuario está cerrado. Podés jugar otro Mundial en ${minutos} minutos.` });
+                return res.json({ ok: false, elVestuarioEstaCerrado: true, mensaje: `⏳ Vestuario cerrado.` });
             }
         }
 
-        // 2. Validar que tenga como mínimo 3 cartas obtenidas
-        const countCheck = await pool.query("SELECT COUNT(*) FROM usuario_progreso WHERE usuario_id = $1 AND cantidad > 0", [usuario_id]);
-        if (parseInt(countCheck.rows[0].count) < 3) {
-            return res.json({ ok: false, mensaje: "❌ Requisito insuficiente: Necesitás al menos 3 jugadores desbloqueados en tu álbum para competir." });
+        // 2. Buscar qué países tienen como mínimo 3 cartas obtenidas en su inventario
+        const paisesValidosQuery = await pool.query(`
+            SELECT j.pais 
+            FROM usuario_progreso up 
+            JOIN jugadores j ON up.jugador_id = j.id 
+            WHERE up.usuario_id = $1 AND up.cantidad > 0 
+            GROUP BY j.pais 
+            HAVING COUNT(j.id) >= 3
+        `, [usuario_id]);
+
+        const paisesCandidatos = paisesValidosQuery.rows.map(r => r.pais);
+
+        if (paisesCandidatos.length === 0) {
+            return res.json({ ok: false, mensaje: "❌ Requisito insuficiente: Necesitás tener al menos 3 jugadores de un mismo país desbloqueados para poder inscribirte." });
         }
 
-        // 3. Generar la terna de 3 selecciones aleatorias para que elija el cliente
-        // Mezclamos la lista global de selecciones que traías en tu script del backend
-        const listaClonada = [...SELECCIONES_BOTS];
-        const ternaElegible = mezclarArray(listaClonada).slice(0, 3);
+        // 3. Tomar un máximo de 3 países aleatorios de los que sí cumple el requisito
+        const ternaFiltrada = mezclarArray([...paisesCandidatos]).slice(0, 3);
         
-        // Buscamos un rival random de clasificación que no esté en la terna
+        // Elegir un rival random de clasificación que no sea de su terna
         let rivalClasificacion = SELECCIONES_BOTS[Math.floor(Math.random() * SELECCIONES_BOTS.length)];
-        while (ternaElegible.includes(rivalClasificacion)) {
+        while (ternaFiltrada.includes(rivalClasificacion)) {
             rivalClasificacion = SELECCIONES_BOTS[Math.floor(Math.random() * SELECCIONES_BOTS.length)];
         }
 
         return res.json({
             ok: true,
-            terna: ternaElegible,
+            terna: ternaFiltrada,
             rivalClasificacion: rivalClasificacion
         });
     } catch (err) {

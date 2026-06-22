@@ -244,10 +244,9 @@
                     <!-- FASE 1: INSCRIPCIÓN Y COOLDOWN -->
                     <div id="fase-inscripcion-mundial" class="inputs-apuesta-timba-stadium" style="text-align: center; padding: 20px;">
                         <div id="cronometro-mundial" class="banca-reloj-status" style="margin-bottom: 15px;">⏱️ Verificando estado del vestuario...</div>
-                        <h3 class="label-tv">ELIGE TU SELECCIÓN PARA COMPETIR</h3>
-                        <p style="color: #bbb; font-size: 0.95rem; margin-bottom: 15px;">Te aparecerán 3 países aleatorios autorizados por la FIFA para este certamen.</p>
                         
-                        <div id="zona-eleccion-pais-mundial" style="margin: 20px 0;"></div>
+                        <!-- Contenedor dinámico que se limpia solo si hay penalización de tiempo activa -->
+                        <div id="zona-eleccion-pais-mundial" style="margin: 20px 0; display: flex; justify-content: center; flex-wrap: wrap;"></div>
                         
                         <button type="button" id="btn-preparar-mundial" onclick="prepararInscripcionMundial()" class="btn-estadio btn-bet-action" style="max-width: 320px; margin: 0 auto;">
                             🏆 INICIAR INSCRIPCIÓN
