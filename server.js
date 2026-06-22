@@ -1506,7 +1506,7 @@ app.post('/api/mundial/jugar', async (req, res) => {
         else if (promedio >= 70) estrellas = 3;
         else if (promedio >= 62) estrellas = 2;
 
-        const chanceVictoria = 0.05 + (estrellas * 0.09); 
+        const chanceVictoria = 0.20 + (estrellas * 0.10); 
 
         // 3. SIMULACIÓN FASE 1: Partido único de Clasificación
         if (Math.random() > chanceVictoria) {
