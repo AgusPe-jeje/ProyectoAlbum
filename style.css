@@ -159,8 +159,8 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
 .arco-futbol-stadium { 
     position: relative; 
     width: 100%; 
-    max-width: 650px; /* 🚀 Expandido para separar los rincones reales */
-    height: 280px;    /* 🚀 Más alto para colgarla de los ángulos */
+    max-width: 650px; 
+    height: 280px;    
     border: 7px solid #fff; 
     border-bottom: none; 
     margin: 25px auto; 
@@ -183,9 +183,7 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
     position: absolute;
     bottom: 20px;
     left: 50%;
-    /* Tamaño reducido a la mitad de la anterior */
     font-size: 1.5rem; 
-    /* Ajuste de margen para centrar el nuevo tamaño (12px es la mitad de 24px) */
     margin-left: -12px; 
     z-index: 10;
     transition: transform 0.5s ease-out;
@@ -195,9 +193,7 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
     position: absolute;
     top: 90px;
     left: 50%;
-    /* Tamaño reducido a la mitad de la anterior */
     font-size: 2rem; 
-    /* Ajuste de margen para centrar (16px es la mitad de 32px) */
     margin-left: -16px; 
     z-index: 5;
     transition: transform 0.5s ease-out;
@@ -214,7 +210,7 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
 
 .inputs-apuesta-timba-stadium { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 20px; width: 100%; }
 .monto-apuesta-row { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; max-width: 300px; }
-.label-tv { font-size: 1rem; font-weight: 700; color: var(--dorado); letter-spacing: 0.5px; }
+.get-label-tv { font-size: 1rem; font-weight: 700; color: var(--dorado); letter-spacing: 0.5px; }
 
 .grid-opciones-goles-match { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; max-width: 550px; margin-top: 15px; }
 .btn-opcion-resultado { background: rgba(15, 19, 34, 0.6); color: #fff; border: 1px solid var(--celeste) !important; font-family: 'Oswald', sans-serif; font-size: 1.4rem !important; padding: 8px !important; border-radius: 8px; box-shadow: 0 4px 0 #0088cc !important; }
@@ -229,32 +225,6 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
 .spinner-arena { width: 55px; height: 55px; border: 5px solid rgba(255, 255, 255, 0.05); border-top: 5px solid var(--celeste); border-radius: 50%; animation: girarSpinner 0.7s linear infinite; }
 @keyframes girarSpinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 .texto-carga { color: #fff; font-family: 'Oswald', sans-serif; font-size: 1.2rem; margin-top: 15px; text-transform: uppercase; letter-spacing: 1px; }
-
-@media (max-width: 768px) {
-    body { padding: 10px; }
-    .titulo-copa-pe { font-size: 2.1rem; }
-    .header-status-scoreboard { flex-direction: column; gap: 10px; padding: 15px; }
-    .stat-box-tv { width: 100%; flex-direction: row; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 4px 0; }
-    .btn-logout-kick { width: 100%; margin-top: 5px; padding: 8px; }
-    .nav-modulos-estadio { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-    .btn-modulo-match { padding: 10px; font-size: 1.05rem; }
-    .contenedor-tienda-cofres { flex-direction: column; align-items: center; }
-    .tarjeta-cofre-match { width: 100%; max-width: 320px; }
-    .grid-album-match, .grid-album, .grid-sobre { grid-template-columns: repeat(3, 1fr) !important; gap: 8px !important; display: grid !important; }
-    .carta-clash { width: 100% !important; height: auto !important; aspect-ratio: 2 / 3 !important; }
-    .rareza-vertical { font-size: 0.5rem; left: 3px; bottom: 6px; padding: 3px 1px; }
-    .badge-repetidas { font-size: 0.75rem; padding: 1px 5px; }
-    .contenedor-penales-layout-estadio { flex-direction: column; }
-    .arco-futbol-stadium { max-width: 320px; height: 150px; }
-    .arquero-stadium { font-size: 2.2rem; top: 20px; }
-    #balon-animado { font-size: 1.7rem; }
-    .bandera-flag { font-size: 2.6rem; }
-    .nombre-seleccion { font-size: 1.1rem; }
-    .grid-opciones-goles-match { grid-template-columns: 1fr 1fr; }
-}
-
-@keyframes abrirSobre { from { opacity: 0; transform: translateY(20px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
-@keyframes brilloOro { 0%, 100% { box-shadow: 0 0 5px rgba(255,177,0,0.2); } 50% { box-shadow: 0 0 20px rgba(255,177,0,0.55); } }
 
 /* 🎬 PACK OPENING ADDITIONAL SECTIONS */
 .pack-opening-escenario { background: radial-gradient(circle at 50% 50%, #0c152b 0%, #040712 100%); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 30px; min-height: 400px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; box-shadow: inset 0 0 100px rgba(0,0,0,0.8); }
@@ -272,8 +242,6 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
 /* ========================================================================
    🏆 ESTILOS PREMIUM PARA EL COLISEO DEL MINIMUNDIAL
    ======================================================================== */
-
-/* Contenedor del mazo de cartas disponibles en el Draft */
 #grid-cartas-draft-mundial {
     display: grid !important;
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
@@ -282,34 +250,22 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
     scrollbar-color: var(--celeste) rgba(0, 0, 0, 0.3);
 }
 
-/* Scrollbars personalizadas para Webkit (Chrome/Safari) en el Draft */
-#grid-cartas-draft-mundial::-webkit-scrollbar {
-    width: 6px;
-}
-#grid-cartas-draft-mundial::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 4px;
-}
-#grid-cartas-draft-mundial::-webkit-scrollbar-thumb {
-    background: var(--celeste);
-    border-radius: 4px;
-}
+#grid-cartas-draft-mundial::-webkit-scrollbar { width: 6px; }
+#grid-cartas-draft-mundial::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); border-radius: 4px; }
+#grid-cartas-draft-mundial::-webkit-scrollbar-thumb { background: var(--celeste); border-radius: 4px; }
 
-/* ✨ Carta seleccionada en el Draft */
 .carta-clash.activo-draft {
     transform: scale(0.96) translateY(2px);
     filter: brightness(1.15);
     box-shadow: 0 0 20px var(--verde-match), inset 0 0 15px rgba(0, 255, 136, 0.3) !important;
-    animation: pulsoDraft SELECCIONADO 1.5s infinite ease-in-out;
+    animation: pulsoDraft 1.5s infinite ease-in-out;
 }
 
-/* Efecto hover interactivo dentro del menú de Draft */
 #grid-cartas-draft-mundial .carta-clash:not(.activo-draft):hover {
     border-color: var(--celeste) !important;
     box-shadow: 0 0 15px rgba(0, 204, 255, 0.3) !important;
 }
 
-/* 📊 Estructura de filas para la bitácora de Play-offs */
 #lista-cruces-mundial-simulacion .item-historial-partido {
     background: linear-gradient(90deg, rgba(16, 24, 43, 0.6) 0%, rgba(9, 13, 22, 0.8) 100%);
     border-left: 5px solid #232d45;
@@ -321,39 +277,91 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
     animation: entradaFixture 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
 }
 
-/* Animación en cascada para la salida de los partidos simulados */
 #lista-cruces-mundial-simulacion .item-historial-partido:nth-child(1) { animation-delay: 0.1s; }
 #lista-cruces-mundial-simulacion .item-historial-partido:nth-child(2) { animation-delay: 0.3s; }
 #lista-cruces-mundial-simulacion .item-historial-partido:nth-child(3) { animation-delay: 0.5s; }
 #lista-cruces-mundial-simulacion .item-historial-partido:nth-child(4) { animation-delay: 0.7s; }
 
-/* ========================================================================
-   🎬 ANIMACIONES MECÁNICAS
-   ======================================================================== */
 @keyframes pulsoDraft {
     0%, 100% { border-color: var(--verde-match); }
     50% { border-color: #ffffff; box-shadow: 0 0 25px var(--verde-match), inset 0 0 10px rgba(0, 255, 136, 0.5) !important; }
 }
 
 @keyframes entradaFixture {
-    from {
-        opacity: 0;
-        transform: translateX(-25px);
-        filter: blur(4px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-        filter: blur(0);
-    }
+    from { opacity: 0; transform: translateX(-25px); filter: blur(4px); }
+    to { opacity: 1; transform: translateX(0); filter: blur(0); }
 }
 
-/* 📱 Ajustes Adaptativos para Celulares */
+@keyframes abrirSobre { from { opacity: 0; transform: translateY(20px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes brilloOro { 0%, 100% { box-shadow: 0 0 5px rgba(255,177,0,0.2); } 50% { box-shadow: 0 0 20px rgba(255,177,0,0.55); } }
+
+/* ========================================================================
+   📱 REINGENIERÍA EXCLUSIVA RESPONSIVA PARA CELULARES (MÁXIMO 768px)
+   ======================================================================== */
 @media (max-width: 768px) {
-    #grid-cartas-draft-mundial {
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 8px !important;
+    body { padding: 10px; }
+    .titulo-copa-pe { font-size: 2.1rem; }
+    
+    .header-status-scoreboard { flex-direction: column; gap: 10px; padding: 15px; }
+    .stat-box-tv { width: 100%; flex-direction: row; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 4px 0; }
+    .btn-logout-kick { width: 100%; margin-top: 5px; padding: 8px; }
+    
+    .nav-modulos-estadio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .btn-modulo-match { padding: 10px 4px; font-size: 0.95rem; white-space: nowrap; }
+    
+    .contenedor-tienda-cofres { flex-direction: column; align-items: center; }
+    .tarjeta-cofre-match { width: 100%; max-width: 320px; }
+
+    /* 🎬 ADAPTACIÓN DE APERTURA DE SOBRES */
+    .pack-opening-escenario { min-height: 320px; padding: 15px; }
+    
+    .pistas-pack-container {
+        gap: 6px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        justify-content: center !important;
     }
+    .pista-bloque {
+        min-width: 0 !important;
+        flex: 1 !important;
+        max-width: 85px !important;
+        font-size: 1.1rem !important;
+        padding: 6px 8px !important;
+        white-space: nowrap !important;
+    }
+    
+    .carta-presentada-wrapper { min-height: 180px; margin-bottom: 15px; }
+    .carta-clash.caminante-entrada { animation: entradaFIFAMovil 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards !important; }
+
+    .grid-album-match, .grid-album, .grid-sobre, #grid-sobre-abierto { 
+        grid-template-columns: repeat(3, 1fr) !important; 
+        gap: 8px !important; 
+        display: grid !important; 
+    }
+    .carta-clash { width: 100% !important; height: auto !important; aspect-ratio: 2 / 3 !important; }
+    .rareza-vertical { font-size: 0.5rem; left: 3px; bottom: 6px; padding: 3px 1px; }
+    .badge-repetidas { font-size: 0.75rem; padding: 1px 5px; }
+
+    /* ⚽ ADAPTACIÓN CALIBRADA DE JUEGO DE PENALES */
+    .contenedor-penales-layout-estadio { flex-direction: column; gap: 15px; }
+    
+    .arco-futbol-stadium { 
+        width: 100% !important;
+        max-width: 340px !important; 
+        height: 160px !important; 
+        border-width: 4px !important;
+        margin: 15px auto !important;
+    }
+    
+    #arquero-animado { font-size: 1.6rem !important; top: 45px !important; margin-left: -13px !important; }
+    #balon-animado { font-size: 1.3rem !important; bottom: 10px !important; margin-left: -10px !important; }
+
+    /* 🎲 ADAPTACIÓN TIMBA Y MINIMUNDIAL */
+    .bandera-flag { font-size: 2.6rem; }
+    .nombre-seleccion { font-size: 1.1rem; }
+    .grid-opciones-goles-match { grid-template-columns: repeat(2, 1fr); }
+    
+    #grid-cartas-draft-mundial { grid-template-columns: repeat(3, 1fr) !important; gap: 8px !important; }
     #lista-cruces-mundial-simulacion .item-historial-partido {
         font-size: 0.95rem;
         padding: 10px 12px;
@@ -361,7 +369,10 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
         align-items: flex-start;
         gap: 6px;
     }
-    #lista-cruces-mundial-simulacion .item-historial-partido b {
-        align-self: flex-end;
-    }
+    #lista-cruces-mundial-simulacion .item-historial-partido b { align-self: flex-end; }
+}
+
+@keyframes entradaFIFAMovil { 
+    0% { opacity: 0; transform: translateX(-80px) scale(0.6) rotate(-10deg); filter: blur(3px) brightness(2); } 
+    100% { opacity: 1; transform: translateX(0) scale(1) rotate(0deg); filter: blur(0) brightness(1); } 
 }
