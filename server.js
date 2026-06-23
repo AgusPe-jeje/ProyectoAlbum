@@ -17,7 +17,7 @@ app.use(express.json());
 /* ========================================================================
    🛠️ CONFIGURACIÓN DE MODO MANTENIMIENTO / MODO SOLO YO
    ======================================================================== */
-const MODO_MANTENIMIENTO = true; 
+const MODO_MANTENIMIENTO = false; 
 
 app.use((req, res, next) => {
     if (!MODO_MANTENIMIENTO) {
