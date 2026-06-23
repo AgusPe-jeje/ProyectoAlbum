@@ -1461,7 +1461,7 @@ app.post('/api/mundial/preparar', async (req, res) => {
         if (userCheck.rows[0].ultima_timba_mundial) {
             const transcurrido = new Date() - new Date(userCheck.rows[0].ultima_timba_mundial);
             if (transcurrido < COOLDOWN_MUNDIAL_MS) {
-                return res.json({ ok: false, elVestuarioEstaCerrado: true, mensaje: `⏳ Vestuario cerrado.` });
+                return res.json({ ok: false, elVestuarioEstaCerrado: true, mensaje: `⏳ Vestuario cerrado. Debés esperar a que se cumpla el tiempo.` });
             }
         }
 
@@ -1486,9 +1486,12 @@ app.post('/api/mundial/preparar', async (req, res) => {
             return res.json({ ok: false, mensaje: "❌ Requisito insuficiente: Necesitás tener al menos 3 jugadores de un mismo país desbloqueados para poder inscribirte." });
         }
 
-        // 🔥 LIQUIDACIÓN DEL BUG EXPLOIT: Cobramos la inscripción antes de generar la terna
+        // 🔥 CRUNCH AL EXPLOIT: Quitamos las 500 monedas Y activamos las 3 horas de Cooldown de una sola vez
         const nuevoOro = userCheck.rows[0].monedas - 500;
-        await pool.query("UPDATE usuarios SET monedas = $1 WHERE id = $2", [nuevoOro, usuario_id]);
+        await pool.query(
+            "UPDATE usuarios SET monedas = $1, ultima_timba_mundial = NOW() WHERE id = $2", 
+            [nuevoOro, usuario_id]
+        );
 
         const ternaFiltrada = mezclarArray([...paisesCandidatos]).slice(0, 3);
         
@@ -1497,12 +1500,11 @@ app.post('/api/mundial/preparar', async (req, res) => {
             rivalClasificacion = SELECCIONES_BOTS[Math.floor(Math.random() * SELECCIONES_BOTS.length)];
         }
 
-        // Devolvemos el saldo actualizado para que el frontend (`data.monedasActualizadas`) redibuje la UI
         return res.json({
             ok: true,
             terna: ternaFiltrada,
             rivalClasificacion: rivalClasificacion,
-            monedasActualizadas: nuevoOro // 👈 Sincronización nativa con tu script.js
+            monedasActualizadas: nuevoOro
         });
         
     } catch (err) {
@@ -1700,7 +1702,7 @@ const CONFIG_ANUNCIO_SERVIDOR = {
     titulo: "¡ACTUALIZACIÓN DE TEMPORADA!",
     texto: "Prendete a los nuevos torneos en vivo. Calibramos el MiniMundial para que sea más justo.",
     urlImagen: "https://albumpe.onrender.com/assets/novedad.png", 
-    urlVideo: "https://www.youtube.com/embed/2mcPLwhS43Q" 
+    urlVideo: "https://www.youtube.com/embed/dQw4w9WgXcQ" 
 };
 
 // Endpoint público para que el juego consulte el anuncio
