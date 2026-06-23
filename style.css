@@ -38,7 +38,7 @@ body.ambiente-mundial {
 .banner-tienda { background: url('./static/sobres.jpg') no-repeat center center; background-size: cover; }
 .banner-penales { background: url('./static/penales.jpg') no-repeat center center; background-size: cover; }
 .banner-casino { background: url('./static/casino.jpg') no-repeat center center; background-size: cover; }
-.banner-mundial { background: url('./static/mundial.jpg') no-repeat center center; background-size: cover; } /* 🔥 Vinculación del nuevo banner */
+.banner-mundial { background: url('./static/mundial.jpg') no-repeat center center; background-size: cover; }
 
 .header-principal-mundial { margin-bottom: 15px; text-align: center; }
 .titulo-copa-pe { font-family: 'Oswald', sans-serif; font-size: 3rem; font-weight: 700; text-transform: uppercase; margin: 0; color: #ffffff; text-shadow: 0 4px 0 #000, 0 0 25px rgba(0, 204, 255, 0.4); }
@@ -296,89 +296,7 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
 @keyframes abrirSobre { from { opacity: 0; transform: translateY(20px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes brilloOro { 0%, 100% { box-shadow: 0 0 5px rgba(255,177,0,0.2); } 50% { box-shadow: 0 0 20px rgba(255,177,0,0.55); } }
 
-/* ========================================================================
-   📱 REINGENIERÍA EXCLUSIVA RESPONSIVA PARA CELULARES (MÁXIMO 768px)
-   ======================================================================== */
-@media (max-width: 768px) {
-    body { padding: 10px; }
-    .titulo-copa-pe { font-size: 2.1rem; }
-    
-    .header-status-scoreboard { flex-direction: column; gap: 10px; padding: 15px; }
-    .stat-box-tv { width: 100%; flex-direction: row; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 4px 0; }
-    .btn-logout-kick { width: 100%; margin-top: 5px; padding: 8px; }
-    
-    .nav-modulos-estadio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-    .btn-modulo-match { padding: 10px 4px; font-size: 0.95rem; white-space: nowrap; }
-    
-    .contenedor-tienda-cofres { flex-direction: column; align-items: center; }
-    .tarjeta-cofre-match { width: 100%; max-width: 320px; }
-
-    /* 🎬 ADAPTACIÓN DE APERTURA DE SOBRES */
-    .pack-opening-escenario { min-height: 320px; padding: 15px; }
-    
-    .pistas-pack-container {
-        gap: 6px !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-        justify-content: center !important;
-    }
-    .pista-bloque {
-        min-width: 0 !important;
-        flex: 1 !important;
-        max-width: 85px !important;
-        font-size: 1.1rem !important;
-        padding: 6px 8px !important;
-        white-space: nowrap !important;
-    }
-    
-    .carta-presentada-wrapper { min-height: 180px; margin-bottom: 15px; }
-    .carta-clash.caminante-entrada { animation: entradaFIFAMovil 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards !important; }
-
-    .grid-album-match, .grid-album, .grid-sobre, #grid-sobre-abierto { 
-        grid-template-columns: repeat(3, 1fr) !important; 
-        gap: 8px !important; 
-        display: grid !important; 
-    }
-    .carta-clash { width: 100% !important; height: auto !important; aspect-ratio: 2 / 3 !important; }
-    .rareza-vertical { font-size: 0.5rem; left: 3px; bottom: 6px; padding: 3px 1px; }
-    .badge-repetidas { font-size: 0.75rem; padding: 1px 5px; }
-
-    /* ⚽ ADAPTACIÓN CALIBRADA DE JUEGO DE PENALES */
-    .contenedor-penales-layout-estadio { flex-direction: column; gap: 15px; }
-    
-    .arco-futbol-stadium { 
-        width: 100% !important;
-        max-width: 340px !important; 
-        height: 160px !important; 
-        border-width: 4px !important;
-        margin: 15px auto !important;
-    }
-    
-    #arquero-animado { font-size: 1.6rem !important; top: 45px !important; margin-left: -13px !important; }
-    #balon-animado { font-size: 1.3rem !important; bottom: 10px !important; margin-left: -10px !important; }
-
-    /* 🎲 ADAPTACIÓN TIMBA Y MINIMUNDIAL */
-    .bandera-flag { font-size: 2.6rem; }
-    .nombre-seleccion { font-size: 1.1rem; }
-    .grid-opciones-goles-match { grid-template-columns: repeat(2, 1fr); }
-    
-    #grid-cartas-draft-mundial { grid-template-columns: repeat(3, 1fr) !important; gap: 8px !important; }
-    #lista-cruces-mundial-simulacion .item-historial-partido {
-        font-size: 0.95rem;
-        padding: 10px 12px;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 6px;
-    }
-    #lista-cruces-mundial-simulacion .item-historial-partido b { align-self: flex-end; }
-}
-
-@keyframes entradaFIFAMovil { 
-    0% { opacity: 0; transform: translateX(-80px) scale(0.6) rotate(-10deg); filter: blur(3px) brightness(2); } 
-    100% { opacity: 1; transform: translateX(0) scale(1) rotate(0deg); filter: blur(0) brightness(1); } 
-}
-
-/* 🚪 Botón Salir Premium Agrandado */
+/* 🚪 Botón Salir Premium */
 .btn-logout-premium {
     padding: 10px 22px !important;
     font-size: 1.1rem !important;
@@ -390,51 +308,34 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
     box-shadow: 0 4px 10px rgba(255, 51, 68, 0.15);
 }
 
-@media (max-width: 768px) {
-    .btn-logout-premium {
-        width: 100% !important;
-        padding: 12px !important;
-        font-size: 1.1rem !important;
-        margin-top: 5px;
-    }
-}
-
 /* ========================================================================
    ❓ BOTÓN DE AYUDA PREMIUM (ESTILO TRANSMISIÓN TV)
    ======================================================================== */
 .btn-ayuda-arena {
-    /* Fondo transparente con un toque sutil oscuro igual al de Salir */
     background: #0f172a !important; 
-    border: 1px solid var(--celeste) !important; /* Borde fino de 1px */
-    color: var(--celeste) !important; /* Texto celeste nativo del juego */
-    
-    /* Copia exacta del tamaño y la forma redondeada de image_8db7c2.png */
+    border: 1px solid var(--celeste) !important; 
+    color: var(--celeste) !important; 
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     padding: 8px 24px !important;
-    border-radius: 12px !important; /* Redondeado idéntico al de Salir */
-    
-    /* Tipografía alineada con el marcador */
+    border-radius: 12px !important; 
     font-family: 'Oswald', sans-serif !important;
     font-weight: 700 !important;
     font-size: 1rem !important;
     letter-spacing: 1px !important;
     text-transform: uppercase;
-    
     cursor: pointer;
     transition: all 0.2s ease-in-out !important;
-    box-shadow: 0 0 10px rgba(14, 165, 233, 0.15) !important; /* Brillo neón sutil */
+    box-shadow: 0 0 10px rgba(14, 165, 233, 0.15) !important; 
 }
 
-/* Efecto al pasar el cursor (Hover) */
 .btn-ayuda-arena:hover {
-    background: rgba(14, 165, 233, 0.1) !important; /* Se ilumina levemente por dentro */
-    box-shadow: 0 0 20px rgba(14, 165, 233, 0.4) !important; /* Incrementa el neón */
+    background: rgba(14, 165, 233, 0.1) !important; 
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.4) !important; 
     transform: scale(1.02);
 }
 
-/* Efecto al hacer clic */
 .btn-ayuda-arena:active {
     transform: scale(0.98);
 }
@@ -443,7 +344,7 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
    🚨 CONTENEDOR ANUNCIOS FULLSCREEN (RESPONSIVO Y CALIBRADO)
    ======================================================================== */
 .modal-anuncio-overlay {
-    display: none; /* JS lo maneja */
+    display: none; 
     position: fixed;
     top: 0;
     left: 0;
@@ -454,16 +355,15 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
     z-index: 99999;
     align-items: center;
     justify-content: center;
-    padding: 20px; /* Evita que toque los bordes en pantallas chicas */
+    padding: 20px; 
 }
 
-/* Caja contenedora del anuncio */
 .modal-anuncio-content {
     background: #0b0f19;
     border: 2px solid var(--celeste);
     box-shadow: 0 0 30px rgba(14, 165, 233, 0.3);
     width: 100%;
-    max-width: 520px; /* Tamaño compacto HUD */
+    max-width: 520px; 
     padding: 25px;
     border-radius: 14px;
     position: relative;
@@ -471,8 +371,8 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
     color: #fff;
     font-family: 'Oswald', sans-serif;
     text-align: center;
-    max-height: 90vh; /* Se adapta a notebooks */
-    overflow-y: auto;  /* Scroll interno si el texto es gigante */
+    max-height: 90vh; 
+    overflow-y: auto;  
 }
 
 @keyframes popInAnuncio {
@@ -480,10 +380,9 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
     to { transform: scale(1); opacity: 1; }
 }
 
-/* 🔥 BOTÓN DE CERRAR REDISEÑADO DENTRO DEL CONTENEDOR */
 .btn-cerrar-anuncio {
     position: absolute;
-    top: 15px; /* Lo metemos adentro para que NO se corte nunca */
+    top: 15px; 
     right: 15px;
     background: #ef4444 !important;
     color: white !important;
@@ -504,12 +403,11 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
     transform: scale(1.05);
 }
 
-/* Título con margen superior para no encimarse con el botón de cerrar */
 .anuncio-titulo {
     color: var(--celeste);
     font-size: 1.8rem;
     letter-spacing: 1px;
-    margin-top: 15px; /* Espacio para el botón de cerrar */
+    margin-top: 15px; 
     margin-bottom: 15px;
     text-transform: uppercase;
 }
@@ -521,15 +419,14 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
     margin-bottom: 15px;
 }
 
-/* Ajuste del contenedor de video para que mantenga proporción 16:9 perfecta */
 .anuncio-video-container {
     position: relative;
-    padding-bottom: 56.25%; /* Ratio 16:9 */
+    padding-bottom: 56.25%; 
     height: 0;
     width: 100%;
     margin-top: 12px;
     border-radius: 8px;
-    overflow: hidden; /* Corta los bordes rectos del iframe */
+    overflow: hidden; 
     border: 1px solid rgba(14, 165, 233, 0.5);
 }
 
@@ -541,7 +438,6 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
     height: 100%;
 }
 
-/* Imágenes responsivas */
 .anuncio-media {
     max-width: 100%;
     max-height: 260px;
@@ -549,4 +445,63 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
     border-radius: 8px;
     margin-top: 12px;
     border: 1px solid rgba(14, 165, 233, 0.3);
+}
+
+/* ========================================================================
+   📱 REINGENIERÍA EXCLUSIVA RESPONSIVA PARA CELULARES (MÁXIMO 768px)
+   ======================================================================== */
+@media (max-width: 768px) {
+    body { padding: 10px; }
+    .titulo-copa-pe { font-size: 2.1rem; }
+    
+    /* Marcador de Estado: se apila en vertical simulando renglones HUD */
+    .header-status-scoreboard { flex-direction: column; gap: 10px; padding: 15px; }
+    .stat-box-tv { width: 100%; flex-direction: row; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 6px 0; }
+    
+    /* Navegación Modular: Rejilla simétrica de 3 columnas */
+    .nav-modulos-estadio { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 6px; }
+    .btn-modulo-match { padding: 10px 4px; font-size: 0.95rem; white-space: nowrap; }
+    
+    /* Tienda y Cofres */
+    .contenedor-tienda-cofres { flex-direction: column; align-items: center; }
+    .tarjeta-cofre-match { width: 100%; max-width: 320px; }
+
+    /* Animaciones y Escenario de Aperturas */
+    .pack-opening-escenario { min-height: 320px; padding: 15px; }
+    .pistas-pack-container { gap: 6px !important; width: 100% !important; box-sizing: border-box !important; justify-content: center !important; }
+    .pista-bloque { min-width: 0 !important; flex: 1 !important; max-width: 85px !important; font-size: 1.1rem !important; padding: 6px 8px !important; white-space: nowrap !important; }
+    .carta-presentada-wrapper { min-height: 180px; margin-bottom: 15px; }
+    .carta-clash.caminante-entrada { animation: entradaFIFAMovil 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards !important; }
+
+    /* Cuadrículas e Inventario del Álbum: Clavado en 3 columnas puras */
+    .grid-album-match, .grid-album, .grid-sobre, #grid-sobre-abierto, #grid-cartas-draft-mundial { 
+        grid-template-columns: repeat(3, 1fr) !important; 
+        gap: 8px !important; 
+        display: grid !important; 
+    }
+    .carta-clash { width: 100% !important; height: auto !important; aspect-ratio: 2 / 3 !important; }
+    .rareza-vertical { font-size: 0.5rem; left: 3px; bottom: 6px; padding: 3px 1px; }
+    .badge-repetidas { font-size: 0.75rem; padding: 1px 5px; }
+
+    /* Juego de Penales Adaptado */
+    .contenedor-penales-layout-estadio { flex-direction: column; gap: 15px; }
+    .arco-futbol-stadium { width: 100% !important; max-width: 340px !important; height: 160px !important; border-width: 4px !important; margin: 15px auto !important; }
+    #arquero-animado { font-size: 1.6rem !important; top: 45px !important; margin-left: -13px !important; }
+    #balon-animado { font-size: 1.3rem !important; bottom: 10px !important; margin-left: -10px !important; }
+
+    /* Casino y Fixture del Mundial */
+    .bandera-flag { font-size: 2.6rem; }
+    .nombre-seleccion { font-size: 1.1rem; }
+    .grid-opciones-goles-match { grid-template-columns: repeat(2, 1fr); }
+    
+    #lista-cruces-mundial-simulacion .item-historial-partido { font-size: 0.95rem; padding: 10px 12px; flex-direction: column; align-items: flex-start; gap: 6px; }
+    #lista-cruces-mundial-simulacion .item-historial-partido b { align-self: flex-end; }
+    
+    /* Botonera de Salida */
+    .btn-logout-premium { width: 100% !important; padding: 12px !important; font-size: 1.1rem !important; margin-top: 5px; }
+}
+
+@keyframes entradaFIFAMovil { 
+    0% { opacity: 0; transform: translateX(-80px) scale(0.6) rotate(-10deg); filter: blur(3px) brightness(2); } 
+    100% { opacity: 1; transform: translateX(0) scale(1) rotate(0deg); filter: blur(0) brightness(1); } 
 }
