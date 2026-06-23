@@ -1659,9 +1659,9 @@ const CONFIG_ANUNCIO_SERVIDOR = {
     activo: true,       // true = encendido | false = apagado
     tipo: "video",      // "texto" | "imagen" | "video"
     titulo: "¡ACTUALIZACIÓN DE TEMPORADA!",
-    texto: "Prendete a los nuevos torneos en vivo. Calibramos el MiniMundial para que sea más justo.",
+    texto: "Prendete a los nuevos torneos en vivo. No te olvides de timbear.",
     urlImagen: "https://proyectoalbum.onrender.com/assets/novedad.png", 
-    urlVideo: "https://www.youtube.com/embed/AV6dT0X_sHY" 
+    urlVideo: "https://www.youtube.com/embed/a15c6b8oIPE" 
 };
 
 // Endpoint público para que el juego consulte el anuncio
