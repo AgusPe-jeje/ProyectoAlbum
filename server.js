@@ -17,7 +17,7 @@ app.use(express.json());
 /* ========================================================================
    🛠️ CONFIGURACIÓN DE MODO MANTENIMIENTO / MODO SOLO YO
    ======================================================================== */
-const MODO_MANTENIMIENTO = false; 
+const MODO_MANTENIMIENTO = true; 
 
 app.use((req, res, next) => {
     if (!MODO_MANTENIMIENTO) {
@@ -1465,7 +1465,7 @@ app.post('/api/mundial/preparar', async (req, res) => {
             }
         }
 
-        // 🔥 NUEVA VALIDACIÓN: Verificar si tiene las 500 monedas para la inscripción
+        // 🪙 VALIDACIÓN DE ORO
         if (userCheck.rows[0].monedas < 500) {
             return res.json({ ok: false, mensaje: "🪙 No tenés suficiente Oro. La inscripción al MiniMundial cuesta 500 monedas." });
         }
@@ -1486,6 +1486,10 @@ app.post('/api/mundial/preparar', async (req, res) => {
             return res.json({ ok: false, mensaje: "❌ Requisito insuficiente: Necesitás tener al menos 3 jugadores de un mismo país desbloqueados para poder inscribirte." });
         }
 
+        // 🔥 LIQUIDACIÓN DEL BUG EXPLOIT: Cobramos la inscripción antes de generar la terna
+        const nuevoOro = userCheck.rows[0].monedas - 500;
+        await pool.query("UPDATE usuarios SET monedas = $1 WHERE id = $2", [nuevoOro, usuario_id]);
+
         const ternaFiltrada = mezclarArray([...paisesCandidatos]).slice(0, 3);
         
         let rivalClasificacion = SELECCIONES_BOTS[Math.floor(Math.random() * SELECCIONES_BOTS.length)];
@@ -1493,11 +1497,14 @@ app.post('/api/mundial/preparar', async (req, res) => {
             rivalClasificacion = SELECCIONES_BOTS[Math.floor(Math.random() * SELECCIONES_BOTS.length)];
         }
 
+        // Devolvemos el saldo actualizado para que el frontend (`data.monedasActualizadas`) redibuje la UI
         return res.json({
             ok: true,
             terna: ternaFiltrada,
-            rivalClasificacion: rivalClasificacion
+            rivalClasificacion: rivalClasificacion,
+            monedasActualizadas: nuevoOro // 👈 Sincronización nativa con tu script.js
         });
+        
     } catch (err) {
         return res.status(500).json({ ok: false, error: err.message });
     }
