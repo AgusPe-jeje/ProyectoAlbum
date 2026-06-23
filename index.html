@@ -347,6 +347,13 @@
                 </div>
         </div>
     </div>
+    <script src="https://unpkg.com/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
+    <script>
+    // Corre automáticamente apenas carga la página y renderiza los emojis como imágenes uniformes
+    window.addEventListener('DOMContentLoaded', () => {
+        twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });
+    });
+    </script>
     
     <script src="script.js"></script>
 </body>
