@@ -1334,7 +1334,7 @@ app.post('/api/timba/procesar', async (req, res) => {
                 
                 // CASO A: Si apostó una LEGENDARIA, el premio es ORO PURO
                 if (rarezaOriginal === "legendaria") {
-                    let oroPremio = opcionReal.tipo === 'exacto' ? 10000 : 5000;
+                    let oroPremio = opcionReal.tipo === 'exacto' ? 2500 : 1000;
                     puntosAsignados = opcionReal.tipo === 'exacto' ? 40 : 20;
 
                     await pool.query("UPDATE usuario_progreso SET cantidad = cantidad - 1 WHERE usuario_id = $1 AND jugador_id = $2", [usuario_id, jugadorIdApostado]);
@@ -1693,7 +1693,7 @@ const CONFIG_ANUNCIO_SERVIDOR = {
     titulo: "¡ACTUALIZACIÓN DE TEMPORADA!",
     texto: "Prendete a los nuevos torneos en vivo. Calibramos el MiniMundial para que sea más justo.",
     urlImagen: "https://albumpe.onrender.com/assets/novedad.png", 
-    urlVideo: "https://www.youtube.com/embed/a15c6b8oIPE" 
+    urlVideo: "https://www.youtube.com/embed/dQw4w9WgXcQ" 
 };
 
 // Endpoint público para que el juego consulte el anuncio
