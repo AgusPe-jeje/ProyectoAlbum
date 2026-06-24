@@ -60,7 +60,7 @@ function generarCodigoSala() {
 
    ======================================================================== */
 
-const MODO_MANTENIMIENTO = true; 
+const MODO_MANTENIMIENTO = false; 
 
 // 👥 Agregá o sacá acá los usuarios permitidos en minúscula para las pruebas
 
