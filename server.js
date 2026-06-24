@@ -2001,14 +2001,32 @@ app.post('/api/multijugador/jugar', async (req, res) => {
 
         competidores = mezclarArray(competidores);
 
+        // 📋 1. REMOCIÓN PREVIA DE APUESTAS (Ambos arriesgan y pierden de entrada)
+        const modalidadSala = sala.tipo_apuesta ? sala.tipo_apuesta.toLowerCase() : 'amistoso';
+        
+        if (modalidadSala === 'carta') {
+            // Quitamos 1 carta aleatoria (o la seleccionada si guardás el ID en la sala) del inventario de cada jugador real en la sala
+            for (let jugadorReal of competidores.filter(c => !c.esBot)) {
+                // Buscamos una carta cualquiera que tenga para descontarle
+                const cartaCheck = await pool.query("SELECT jugador_id FROM usuario_progreso WHERE usuario_id = $1 AND cantidad > 0 LIMIT 1", [jugadorReal.id]);
+                if (cartaCheck.rows.length > 0) {
+                    await pool.query(
+                        "UPDATE usuario_progreso SET cantidad = cantidad - 1 WHERE usuario_id = $1 AND jugador_id = $2",
+                        [jugadorReal.id, cartaCheck.rows[0].id]
+                    );
+                }
+            }
+        }
+
         let bitacoraPartidosPlana = [];
 
-        // 1. SIMULACIÓN DE CUARTOS DE FINAL
+        // 2. SIMULACIÓN DE CUARTOS DE FINAL (Enumerados)
         let ganadoresCuartos = [];
+        let numeroPartido = 1;
         for (let i = 0; i < 8; i += 2) {
             let cruce = simularPartidoEliminatorio(competidores[i], competidores[i+1]);
             bitacoraPartidosPlana.push({
-                ronda: "Cuartos de Final",
+                ronda: `Cuartos de Final (${numeroPartido}/4)`,
                 local: cruce.local.seleccion,
                 visitante: cruce.visitante.seleccion,
                 golesLocal: cruce.golesL,
@@ -2019,14 +2037,16 @@ app.post('/api/multijugador/jugar', async (req, res) => {
                 ganadorUsername: cruce.ganador.username
             });
             ganadoresCuartos.push(cruce.ganador);
+            numeroPartido++;
         }
 
-        // 2. SIMULACIÓN DE SEMIFINALES
+        // 3. SIMULACIÓN DE SEMIFINALES
+        let numeroSemi = 1;
         let ganadoresSemis = [];
         for (let i = 0; i < 4; i += 2) {
             let cruce = simularPartidoEliminatorio(ganadoresCuartos[i], ganadoresCuartos[i+1]);
             bitacoraPartidosPlana.push({
-                ronda: "Semifinal",
+                ronda: `Semifinal (${numeroSemi}/2)`,
                 local: cruce.local.seleccion,
                 visitante: cruce.visitante.seleccion,
                 golesLocal: cruce.golesL,
@@ -2037,9 +2057,10 @@ app.post('/api/multijugador/jugar', async (req, res) => {
                 ganadorUsername: cruce.ganador.username
             });
             ganadoresSemis.push(cruce.ganador);
+            numeroSemi++;
         }
 
-        // 3. SIMULACIÓN DE LA GRAN FINAL
+        // 4. SIMULACIÓN DE LA GRAN FINAL
         let finalCruce = simularPartidoEliminatorio(ganadoresSemis[0], ganadoresSemis[1]);
         const campeonMundial = finalCruce.ganador;
         
@@ -2055,27 +2076,38 @@ app.post('/api/multijugador/jugar', async (req, res) => {
             ganadorUsername: finalCruce.ganador.username
         });
 
-        let datosPremio = { ganoBot: true, ganador_username: campeonMundial.username, pozo: sala.pozo_total, tipo_apuesta: sala.tipo_apuesta };
+        // 🎁 5. RECOMPENSAS FINALES Y POZOS
+        let datosPremio = { 
+            ganoBot: true, 
+            ganador_username: campeonMundial.username, 
+            pozo: sala.pozo_total, 
+            tipo_apuesta: sala.tipo_apuesta,
+            nombreCartaPremio: null 
+        };
         
         if (!campeonMundial.esBot) {
             datosPremio.ganoBot = false;
-            const modalidadSala = sala.tipo_apuesta ? sala.tipo_apuesta.toLowerCase() : 'amistoso';
 
             if (modalidadSala === 'oro') {
                 await pool.query("UPDATE usuarios SET monedas = monedas + $1 WHERE id = $2", [sala.pozo_total, campeonMundial.id]);
             } else if (modalidadSala === 'carta') {
-                const lootPremio = await pool.query("SELECT id FROM jugadores WHERE rareza IN ('epica', 'legendaria') ORDER BY RANDOM() LIMIT 1");
+                // Buscamos un cromo Épico o Legendario de recompensa
+                const lootPremio = await pool.query("SELECT id, nombre, rareza FROM jugadores WHERE rareza IN ('epica', 'legendaria') ORDER BY RANDOM() LIMIT 1");
+                const cartaRecompensa = lootPremio.rows[0];
+                
+                // Se le adjudica la nueva carta obtenida
                 await pool.query(
                     `INSERT INTO usuario_progreso (usuario_id, jugador_id, cantidad) VALUES ($1, $2, 1) 
                      ON CONFLICT (usuario_id, jugador_id) DO UPDATE SET cantidad = usuario_progreso.cantidad + 1`,
-                    [campeonMundial.id, lootPremio.rows[0].id]
+                    [campeonMundial.id, cartaRecompensa.id]
                 );
+                
+                datosPremio.nombreCartaPremio = `${cartaRecompensa.nombre} (${cartaRecompensa.rareza.toUpperCase()})`;
             }
         }
 
         await pool.query("UPDATE mundial_salas SET estado = 'finalizado' WHERE id = $1", [sala_id]);
 
-        // 🔥 ALIMENTAMOS EL CACHÉ GLOBAL ANTES DEL RETURN PARA QUE EL INVITADO PUEDA LEERLO
         BITACORAS_SALA_CACHE[sala_id] = { bitacora: bitacoraPartidosPlana, premio: datosPremio };
 
         return res.json({ ok: true, bitacora: bitacoraPartidosPlana, premio: datosPremio });
