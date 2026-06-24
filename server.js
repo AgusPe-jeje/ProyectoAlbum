@@ -1799,32 +1799,53 @@ app.post('/api/multijugador/crear', async (req, res) => {
 app.post('/api/multijugador/unirse', async (req, res) => {
     const { usuario_id, codigo_sala, seleccion, jugador_ids } = req.body;
 
+    if (!codigo_sala) {
+        return res.json({ ok: false, mensaje: "❌ Falta el código de la sala." });
+    }
+
     if (!jugador_ids || jugador_ids.length !== 3) {
         return res.json({ ok: false, mensaje: "❌ Debés seleccionar 3 jugadores para tu plantel." });
     }
 
     try {
+        // 1. Buscamos la sala en Neon
         const salaCheck = await pool.query(
             "SELECT id, tipo_apuesta, apuesta_oro, pozo_total, estado FROM mundial_salas WHERE codigo_sala = $1", 
             [codigo_sala.toUpperCase()]
         );
 
-        if (salaCheck.rows.length === 0) return res.json({ ok: false, mensaje: "❌ El código de sala no existe." });
+        if (salaCheck.rows.length === 0) {
+            return res.json({ ok: false, mensaje: "❌ El código de sala no existe o es inválido." });
+        }
+        
         const sala = salaCheck.rows[0];
 
-        if (sala.estado !== 'esperando') return res.json({ ok: false, mensaje: "🚫 Esta sala ya empezó o está cerrada." });
+        // 2. Validaciones de estado de la sala
+        if (sala.estado !== 'esperando') {
+            return res.json({ ok: false, mensaje: "🚫 Esta sala ya empezó o está cerrada." });
+        }
 
         const participantesQuery = await pool.query("SELECT COUNT(*) FROM sala_participantes WHERE sala_id = $1", [sala.id]);
-        if (parseInt(participantesQuery.rows[0].count) >= 8) return res.json({ ok: false, mensaje: "🚫 La sala está llena (Máximo 8)." });
+        if (parseInt(participantesQuery.rows[0].count) >= 8) {
+            return res.json({ ok: false, mensaje: "🚫 La sala está llena (Máximo 8)." });
+        }
 
+        // 3. Chequeamos al usuario invitado
         const userCheck = await pool.query("SELECT monedas FROM usuarios WHERE id = $1", [usuario_id]);
-        if (userCheck.rows.length === 0) return res.status(404).json({ ok: false, mensaje: "Usuario inválido." });
+        if (userCheck.rows.length === 0) {
+            return res.status(404).json({ ok: false, mensaje: "Usuario inválido." });
+        }
+        
         const monedasActuales = userCheck.rows[0].monedas;
-
         let nuevoOroUsuario = monedasActuales;
 
-        // 🎰 VALIDACIÓN DINÁMICA DE LA APUESTA PARA EL INVITADO
-        if (sala.tipo_apuesta === 'oro') {
+        // ========================================================================
+        // 🎰 VALIDACIÓN DINÁMICA DE MODALIDAD (FIX DE COBRO MUNDIAL AMISTOSO)
+        // ========================================================================
+        const tipoSala = sala.tipo_apuesta ? sala.tipo_apuesta.toLowerCase() : 'amistoso';
+
+        if (tipoSala === 'oro') {
+            // Si la sala es por oro, cobramos el arancel fijado por el host
             if (monedasActuales < sala.apuesta_oro) {
                 return res.json({ ok: false, mensaje: `🪙 No tenés oro suficiente. Entrar cuesta ${sala.apuesta_oro} monedas.` });
             }
@@ -1832,44 +1853,54 @@ app.post('/api/multijugador/unirse', async (req, res) => {
             await pool.query("UPDATE usuarios SET monedas = $1 WHERE id = $2", [nuevoOroUsuario, usuario_id]);
             await pool.query("UPDATE mundial_salas SET pozo_total = pozo_total + $1 WHERE id = $2", [sala.apuesta_oro, sala.id]);
         } 
-        else if (sala.tipo_apuesta === 'carta') {
-            // Elige automáticamente su jugador con peor ID o duplicado para poner en juego en el backend de forma segura
+        else if (tipoSala === 'carta') {
+            // Desafío por figurita repetida
             const miCromoRepetido = await pool.query(
                 "SELECT jugador_id FROM usuario_progreso WHERE usuario_id = $1 AND cantidad > 1 LIMIT 1",
                 [usuario_id]
             );
             if (miCromoRepetido.rows.length === 0) {
-                return res.json({ ok: false, mensaje: "🃏 No podés unirte a este desafío porque no tenés ninguna carta repetida para arriesgar." });
+                return res.json({ ok: false, mensaje: "🃏 No podés unirte porque no tenés ninguna carta repetida para arriesgar." });
             }
             await pool.query(
                 "UPDATE usuario_progreso SET cantidad = cantidad - 1 WHERE usuario_id = $1 AND jugador_id = $2",
                 [usuario_id, miCromoRepetido.rows[0].jugador_id]
             );
+        } 
+        else {
+            // 🔥 COMPUERTA AMISTOSO: Si es amistoso o gratis, el costo es 0. 
+            // Pasa de largo sin tocar las monedas del usuario ni el pozo de la sala.
+            nuevoOroUsuario = monedasActuales; 
         }
 
+        // 4. Verificamos que nadie más en la sala esté usando la misma selección
         const seleccionCheck = await pool.query(
             "SELECT id FROM sala_participantes WHERE sala_id = $1 AND UPPER(seleccion) = $2",
             [sala.id, seleccion.toUpperCase()]
         );
         if (seleccionCheck.rows.length > 0) {
-            return res.json({ ok: false, mensaje: `La selección de ${seleccion.toUpperCase()} ya está ocupada.` });
+            return res.json({ ok: false, mensaje: `La selección de ${seleccion.toUpperCase()} ya está ocupada por otro DT en la sala.` });
         }
+
+        // 5. Insertamos al invitado. Formateamos el array para que Postgres lo entienda como integer[] sin renegar
+        const arrayFormateadoPostgres = `{${jugador_ids.join(',')}}`;
 
         await pool.query(
             `INSERT INTO sala_participantes (sala_id, usuario_id, seleccion, jugador_ids) 
              VALUES ($1, $2, $3, $4)`,
-            [sala.id, usuario_id, seleccion, jugador_ids]
+            [sala.id, usuario_id, seleccion, arrayFormateadoPostgres]
         );
 
+        // Devolvemos la respuesta limpia de bardo
         return res.json({
             ok: true,
             mensaje: "⚽ ¡Te uniste a la sala con éxito!",
             sala_id: sala.id,
-            monedasActualizadas: nuevoOroUsuario
+            monedasActualizadas: nuevoOroUsuario // Tu script.js va a setear esto en el HUD superior
         });
 
     } catch (err) {
-        console.error(err);
+        console.error("❌ Error crítico en endpoint unirse:", err);
         return res.status(500).json({ ok: false, error: err.message });
     }
 });
