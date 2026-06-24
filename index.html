@@ -329,6 +329,32 @@
                         </div>
                     </div>
 
+                    <div id="multi-fase-inscripcion" style="display: none; text-align: center; padding: 20px;">
+                        <h3 style="color: var(--celeste);">ELEGÍ TU PAÍS PARA EL TORNEO ONLINE</h3>
+                        <div id="multi-zona-eleccion-pais" style="margin: 20px 0; display: flex; justify-content: center; flex-wrap: wrap;"></div>
+                    </div>
+
+                    <div id="multi-fase-draft" style="display: none; padding: 15px;">
+                        <div class="arena-versus-scoreboard" style="margin-bottom: 20px;">
+                            <div class="bando-equipo-stadium local">
+                                <span class="bandera-flag">🛡️</span>
+                                <span id="multi-lbl-tu-seleccion" class="nombre-seleccion">-</span>
+                            </div>
+                            <div class="vs-circulo-match" style="font-size: 1.2rem;">ONLINE</div>
+                            <div class="bando-equipo-stadium visitante">
+                                <span class="bandera-flag">👥</span>
+                                <span class="nombre-seleccion">RIVALES</span>
+                            </div>
+                        </div>
+                        <div class="banca-reloj-status" id="multi-lbl-estrellas-equipo" style="text-align: center; font-size: 1.1rem; border-color: var(--celeste); color: var(--celeste); margin-bottom: 20px;">
+                            ⭐ (0/5 Estrellas)
+                        </div>
+                        <div class="grid-cartas-draft-mundial" id="multi-grid-cartas-draft" style="max-height: 350px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 20px;"></div>
+                        <button type="button" onclick="ejecutarTorneoMundial()" class="btn-estadio btn-bet-action" style="background: var(--verde-match); border-color: var(--verde-match); font-size: 1.2rem;">
+                            ⚔️ CONFIRMAR ALINEACIÓN Y ENTRAR AL VESTUARIO
+                        </button>
+                    </div>
+
                     <div id="multi-lobby-espera" style="display: none; text-align: center;">
                         <div style="background: #0b111e; padding: 15px; border-radius: 10px; display: inline-block; margin-bottom: 20px; border: 2px solid var(--dorado);">
                             <span style="font-size: 1.1rem; color: #64748b;">CÓDIGO DE SALA:</span>
