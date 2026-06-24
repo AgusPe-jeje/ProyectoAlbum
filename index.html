@@ -234,7 +234,7 @@
                 <div class="caja-modulo-estadio">
                     <div class="banner-modulo-imagen banner-mundial">
                         <div class="overlay-banner-texto">
-                            <h2>🏆 EL COLISEO DEL MINIMUNDIAL</h2>
+                            <h2>🏆 EL COLISEO DEL MUNDIAL</h2>
                         </div>
                     </div>
 
@@ -253,10 +253,10 @@
                     </div>
 
                     <div id="fase-inscripcion-mundial" class="inputs-apuesta-timba-stadium" style="text-align: center; padding: 20px;">
-                        <div id="cronometro-mundial" class="banca-reloj-status" style="margin-bottom: 15px;">⏱️ Verificando estado del vestuario...</div>
+                        <div id="cronometro-mundial" class="banca-reloj-status" style="margin-bottom: 15px;">⏱ McKay Verificando estado del vestuario...</div>
                         <div id="zona-eleccion-pais-mundial" style="margin: 20px 0; display: flex; justify-content: center; flex-wrap: wrap;"></div>
                         <button type="button" id="btn-preparar-mundial" onclick="prepararInscripcionMundial()" class="btn-estadio btn-bet-action" style="max-width: 320px; margin: 0 auto;">
-                            🏆 INSCRIBIRSE (🪙500 Oro)
+                            🏆 INSCRIBIRSE AL TORNEO (🪙500 Oro)
                         </button>
                     </div>
 
@@ -280,7 +280,7 @@
                         <div class="grid-cartas-draft-mundial" id="grid-cartas-draft-mundial" style="max-height: 350px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 20px;"></div>
 
                         <button type="button" onclick="ejecutarTorneoMundial()" class="btn-estadio btn-bet-action" style="background: var(--verde-match); border-color: var(--verde-match); font-size: 1.2rem;">
-                            ⚔️ SIMULAR PARTIDO DE CLASIFICACIÓN
+                            ⚔️ JUGAR PARTIDO DE SELECCIONES
                         </button>
                     </div>
 
@@ -309,13 +309,11 @@
                                 <option value="carta">🃏 APOSTAR FIGURITA REPETIDA</option>
                             </select>
 
-                            <!-- Caja de Oro (Se oculta si es amistoso/carta) -->
                             <div id="multi-wrapper-oro" style="display: none;">
                                 <label>Apuesta de Oro:</label>
                                 <input type="number" id="multi-input-apuesta" value="500" min="100" step="100" style="width: 80%; padding: 8px; margin: 10px 0; border-radius: 6px; text-align: center; background: #0b111e; color: #fff; border: 1px solid #1e293b;">
                             </div>
 
-                            <!-- Caja de Cartas Repetidas (Se oculta si es amistoso/oro) -->
                             <div id="multi-wrapper-carta" style="display: none;">
                                 <label>Elegí el Cromo a arriesgar:</label>
                                 <select id="multi-select-carta-apuesta" style="width: 85%; padding: 8px; margin: 10px 0; border-radius: 6px; background: #0b111e; color: #fff; border: 1px solid #1e293b;"></select>
@@ -346,7 +344,7 @@
                     </div>
 
                     <div id="multi-pantalla-fixture" style="display: none;">
-                        <h3 style="text-align: center; color: var(--dorado); font-family: 'Oswald'; margin-bottom: 20px;">📊 TRANSMISIÓN EN VIVO</h3>
+                        <h3 style="text-align: center; color: var(--dorado); font-family: 'Oswald'; margin-bottom: 20px;">📊 TRANSMISIÓN EN VIVO MULTIJUGADOR</h3>
                         <div id="multi-cronologia-goles" style="max-width: 600px; margin: 0 auto; min-height: 300px; padding: 10px;"></div>
                     </div>
                 </div>
