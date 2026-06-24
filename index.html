@@ -355,7 +355,6 @@
                         </button>
                     </div>
 
-                    <!-- 3. FASE DRAFT: TABLERO DE SELECCIÓN DE LAS 3 CARTAS -->
                     <div id="multi-fase-draft" style="display: none; padding: 15px;">
                         <div class="arena-versus-scoreboard" style="margin-bottom: 20px;">
                             <div class="bando-equipo-stadium local">
@@ -371,8 +370,14 @@
                         <div class="banca-reloj-status" id="multi-lbl-estrellas-equipo" style="text-align: center; font-size: 1.1rem; border-color: var(--celeste); color: var(--celeste); margin-bottom: 20px;">
                             ⭐ (0/5 Estrellas)
                         </div>
+
                         <div class="grid-cartas-draft-mundial" id="multi-grid-cartas-draft" style="max-height: 350px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 20px;"></div>
                         
+                        <div id="multi-wrapper-apuesta-invitado" style="display: none; background:#131c2e; padding:15px; border-radius:8px; border:1px solid var(--dorado); margin-bottom:15px; text-align:center;">
+                            <label style="color:var(--dorado); font-weight:bold; display:block; margin-bottom:8px;">🃏 SELECCIONÁ TU CARTA PARA PONER EN JUEGO:</label>
+                            <select id="multi-select-carta-apuesta-invitado" style="width:90%; padding:8px; border-radius:6px; background:#0b111e; color:#fff; border:1px solid #1e293b;"></select>
+                        </div>
+
                         <div style="display: flex; flex-direction: column; gap: 10px;">
                             <button type="button" onclick="confirmarInscripcionMultiServidor(window.mundialSeleccionUsuario, jugadoresSeleccionadosDraft)" class="btn-estadio btn-bet-action" style="background: var(--verde-match); border-color: var(--verde-match); font-size: 1.2rem; width: 100%;">
                                 ⚔️ CONFIRMAR ALINEACIÓN Y ENTRAR AL VESTUARIO
