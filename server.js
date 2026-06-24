@@ -14,6 +14,17 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+
+// Genera un código de 6 caracteres únicos para las salas
+function generarCodigoSala() {
+    const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let resultado = '';
+    for (let i = 0; i < 6; i++) {
+        resultado += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+    }
+    return resultado;
+}
+
 /* ========================================================================
    🛠️ CONFIGURACIÓN DE MODO MANTENIMIENTO / MODO SOLO YO
    ======================================================================== */
@@ -825,6 +836,7 @@ app.post('/api/login', async (req, res) => {
         return res.status(500).json({ error: err.message });
     }
 });
+
 
 app.post('/api/registro', async (req, res) => {
     const { username, password } = req.body;
@@ -1692,6 +1704,327 @@ app.post('/api/mundial/jugar', async (req, res) => {
     }
 });
 
+app.post('/api/multijugador/crear', async (req, res) => {
+    const { usuario_id, apuesta_oro, seleccion, jugador_ids } = req.body;
+
+    // Validar que el draft tenga 3 jugadores
+    if (!jugador_ids || jugador_ids.length !== 3) {
+        return res.json({ ok: false, mensaje: "❌ Debés seleccionar 3 jugadores para tu plantel." });
+    }
+
+    try {
+        // 1. Verificar si el usuario tiene el oro suficiente para la apuesta
+        const userCheck = await pool.query("SELECT monedas FROM usuarios WHERE id = $1", [usuario_id]);
+        if (userCheck.rows.length === 0) return res.status(404).json({ ok: false, mensaje: "Usuario inválido." });
+
+        const monedasActuales = userCheck.rows[0].monedas;
+        if (monedasActuales < apuesta_oro) {
+            return res.json({ ok: false, mensaje: `🪙 No tenés suficiente Oro. Crear esta sala cuesta ${apuesta_oro} monedas.` });
+        }
+
+        // 2. Generar código único de sala
+        let codigo = generarCodigoSala();
+        
+        // 3. Insertar la sala en la base de datos
+        const nuevaSala = await pool.query(
+            `INSERT INTO mundial_salas (codigo_sala, creador_id, apuesta_oro, pozo_total, estado) 
+             VALUES ($1, $2, $3, $4, 'esperando') RETURNING id`,
+            [codigo, usuario_id, apuesta_oro, apuesta_oro]
+        );
+        
+        const salaId = nuevaSala.rows[0].id;
+
+        // 4. Meter al creador como el primer participante
+        await pool.query(
+            `INSERT INTO sala_participantes (sala_id, usuario_id, seleccion, jugador_ids) 
+             VALUES ($1, $2, $3, $4)`,
+            [salaId, usuario_id, seleccion, jugador_ids]
+        );
+
+        // 5. Cobrar el oro de la apuesta al creador
+        const nuevoOro = monedasActuales - apuesta_oro;
+        await pool.query("UPDATE usuarios SET monedas = $1 WHERE id = $2", [nuevoOro, usuario_id]);
+
+        return res.json({
+            ok: true,
+            mensaje: "🎉 ¡Sala creada con éxito!",
+            codigo_sala: codigo,
+            sala_id: salaId,
+            monedasActualizadas: nuevoOro
+        });
+
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ ok: false, error: err.message });
+    }
+});
+
+app.post('/api/multijugador/unirse', async (req, res) => {
+    const { usuario_id, codigo_sala, seleccion, jugador_ids } = req.body;
+
+    if (!jugador_ids || jugador_ids.length !== 3) {
+        return res.json({ ok: false, mensaje: "❌ Debés seleccionar 3 jugadores para tu plantilla." });
+    }
+
+    try {
+        // 1. Buscar si la sala existe y está abierta
+        const salaCheck = await pool.query(
+            "SELECT id, apuesta_oro, pozo_total, estado FROM mundial_salas WHERE codigo_sala = $1", 
+            [codigo_sala.toUpperCase()]
+        );
+
+        if (salaCheck.rows.length === 0) {
+            return res.json({ ok: false, mensaje: "❌ El código de sala no existe." });
+        }
+
+        const sala = salaCheck.rows[0];
+
+        if (sala.estado !== 'esperando') {
+            return res.json({ ok: false, mensaje: "🚫 Esta sala ya empezó o está cerrada." });
+        }
+
+        // 2. Verificar la cantidad actual de participantes (máximo 8)
+        const participantesQuery = await pool.query(
+            "SELECT COUNT(*) FROM sala_participantes WHERE sala_id = $1", 
+            [sala.id]
+        );
+        if (parseInt(participantesQuery.rows[0].count) >= 8) {
+            return res.json({ ok: false, mensaje: "🚫 La sala ya está llena (Máximo 8 jugadores)." });
+        }
+
+        // 3. Verificar si el usuario tiene el oro para pagar la apuesta
+        const userCheck = await pool.query("SELECT monedas FROM usuarios WHERE id = $1", [usuario_id]);
+        if (userCheck.rows.length === 0) return res.status(404).json({ ok: false, mensaje: "Usuario inválido." });
+
+        const monedasActuales = userCheck.rows[0].monedas;
+        if (monedasActuales < sala.apuesta_oro) {
+            return res.json({ ok: false, mensaje: `🪙 No tenés oro suficiente. Entrar cuesta ${sala.apuesta_oro} monedas.` });
+        }
+
+        // 4. Verificar que la selección elegida no esté ocupada en esta sala
+        const seleccionCheck = await pool.query(
+            "SELECT id FROM sala_participantes WHERE sala_id = $1 AND UPPER(seleccion) = $2",
+            [sala.id, seleccion.toUpperCase()]
+        );
+        if (seleccionCheck.rows.length > 0) {
+            return res.json({ ok: false, mensaje: `⚽ La selección de ${seleccion.toUpperCase()} ya fue elegida por otro jugador. ¡Buscate otra, pa!` });
+        }
+
+        // 5. Meter al participante en la sala
+        await pool.query(
+            `INSERT INTO sala_participantes (sala_id, usuario_id, seleccion, jugador_ids) 
+             VALUES ($1, $2, $3, $4)`,
+            [sala.id, usuario_id, seleccion, jugador_ids]
+        );
+
+        // 6. Actualizar el pozo de la sala y descontar el oro al usuario
+        const nuevoPozo = sala.pozo_total + sala.apuesta_oro;
+        await pool.query("UPDATE mundial_salas SET pozo_total = $1 WHERE id = $2", [nuevoPozo, sala.id]);
+
+        const nuevoOroUsuario = monedasActuales - sala.apuesta_oro;
+        await pool.query("UPDATE usuarios SET monedas = $1 WHERE id = $2", [nuevoOroUsuario, usuario_id]);
+
+        return res.json({
+            ok: true,
+            mensaje: "⚽ ¡Te uniste a la sala con éxito! Esperando al resto...",
+            sala_id: sala.id,
+            monedasActualizadas: nuevoOroUsuario
+        });
+
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ ok: false, error: err.message });
+    }
+});
+
+app.get('/api/multijugador/sala/:codigo', async (req, res) => {
+    const { codigo } = req.params;
+
+    try {
+        // 1. Buscar la sala por su código único
+        const salaQuery = await pool.query(
+            "SELECT id, creador_id, apuesta_oro, pozo_total, estado FROM mundial_salas WHERE codigo_sala = $1",
+            [codigo.toUpperCase()]
+        );
+
+        if (salaQuery.rows.length === 0) {
+            return res.json({ ok: false, mensaje: "La sala no existe." });
+        }
+
+        const sala = salaQuery.rows[0];
+
+        // 2. Traer todos los participantes unidos con sus nombres de usuario reales
+        const participantesQuery = await pool.query(
+            `SELECT sp.usuario_id, u.username, sp.seleccion 
+             FROM sala_participantes sp
+             JOIN usuarios u ON sp.usuario_id = u.id
+             WHERE sp.sala_id = $1`,
+            [sala.id]
+        );
+
+        return res.json({
+            ok: true,
+            sala_id: sala.id,
+            creador_id: sala.creador_id,
+            apuesta_oro: sala.apuesta_oro,
+            pozo_total: sala.pozo_total,
+            estado: sala.estado,
+            participantes: participantesQuery.rows // Devuelve la lista de los locos conectados
+        });
+
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ ok: false, error: err.message });
+    }
+});
+
+app.post('/api/multijugador/jugar', async (req, res) => {
+    const { sala_id, usuario_id } = req.body; // El creador de la sala es el que dispara el botón
+
+    try {
+        // 1. Validar que la sala exista, esté esperando y que quien dispara sea el creador
+        const salaQuery = await pool.query(
+            "SELECT id, creador_id, pozo_total, estado FROM mundial_salas WHERE id = $1", [sala_id]
+        );
+        if (salaQuery.rows.length === 0) return res.json({ ok: false, mensaje: "Sala no encontrada." });
+        
+        const sala = salaQuery.rows[0];
+        if (sala.creador_id !== usuario_id) return res.json({ ok: false, mensaje: "⛔ Solo el creador de la sala puede iniciar el torneo." });
+        if (sala.estado !== 'esperando') return res.json({ ok: false, mensaje: "🚫 Este torneo ya se jugó o está en progreso." });
+
+        // 2. Traer todos los participantes reales de la sala
+        const participantesQuery = await pool.query(
+            `SELECT sp.usuario_id, u.username, sp.seleccion 
+             FROM sala_participantes sp
+             JOIN usuarios u ON sp.usuario_id = u.id
+             WHERE sp.sala_id = $1`, [sala_id]
+        );
+        
+        let competidores = participantesQuery.rows.map(p => ({
+            id: p.usuario_id,
+            username: p.username,
+            seleccion: p.seleccion,
+            esBot: false
+        }));
+
+        if (competidores.length < 2) {
+            return res.json({ ok: false, mensaje: "❌ Se necesitan al menos 2 jugadores reales para iniciar." });
+        }
+
+        // 3. 🤖 RELLENO CON BOTS SI FALTRAN PARA LLEGAR A 8
+        const PAISES_BOTS_BACKUP = ["ALEMANIA", "ITALIA", "ESPAÑA", "INGLATERRA", "PORTUGAL", "HOLANDA", "URUGUAY", "MÉXICO"];
+        let botIdx = 0;
+        while (competidores.length < 8) {
+            let paisBot = PAISES_BOTS_BACKUP[botIdx % PAISES_BOTS_BACKUP.length];
+            // Asegurarnos que el bot no use una selección que ya eligió un humano
+            let yaExiste = competidores.some(c => c.seleccion.toUpperCase() === paisBot.toUpperCase());
+            if (!yaExiste) {
+                competidores.push({
+                    id: null,
+                    username: `🤖 Bot ${paisBot}`,
+                    seleccion: paisBot,
+                    esBot: true
+                });
+            }
+            botIdx++;
+        }
+
+        // Mezclar las llaves al azar para los Cuartos de Final
+        competidores = mezclarArray(competidores);
+
+        // 4. 🔥 SIMULADOR DE ELIMINACIÓN DIRECTA (Cuartos -> Semis -> Final)
+        let bitacoraMundial = {
+            cuartos: [],
+            semis: [],
+            final: null,
+            campeon: null
+        };
+
+        // --- CUARTOS DE FINAL (4 Cruces) ---
+        let ganadoresCuartos = [];
+        for (let i = 0; i < 8; i += 2) {
+            let cruce = simularPartidoEliminatorio(competidores[i], competidores[i+1]);
+            bitacoraMundial.cuartos.push(cruce);
+            ganadoresCuartos.push(cruce.ganador);
+        }
+
+        // --- SEMIFINALES (2 Cruces) ---
+        let ganadoresSemis = [];
+        for (let i = 0; i < 4; i += 2) {
+            let cruce = simularPartidoEliminatorio(ganadoresCuartos[i], ganadoresCuartos[i+1]);
+            bitacoraMundial.semis.push(cruce);
+            ganadoresSemis.push(cruce.ganador);
+        }
+
+        // --- GRAN FINAL ---
+        let finalCruce = simularPartidoEliminatorio(ganadoresSemis[0], ganadoresSemis[1]);
+        bitacoraMundial.final = finalCruce;
+        
+        const campeonMundial = finalCruce.ganador;
+        bitacoraMundial.campeon = campeonMundial;
+
+        // 5. 💰 REPARTO DEL PREMIO DEL POZO AL GANADOR (Si no es un Bot)
+        let datosPremio = { ganoBot: true, ganador_username: campeonMundial.username, pozo: sala.pozo_total };
+        
+        if (!campeonMundial.esBot) {
+            datosPremio.ganoBot = false;
+            // Sumamos el pozo acumulado al saldo de monedas del campeón real en Neon
+            await pool.query(
+                "UPDATE usuarios SET monedas = monedas + $1 WHERE id = $2", 
+                [sala.pozo_total, campeonMundial.id]
+            );
+        }
+
+        // 6. Cerrar el estado de la sala para que quede registrada como terminada
+        await pool.query("UPDATE mundial_salas SET estado = 'finalizado' WHERE id = $1", [sala_id]);
+
+        return res.json({
+            ok: true,
+            bitacora: bitacoraMundial,
+            premio: datosPremio
+        });
+
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ ok: false, error: err.message });
+    }
+});
+
+// 📊 FUNCIÓN AUXILIAR MATEMÁTICA PARA SIMULAR GOLES Y PENALES EN EMPATES
+function simularPartidoEliminatorio(equipo1, equipo2) {
+    let g1 = Math.floor(Math.random() * 4);
+    let g2 = Math.floor(Math.random() * 4);
+    let fueAPenales = false;
+    let penales1 = 0;
+    let penales2 = 0;
+    let ganador;
+
+    if (g1 > g2) {
+        ganador = equipo1;
+    } else if (g2 > g1) {
+        ganador = equipo2;
+    } else {
+        // Empate en los 90': Rompemos en tanda de penales
+        fueAPenales = true;
+        while (penales1 === penales2) {
+            penales1 = Math.floor(Math.random() * 5) + 1;
+            penales2 = Math.floor(Math.random() * 5) + 1;
+        }
+        ganador = (penales1 > penales2) ? equipo1 : equipo2;
+    }
+
+    return {
+        local: equipo1,
+        visitante: equipo2,
+        golesL: g1,
+        golesV: g2,
+        penalesL: fueAPenales ? penales1 : null,
+        penalesV: fueAPenales ? penales2 : null,
+        definicionPenales: fueAPenales,
+        ganador: ganador
+    };
+}
+
 /* ========================================================================
    🚨 CONFIGURACIÓN Y ENDPOINT SEGURO DE ANUNCIOS GLOBAL
    ======================================================================== */
@@ -1702,7 +2035,7 @@ const CONFIG_ANUNCIO_SERVIDOR = {
     titulo: "¡ACTUALIZACIÓN DE TEMPORADA!",
     texto: "Prendete a los nuevos torneos en vivo. Calibramos el MiniMundial para que sea más justo.",
     urlImagen: "https://albumpe.onrender.com/assets/novedad.png", 
-    urlVideo: "https://www.youtube.com/embed/2mcPLwhS43Q" 
+    urlVideo: "https://www.youtube.com/embed/dQw4w9WgXcQ" 
 };
 
 // Endpoint público para que el juego consulte el anuncio

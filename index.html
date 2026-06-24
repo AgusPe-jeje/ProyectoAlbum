@@ -334,6 +334,46 @@
                 </div>
             </div>
 
+            <div id="modulo-mundial-multi" class="modulo-estadio" style="display: none;">
+                <h2 class="titulo-modulo">🏆 MINI-MUNDIAL MULTIJUGADOR (8 slots)</h2>
+                
+            <div id="multi-menu-inicial" style="text-align: center; margin-top: 20px;">
+                <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 12px; max-width: 400px; margin: 0 auto 20px;">
+                    <h3>🆕 CREAR NUEVA SALA</h3>
+                    <label>Apuesta de Oro por persona:</label>
+                    <input type="number" id="multi-input-apuesta" value="500" min="100" step="100" style="width: 80%; padding: 8px; margin: 10px 0; border-radius: 6px; text-align: center;">
+                    <button class="btn-estadio" onclick="abrirDraftMulti(true)">Crear e Ir al Draft</button>
+                </div>
+
+                <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 12px; max-width: 400px; margin: 0 auto;">
+                    <h3>🚪 UNIRSE A UNA SALA</h3>
+                    <input type="text" id="multi-input-codigo" placeholder="CÓDIGO DE SALA" style="width: 80%; padding: 8px; margin: 10px 0; border-radius: 6px; text-align: center; text-transform: uppercase;">
+                    <button class="btn-estadio" onclick="abrirDraftMulti(false)">Ingresar Código e Ir al Draft</button>
+                </div>
+            </div>
+
+            <div id="multi-lobby-espera" style="display: none; text-align: center;">
+                <div style="background: #0b111e; padding: 15px; border-radius: 10px; display: inline-block; margin-bottom: 20px; border: 2px solid var(--dorado);">
+                    <span style="font-size: 1.1rem; color: #64748b;">CÓDIGO PARA COMPARTIR:</span>
+                    <h2 id="lobby-txt-codigo" style="color: var(--dorado); margin: 5px 0; font-size: 2.2rem; font-family: 'Oswald'; letter-spacing: 2px;">------</h2>
+                    <span id="lobby-txt-pozo" style="color: var(--verde-match); font-weight: bold;">💰 Pozo Actual: 0 Oro</span>
+                </div>
+
+                <h4 style="color: var(--celeste);">👥 JUGADORES CONECTADOS (<span id="lobby-cnt-jugadores">0</span>/8)</h4>
+                <div id="lobby-lista-participantes" style="max-width: 500px; margin: 0 auto 20px; display: flex; flex-direction: column; gap: 8px;">
+                    </div>
+
+                <button id="multi-btn-iniciar-fixture" class="btn-estadio btn-modulo-match" style="display: none; margin: 0 auto;" onclick="lanzarSimulacionMulti()">🔥 ¡LARGAR MUNDIAL! 🔥</button>
+                <p id="multi-txt-espera-host" style="color: #64748b; font-style: italic;">Esperando que el creador inicie el torneo...</p>
+            </div>
+
+                <div id="multi-pantalla-fixture" style="display: none;">
+                    <h3 style="text-align: center; color: var(--dorado); font-family: 'Oswald';">📊 TELEVISACIÓN EN VIVO DEL TORNEO</h3>
+                    <div id="multi-cronologia-goles" style="max-width: 600px; margin: 0 auto; min-height: 300px; padding: 10px;">
+                        </div>
+                </div>
+            </div>
+
         </section>
     </main>
 
