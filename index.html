@@ -132,6 +132,13 @@
                         </div>
                     </div>
 
+                    <!-- 🔥 NUEVO BOTÓN: Acceso directo al Mercado AI -->
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <button type="button" class="btn-estadio" style="background: linear-gradient(135deg, #1e293b, #0f172a); border-color: var(--dorado); color: var(--dorado); max-width: 350px; width: 100%; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px;" onclick="cambiarModulo('modulo-comerciante-bot', this); abrirMercadoBot(window.tusJugadoresGlobales || []);">
+                            🤖 HABLAR CON EL BOT COMERCIANTE
+                        </button>
+                    </div>
+
                     <div class="contenedor-filtros-album">
                         <div class="grupo-filtro">
                             <span class="filtro-label">🔍 ESTADO:</span>
@@ -412,6 +419,21 @@
                         <div id="multi-cronologia-goles" style="max-width: 600px; margin: 0 auto; min-height: 300px; padding: 10px;"></div>
                     </div>
                 </div>
+            </div>
+
+            <!-- 5. TRANSMISIÓN EN VIVO DEL FIXTURE MULTIJUGADOR -->
+                    <div id="multi-pantalla-fixture" style="display: none;">
+                        <h3 style="text-align: center; color: var(--dorado); font-family: 'Oswald'; margin-bottom: 20px;">📊 TRANSMISIÓN EN VIVO MULTIJUGADOR</h3>
+                        <div id="multi-cronologia-goles" style="max-width: 600px; margin: 0 auto; min-height: 300px; padding: 10px;"></div>
+                    </div>
+                </div>
+            </div> <!-- 👈 Acá cierra tu módulo multijugador -->
+
+            <!-- ========================================================================
+                 🤖 NUEVO MÓDULO 7: MERCADO DE PASES AI (BOT COMERCIANTE)
+                 ======================================================================== -->
+            <div id="modulo-comerciante-bot" class="modulo-contenido" style="display: none;">
+                <!-- El JavaScript va a inyectar toda la interfaz interactiva acá de forma limpia -->
             </div>
 
         </section>
