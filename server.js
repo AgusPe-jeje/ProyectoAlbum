@@ -32,7 +32,7 @@ function generarCodigoSala() {
 /* ========================================================================
    🛠️ MIDDLEWARE: MODO MANTENIMIENTO / ACCESO SELECTIVO TESTERS
    ======================================================================== */
-const MODO_MANTENIMIENTO = true; 
+const MODO_MANTENIMIENTO = false; 
 // 👥 Agregá o sacá acá los usuarios permitidos en minúscula para las pruebas
 const TESTERS_PERMITIDOS = ["aguspe", "evevea"]; 
 
@@ -1584,7 +1584,18 @@ app.post('/api/mundial/jugar', async (req, res) => {
         else if (promedio >= 70) estrellas = 3;
         else if (promedio >= 62) estrellas = 2;
 
-        const chanceVictoria = 0.20 + (estrellas * 0.10); 
+                // 🔥 NUEVO MOTOR DE PROBABILIDAD ESCALONADO Y EXIGENTE
+        let chanceVictoria = 0.10; // Base muy baja para 1 estrella
+
+        if (estrellas === 2) {
+            chanceVictoria = 0.25; // 2 Estrellas: Casi imposible ganar 4 partidos seguidos (Fase de grupos es un milagro)
+        } else if (estrellas === 3) {
+            chanceVictoria = 0.48; // 3 Estrellas: Competitivo. Podés pasar grupos si peleás, pero en Playoffs sufrís.
+        } else if (estrellas === 4) {
+            chanceVictoria = 0.70; // 4 Estrellas: Candidato. Pasás grupos caminando, Playoffs equilibrados.
+        } else if (estrellas === 5) {
+            chanceVictoria = 0.88; // 5 Estrellas: El "Dream Team". Sos el cuco del torneo.
+        }
 
         // 3. SIMULACIÓN FASE 1: Partido único de Clasificación
         //if (Math.random() > chanceVictoria) {
@@ -1682,25 +1693,31 @@ app.post('/api/mundial/jugar', async (req, res) => {
             const rivalFinal = botsDisponibles[6];
 
             const llaves = [
-                { ronda: "Octavos de Final", rival: rivalOctavos },
-                { ronda: "Cuartos de Final", rival: rivalCuartos },
-                { ronda: "Semifinal", rival: rivalSemi },
-                { ronda: "Gran Final del Mundo", rival: rivalFinal }
+                { ronda: "Octavos de Final", rival: rivalOctavos, penalizacion: 0 },
+                { ronda: "Cuartos de Final", rival: rivalCuartos, penalizacion: 0.08 },
+                { ronda: "Semifinal", rival: rivalSemi, penalizacion: 0.16 },
+                { ronda: "Gran Final del Mundo", rival: rivalFinal, penalizacion: 0.24 }
             ];
 
             campeon = true;
             for (let llave of llaves) {
                 faseAlcanzada = llave.ronda;
-                if (Math.random() <= chanceVictoria) {
+                
+                // Calculamos la chance real de esta ronda restando la penalización
+                // Ej: Si tenías 3 estrellas (0.48), en la Final tu chance real será de 0.24 (24%).
+                // Si tenías 5 estrellas (0.88), en la Final tu chance será de 0.64 (64%). ¡Se nota la diferencia!
+                const chanceRondaReal = Math.max(0.10, chanceVictoria - llave.penalizacion);
+
+                if (Math.random() <= chanceRondaReal) {
                     bitacoraPlayoffs.push({ 
                         ronda: llave.ronda, rival: llave.rival, resultado: "Ganaste ✅",
-                        incidencias: generarIncidenciasPartido(seleccionElegida, llave.rival) // 🔥 Inyectado en playoffs
+                        incidencias: generarIncidenciasPartido(seleccionElegida, llave.rival)
                     });
                 } else {
                     campeon = false;
                     bitacoraPlayoffs.push({ 
                         ronda: llave.ronda, rival: llave.rival, resultado: "Perdiste ❌",
-                        incidencias: generarIncidenciasPartido(seleccionElegida, llave.rival) // 🔥 Inyectado en playoffs
+                        incidencias: generarIncidenciasPartido(seleccionElegida, llave.rival)
                     });
                     break;
                 }
@@ -1709,13 +1726,20 @@ app.post('/api/mundial/jugar', async (req, res) => {
 
         // 6. Guardar base de datos y otorgar premios si corresponde
         const ahora = new Date();
+        const COSTO_INSCRIPCION = 1500; // Tarifa oficial de entrada
+
         if (campeon) {
+            // Resta el costo real ($1) y suma los 5.000 de premio
             await pool.query(
-                "UPDATE usuarios SET monedas = monedas - 500 + 5000, copas_mundiales = copas_mundiales + 1, puntos_ranking = puntos_ranking + 50, ultima_timba_mundial = $1 WHERE id = $2",
-                [ahora, usuario_id]
+                "UPDATE usuarios SET monedas = monedas - $1 + 5000, copas_mundiales = copas_mundiales + 1, puntos_ranking = puntos_ranking + 50, ultima_timba_mundial = $2 WHERE id = $3",
+                [COSTO_INSCRIPCION, ahora, usuario_id] // $1 es COSTO_INSCRIPCION, $2 es ahora, $3 es usuario_id
             );
         } else {
-            await pool.query("UPDATE usuarios SET monedas = monedas - 500, ultima_timba_mundial = $1 WHERE id = $2", [ahora, usuario_id]);
+            // Resta el costo real ($1) puro por quedar afuera
+            await pool.query(
+                "UPDATE usuarios SET monedas = monedas - $1, ultima_timba_mundial = $2 WHERE id = $3", 
+                [COSTO_INSCRIPCION, ahora, usuario_id] // $1 es COSTO_INSCRIPCION, $2 es ahora, $3 es usuario_id
+            );
         }
 
         const userFinal = await pool.query("SELECT monedas, puntos_ranking, copas_mundiales FROM usuarios WHERE id = $1", [usuario_id]);
@@ -2028,8 +2052,6 @@ app.post('/api/multijugador/jugar', async (req, res) => {
             botIdx++;
         }
 
-        competidores = mezclarArray(competidores);
-
         // 📋 1. REMOCIÓN PREVIA DE APUESTAS
         const modalidadSala = sala.tipo_apuesta ? sala.tipo_apuesta.toLowerCase() : 'amistoso';
         
@@ -2045,13 +2067,33 @@ app.post('/api/multijugador/jugar', async (req, res) => {
             }
         }
 
+        // ========================================================================
+        // 🎲 2. NUEVO SISTEMA DE SORTEO PURO DE LLAVES (ANTI-CRUCE FIJO)
+        // ========================================================================
+        let listaMezclada = mezclarArray([...competidores]);
+        let grillaTorneo = new Array(8);
+        
+        // Repartimos a los usuarios y bots en casilleros aleatorios del 0 al 7
+        for (let competidor of listaMezclada) {
+            let posAleatoria = Math.floor(Math.random() * 8);
+            while (grillaTorneo[posAleatoria] !== undefined) {
+                posAleatoria = (posAleatoria + 1) % 8; // Evita solapamiento de posiciones
+            }
+            grillaTorneo[posAleatoria] = competidor;
+        }
+
         let bitacoraPartidosPlana = [];
 
-        // 2. SIMULACIÓN DE CUARTOS DE FINAL (Con Incidencias Inyectadas)
-        let ganadoresCuartos = [];
+        // ========================================================================
+        // 🏆 3. SIMULACIÓN DE CUARTOS DE FINAL (Usa grillaTorneo)
+        // ========================================================================
+        let ganadoresCuartos = new Array(4);
         let numeroPartido = 1;
+
         for (let i = 0; i < 8; i += 2) {
-            let cruce = simularPartidoEliminatorio(competidores[i], competidores[i+1]);
+            // Se enfrentan de forma balanceada: 0 vs 1, 2 vs 3, 4 vs 5, 6 vs 7
+            let cruce = simularPartidoEliminatorio(grillaTorneo[i], grillaTorneo[i+1]);
+            
             bitacoraPartidosPlana.push({
                 ronda: `Cuartos de Final (${numeroPartido}/4)`,
                 local: cruce.local.seleccion,
@@ -2062,18 +2104,22 @@ app.post('/api/multijugador/jugar', async (req, res) => {
                 penalesVisitante: cruce.penalesV,
                 definicionPenales: cruce.definicionPenales,
                 ganadorUsername: cruce.ganador.username,
-                // 🔥 Inyección de adrenalina minuto a minuto
                 incidencias: generarIncidenciasPartido(cruce.local.seleccion, cruce.visitante.seleccion) 
             });
-            ganadoresCuartos.push(cruce.ganador);
+            
+            ganadoresCuartos[numeroPartido - 1] = cruce.ganador;
             numeroPartido++;
         }
 
-        // 3. SIMULACIÓN DE SEMIFINALES (Con Incidencias Inyectadas)
+        // ========================================================================
+        // 🏆 4. SIMULACIÓN DE SEMIFINALES
+        // ========================================================================
         let numeroSemi = 1;
         let ganadoresSemis = [];
+
         for (let i = 0; i < 4; i += 2) {
             let cruce = simularPartidoEliminatorio(ganadoresCuartos[i], ganadoresCuartos[i+1]);
+            
             bitacoraPartidosPlana.push({
                 ronda: `Semifinal (${numeroSemi}/2)`,
                 local: cruce.local.seleccion,
@@ -2084,14 +2130,16 @@ app.post('/api/multijugador/jugar', async (req, res) => {
                 penalesVisitante: cruce.penalesV,
                 definicionPenales: cruce.definicionPenales,
                 ganadorUsername: cruce.ganador.username,
-                // 🔥 Inyección de adrenalina minuto a minuto
                 incidencias: generarIncidenciasPartido(cruce.local.seleccion, cruce.visitante.seleccion)
             });
+            
             ganadoresSemis.push(cruce.ganador);
             numeroSemi++;
         }
 
-        // 4. SIMULACIÓN DE LA GRAN FINAL (Con Incidencias Inyectadas)
+        // ========================================================================
+        // 🏆 5. SIMULACIÓN DE LA GRAN FINAL
+        // ========================================================================
         let finalCruce = simularPartidoEliminatorio(ganadoresSemis[0], ganadoresSemis[1]);
         const campeonMundial = finalCruce.ganador;
         
@@ -2105,11 +2153,12 @@ app.post('/api/multijugador/jugar', async (req, res) => {
             penalesVisitante: finalCruce.penalesV,
             definicionPenales: finalCruce.definicionPenales,
             ganadorUsername: finalCruce.ganador.username,
-            // 🔥 Inyección de adrenalina minuto a minuto
             incidencias: generarIncidenciasPartido(finalCruce.local.seleccion, finalCruce.visitante.seleccion)
         });
 
-        // 🎁 5. RECOMPENSAS FINALES Y POZOS
+        // ========================================================================
+        // 🎁 6. RECOMPENSAS FINALES Y POZOS
+        // ========================================================================
         let datosPremio = { 
             ganoBot: true, 
             ganador_username: campeonMundial.username, 
@@ -2182,6 +2231,67 @@ app.get('/api/multijugador/resultado-invitado/:sala_id', async (req, res) => {
 
     } catch (err) {
         console.error("❌ Error en consulta espejo de invitado:", err);
+        return res.status(500).json({ ok: false, error: err.message });
+    }
+});
+
+/* ========================================================================
+   🃏 MERCADO DE PASES AI: TRADEO DE REPETIDAS CON EL BOT
+   ======================================================================== */
+app.post('/api/album/comerciar-bot', async (req, res) => {
+    const { usuario_id, jugadorIdsASacar } = req.body; // Enviamos un array con los 3 IDs a sacrificar
+
+    if (!jugadorIdsASacar || jugadorIdsASacar.length !== 3) {
+        return res.status(400).json({ ok: false, mensaje: "El Bot exige exactamente 3 cartas para el trato." });
+    }
+
+    try {
+        // 1. Verificar que el usuario tenga stock de esas 3 cartas y sean REPETIDAS (cantidad > 1)
+        // Usamos un bucle para verificar una por una de forma segura
+        for (let jId of jugadorIdsASacar) {
+            const checkRepetida = await pool.query(
+                "SELECT cantidad FROM usuario_progreso WHERE usuario_id = $1 AND jugador_id = $2",
+                [usuario_id, jId]
+            );
+            
+            if (checkRepetida.rows.length === 0 || checkRepetida.rows[0].amount <= 1) {
+                return res.json({ ok: false, mensaje: "❌ No tenés repetidas suficientes de alguno de los jugadores elegidos." });
+            }
+        }
+
+        // 2. Si todo está OK, procedemos a restar 1 unidad de cada cromo sacrificado
+        for (let jId of jugadorIdsASacar) {
+            await pool.query(
+                "UPDATE usuario_progreso SET cantidad = cantidad - 1 WHERE usuario_id = $1 AND jugador_id = $2",
+                [usuario_id, jId]
+            );
+        }
+
+        // 3. El Bot genera la recompensa: Sorteamos una carta ÉPICA o LEGENDARIA aleatoria
+        const lootBot = await pool.query(
+            "SELECT id, nombre, rareza FROM jugadores WHERE rareza IN ('epica', 'legendaria') ORDER BY RANDOM() LIMIT 1"
+        );
+        const cartaPremio = lootBot.rows[0];
+
+        // 4. Inyectamos la nueva carta en el inventario del usuario
+        await pool.query(
+            `INSERT INTO usuario_progreso (usuario_id, jugador_id, cantidad) VALUES ($1, $2, 1) 
+             ON CONFLICT (usuario_id, jugador_id) DO UPDATE SET cantidad = usuario_progreso.cantidad + 1`,
+            [usuario_id, cartaPremio.id]
+        );
+
+        return res.json({
+            ok: true,
+            mensaje: `🤝 ¡Trato hecho! El Bot Comerciante aceptó el intercambio.`,
+            cartaGanada: {
+                id: cartaPremio.id,
+                nombre: cartaPremio.nombre,
+                rareza: cartaPremio.rareza.toUpperCase()
+            }
+        });
+
+    } catch (err) {
+        console.error("❌ Error en Mercado Bot:", err);
         return res.status(500).json({ ok: false, error: err.message });
     }
 });
