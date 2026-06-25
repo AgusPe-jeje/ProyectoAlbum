@@ -32,7 +32,7 @@ function generarCodigoSala() {
 /* ========================================================================
    🛠️ MIDDLEWARE: MODO MANTENIMIENTO / ACCESO SELECTIVO TESTERS
    ======================================================================== */
-const MODO_MANTENIMIENTO = false; 
+const MODO_MANTENIMIENTO = true; 
 // 👥 Agregá o sacá acá los usuarios permitidos en minúscula para las pruebas
 const TESTERS_PERMITIDOS = ["aguspe", "evevea"]; 
 
@@ -1409,6 +1409,32 @@ app.post('/api/timba/procesar', async (req, res) => {
 });
 
 /* ========================================================================
+   ⚽ GENERADOR DE INCIDENCIAS PARA EL FIXTURE
+   ======================================================================== */
+const generarIncidenciasPartido = (golesL, golesV, tuPais, rival) => {
+    let eventos = {};
+    
+    eventos[45] = "⏳ ENTRETIEMPO: Los equipos van a los vestuarios. ¡Momento de la charla técnica!";
+
+    const minsPeligro = [15, 28, 62, 78, 87];
+    const textosPeligro = [
+        `🧤 ¡Mano a mano agónico! El arquero de ${tuPais} salva en la línea.`,
+        `🟥 ¡Tarjeta Roja! El mediocampo de ${rival} se queda con uno menos por juego brusco.`,
+        `⚠️ ¡Tiro libre peligroso en la puerta del área! Pasa rozando el palo.`,
+        `⚡ ¡Contraataque letal comandado por las cartas épicas! El estadio es un hervidero.`,
+        `🥅 ¡Al palo! El remate rebota en el travesaño y se salva el arco.`
+    ];
+
+    minsPeligro.forEach((min, idx) => {
+        if (Math.random() < 0.6) { 
+            eventos[min] = textosPeligro[idx];
+        }
+    });
+
+    return eventos;
+};
+
+/* ========================================================================
    🏆 MÓDULO MINIMUNDIAL (SINGLE PLAYER / BOTS / COOLDOWNS)
    ======================================================================== */
 const COOLDOWN_MUNDIAL_MS = 3 * 60 * 60 * 1000; // 3 Horas reglamentarias
@@ -1527,6 +1553,9 @@ app.post('/api/mundial/preparar', async (req, res) => {
     }
 });
 
+/* ========================================================================
+   🏆 ENDPOINT DEL MUNDIAL REFACTORIZADO CON INCIDENCIAS
+   ======================================================================== */
 app.post('/api/mundial/jugar', async (req, res) => {
     const { usuario_id, seleccionElegida, rivalClasificacion, jugadorIds } = req.body;
 
@@ -1567,11 +1596,10 @@ app.post('/api/mundial/jugar', async (req, res) => {
             });
         }
 
-        // 4. SIMULACIÓN FASE 2: FASE DE GRUPOS (Tu grupo de 4 equipos)
+        // 4. SIMULACIÓN FASE 2: FASE DE GRUPOS
         let botsDisponibles = SELECCIONES_BOTS.filter(s => s !== seleccionElegida);
         botsDisponibles = mezclarArray(botsDisponibles);
 
-        // Definimos los 3 rivales de tu grupo (Grupo de 4 selecciones en total)
         const rivalGrupo1 = botsDisponibles[0];
         const rivalGrupo2 = botsDisponibles[1];
         const rivalGrupo3 = botsDisponibles[2];
@@ -1579,7 +1607,6 @@ app.post('/api/mundial/jugar', async (req, res) => {
 
         let bitacoraGrupo = [];
         
-        // Función auxiliar interna para simular goles e impacto de puntos
         function simularMatchCompleto(eq1, eq2, esUsuario) {
             let g1 = Math.floor(Math.random() * 3);
             let g2 = Math.floor(Math.random() * 3);
@@ -1590,22 +1617,34 @@ app.post('/api/mundial/jugar', async (req, res) => {
             return { goles1: g1, goles2: g2 };
         }
 
-        // Fecha 1: Vos vs Rival1 | Rival2 vs Rival3
+        // Fecha 1: Inyección de incidencias en la bitácora
         let f1_m1 = simularMatchCompleto(seleccionElegida, rivalGrupo1, true);
         let f1_m2 = simularMatchCompleto(rivalGrupo2, rivalGrupo3, false);
-        bitacoraGrupo.push({ fecha: 1, local: seleccionElegida, visitante: rivalGrupo1, gL: f1_m1.goles1, gV: f1_m1.goles2, botL: rivalGrupo2, botV: rivalGrupo3, gBL: f1_m2.goles1, gBV: f1_m2.goles2 });
+        bitacoraGrupo.push({ 
+            fecha: 1, local: seleccionElegida, visitante: rivalGrupo1, gL: f1_m1.goles1, gV: f1_m1.goles2, 
+            botL: rivalGrupo2, botV: rivalGrupo3, gBL: f1_m2.goles1, gBV: f1_m2.goles2,
+            incidencias: generarIncidenciasPartido(seleccionElegida, rivalGrupo1) // 🔥 Inyectado
+        });
 
-        // Fecha 2: Vos vs Rival2 | Rival1 vs Rival3
+        // Fecha 2: Inyección de incidencias
         let f2_m1 = simularMatchCompleto(seleccionElegida, rivalGrupo2, true);
         let f2_m2 = simularMatchCompleto(rivalGrupo1, rivalGrupo3, false);
-        bitacoraGrupo.push({ fecha: 2, local: seleccionElegida, visitante: rivalGrupo2, gL: f2_m1.goles1, gV: f2_m1.goles2, botL: rivalGrupo1, botV: rivalGrupo3, gBL: f2_m2.goles1, gBV: f2_m2.goles2 });
+        bitacoraGrupo.push({ 
+            fecha: 2, local: seleccionElegida, visitante: rivalGrupo2, gL: f2_m1.goles1, gV: f2_m1.goles2, 
+            botL: rivalGrupo1, botV: rivalGrupo3, gBL: f2_m2.goles1, gBV: f2_m2.goles2,
+            incidencias: generarIncidenciasPartido(seleccionElegida, rivalGrupo2) // 🔥 Inyectado
+        });
 
-        // Fecha 3: Vos vs Rival3 | Rival1 vs Rival2
+        // Fecha 3: Inyección de incidencias
         let f3_m1 = simularMatchCompleto(seleccionElegida, rivalGrupo3, true);
         let f3_m2 = simularMatchCompleto(rivalGrupo1, rivalGrupo2, false);
-        bitacoraGrupo.push({ fecha: 3, local: seleccionElegida, visitante: rivalGrupo3, gL: f3_m1.goles1, gV: f3_m1.goles2, botL: rivalGrupo1, botV: rivalGrupo2, gBL: f3_m2.goles1, gBV: f3_m2.goles2 });
+        bitacoraGrupo.push({ 
+            fecha: 3, local: seleccionElegida, visitante: rivalGrupo3, gL: f3_m1.goles1, gV: f3_m1.goles2, 
+            botL: rivalGrupo1, botV: rivalGrupo2, gBL: f3_m2.goles1, gBV: f3_m2.goles2,
+            incidencias: generarIncidenciasPartido(seleccionElegida, rivalGrupo3) // 🔥 Inyectado
+        });
 
-        // Procesar matemáticamente la tabla de posiciones final en el servidor
+        // Procesar matemáticamente la tabla de posiciones final
         let tablaPuntos = {};
         integrantesGrupo.forEach(p => { tablaPuntos[p] = { pais: p, pts: 0, gf: 0, gc: 0 }; });
 
@@ -1622,17 +1661,15 @@ app.post('/api/mundial/jugar', async (req, res) => {
             acumular(f.botL, f.botV, f.gBL, f.gBV);
         });
 
-        // Ordenamos la tabla por puntos y diferencia de gol
         let tablaOrdenada = Object.values(tablaPuntos).sort((a,b) => {
             if (b.pts !== a.pts) return b.pts - a.pts;
             return (b.gf - b.gc) - (a.gf - a.gc);
         });
 
-        // Averiguamos en qué posición terminó el usuario
         let posicionUsuario = tablaOrdenada.findIndex(r => r.pais === seleccionElegida) + 1;
-        let clasificaALlaves = posicionUsuario <= 2; // Pasan los dos primeros
+        let clasificaALlaves = posicionUsuario <= 2; 
 
-        // 5. SIMULACIÓN FASE 3: PLAY-OFFS (Octavos, Cuartos, Semi, Final)
+        // 5. SIMULACIÓN FASE 3: PLAY-OFFS
         let bitacoraPlayoffs = [];
         let campeon = false;
         let faseAlcanzada = "Fase de Grupos";
@@ -1655,10 +1692,16 @@ app.post('/api/mundial/jugar', async (req, res) => {
             for (let llave of llaves) {
                 faseAlcanzada = llave.ronda;
                 if (Math.random() <= chanceVictoria) {
-                    bitacoraPlayoffs.push({ ronda: llave.ronda, rival: llave.rival, resultado: "Ganaste ✅" });
+                    bitacoraPlayoffs.push({ 
+                        ronda: llave.ronda, rival: llave.rival, resultado: "Ganaste ✅",
+                        incidencias: generarIncidenciasPartido(seleccionElegida, llave.rival) // 🔥 Inyectado en playoffs
+                    });
                 } else {
                     campeon = false;
-                    bitacifyPlayoffs = bitacoraPlayoffs.push({ ronda: llave.ronda, rival: llave.rival, resultado: "Perdiste ❌" });
+                    bitacoraPlayoffs.push({ 
+                        ronda: llave.ronda, rival: llave.rival, resultado: "Perdiste ❌",
+                        incidencias: generarIncidenciasPartido(seleccionElegida, llave.rival) // 🔥 Inyectado en playoffs
+                    });
                     break;
                 }
             }
@@ -1681,9 +1724,9 @@ app.post('/api/mundial/jugar', async (req, res) => {
             ok: true,
             progreso: {
                 ganoClasificacion: true,
-                integrantesGrupo, // Mandamos quiénes integran tu grupo
-                bitacoraGrupo,     // Goles exactos minuto a minuto
-                clasifco: clasificaALlaves, // (Nota: Mantengo 'clasifco' o 'clasifico' según tu front si aplica, pero aquí devuelvo tu objeto exacto)
+                integrantesGrupo, 
+                bitacoraGrupo,     
+                clasifco: clasificaALlaves, 
                 clasifico: clasificaALlaves,
                 posicionFinalGrupo: posicionUsuario,
                 campeon: campeon,
@@ -1987,7 +2030,7 @@ app.post('/api/multijugador/jugar', async (req, res) => {
 
         competidores = mezclarArray(competidores);
 
-        // 📋 1. REMOCIÓN PREVIA DE APUESTAS (Ambos arriesgan y pierden de entrada)
+        // 📋 1. REMOCIÓN PREVIA DE APUESTAS
         const modalidadSala = sala.tipo_apuesta ? sala.tipo_apuesta.toLowerCase() : 'amistoso';
         
         if (modalidadSala === 'carta') {
@@ -2004,7 +2047,7 @@ app.post('/api/multijugador/jugar', async (req, res) => {
 
         let bitacoraPartidosPlana = [];
 
-        // 2. SIMULACIÓN DE CUARTOS DE FINAL (Enumerados)
+        // 2. SIMULACIÓN DE CUARTOS DE FINAL (Con Incidencias Inyectadas)
         let ganadoresCuartos = [];
         let numeroPartido = 1;
         for (let i = 0; i < 8; i += 2) {
@@ -2018,13 +2061,15 @@ app.post('/api/multijugador/jugar', async (req, res) => {
                 penalesLocal: cruce.penalesL,
                 penalesVisitante: cruce.penalesV,
                 definicionPenales: cruce.definicionPenales,
-                ganadorUsername: cruce.ganador.username
+                ganadorUsername: cruce.ganador.username,
+                // 🔥 Inyección de adrenalina minuto a minuto
+                incidencias: generarIncidenciasPartido(cruce.local.seleccion, cruce.visitante.seleccion) 
             });
             ganadoresCuartos.push(cruce.ganador);
             numeroPartido++;
         }
 
-        // 3. SIMULACIÓN DE SEMIFINALES
+        // 3. SIMULACIÓN DE SEMIFINALES (Con Incidencias Inyectadas)
         let numeroSemi = 1;
         let ganadoresSemis = [];
         for (let i = 0; i < 4; i += 2) {
@@ -2038,13 +2083,15 @@ app.post('/api/multijugador/jugar', async (req, res) => {
                 penalesLocal: cruce.penalesL,
                 penalesVisitante: cruce.penalesV,
                 definicionPenales: cruce.definicionPenales,
-                ganadorUsername: cruce.ganador.username
+                ganadorUsername: cruce.ganador.username,
+                // 🔥 Inyección de adrenalina minuto a minuto
+                incidencias: generarIncidenciasPartido(cruce.local.seleccion, cruce.visitante.seleccion)
             });
             ganadoresSemis.push(cruce.ganador);
             numeroSemi++;
         }
 
-        // 4. SIMULACIÓN DE LA GRAN FINAL
+        // 4. SIMULACIÓN DE LA GRAN FINAL (Con Incidencias Inyectadas)
         let finalCruce = simularPartidoEliminatorio(ganadoresSemis[0], ganadoresSemis[1]);
         const campeonMundial = finalCruce.ganador;
         
@@ -2057,7 +2104,9 @@ app.post('/api/multijugador/jugar', async (req, res) => {
             penalesLocal: finalCruce.penalesL,
             penalesVisitante: finalCruce.penalesV,
             definicionPenales: finalCruce.definicionPenales,
-            ganadorUsername: finalCruce.ganador.username
+            ganadorUsername: finalCruce.ganador.username,
+            // 🔥 Inyección de adrenalina minuto a minuto
+            incidencias: generarIncidenciasPartido(finalCruce.local.seleccion, finalCruce.visitante.seleccion)
         });
 
         // 🎁 5. RECOMPENSAS FINALES Y POZOS
