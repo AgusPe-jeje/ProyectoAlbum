@@ -1929,3 +1929,83 @@ function cerrarAnuncioGlobal() {
     const modal = document.getElementById('modalAnuncioGlobal');
     if (modal) { modal.style.display = "none"; document.getElementById('anuncioCuerpo').innerHTML = ""; }
 }
+
+// Función para abrir la interfaz del Bot en el Front
+function abrirMercadoBot(listaTusRepetidas) {
+    // Supongamos que tenés un contenedor para el mercado del Bot
+    const contenedorBot = document.getElementById("modulo-comerciante-bot");
+    contenedorBot.style.display = "block";
+
+    contenedorBot.innerHTML = `
+        <div style="background: #0f172a; border: 2px solid var(--dorado); padding: 20px; border-radius: 12px; text-align: center; max-width: 500px; margin: 20px auto;">
+            <h3 style="color: var(--dorado); font-family: 'Oswald'; font-size: 1.5rem; margin-top: 0;">🤖 BOT COMERCIANTE</h3>
+            <p style="color: #94a3b8; font-size: 0.9rem; font-style: italic;">
+                "Traeme 3 cartas repetidas que te sobren y yo te daré un cromo de Élite (Épica o Legendaria). ¿Hacemos negocio?"
+            </p>
+            
+            <div id="zona-seleccion-bot" style="margin: 15px 0; text-align: left;">
+                 <label style="color: #fff; font-size: 0.85rem; font-weight: bold;">Elegí tus 3 cartas a sacrificar:</label>
+                 <div id="lista-checks-repetidas" style="max-height: 150px; overflow-y: auto; background: #020617; padding: 10px; border-radius: 6px; margin-top: 5px;">
+                      </div>
+            </div>
+
+            <button type="button" id="btn-ejecutar-trato" class="btn-estadio" style="background: var(--verde-match); color: #000; width: 100%; font-weight: bold;">
+                 🤝 FIRMAR CONTRATO DE TRADEO
+            </button>
+            <div id="resultado-trato-bot" style="margin-top: 12px; font-weight: bold; font-size: 0.95rem;"></div>
+        </div>
+    `;
+
+    const listaCheckboxes = document.getElementById("lista-checks-repetidas");
+    
+    // Filtramos e insertamos solo los jugadores que tengan cantidad > 1
+    listaTusRepetidas.forEach(jugador => {
+         if (jugador.cantidad > 1) {
+              listaCheckboxes.innerHTML += `
+                   <label style="display: block; color: #cbd5e1; font-size: 0.85rem; margin-bottom: 5px; cursor: pointer;">
+                        <input type="checkbox" class="check-cromo-bot" value="${jugador.id}" style="margin-right: 8px;">
+                        ${jugador.nombre} (${jugador.rareza.toUpperCase()}) - Repetidas: [${jugador.cantidad - 1}]
+                   </label>
+              `;
+         }
+    });
+
+    // Evento al hacer click en el tradeo
+    document.getElementById("btn-ejecutar-trato").onclick = async () => {
+         const seleccionados = Array.from(document.querySelectorAll('.check-cromo-bot:checked')).map(cb => parseInt(cb.value));
+
+         if (seleccionados.length !== 3) {
+              alert("⚠️ Tenés que seleccionar exactamente 3 cromos repetidos para hacer el trato.");
+              return;
+         }
+
+         document.getElementById("btn-ejecutar-trato").disabled = true;
+         document.getElementById("resultado-trato-bot").innerText = "⏳ El bot está tasando tus cartas...";
+
+         try {
+              const res = await fetch('/api/album/comerciar-bot', {
+                   method: 'POST',
+                   headers: { 'Content-Type': 'application/json' },
+                   body: JSON.stringify({ usuario_id: miUsuarioId, jugadorIdsASacar: seleccionados })
+              });
+              const data = await res.json();
+
+              if (data.ok) {
+                   document.getElementById("resultado-trato-bot").style.color = "var(--verde-match)";
+                   document.getElementById("resultado-trato-bot").innerHTML = `
+                        🎉 ${data.mensaje}<br>
+                        🌟 CROMO RECIBIDO: <span style="color: var(--dorado);">${data.cartaGanada.nombre} [${data.cartaGanada.rareza}]</span>
+                   `;
+                   // Acá podés recargar el álbum de tu front de forma limpia
+                   setTimeout(() => { actualizarUI_Album(); }, 2000);
+              } else {
+                   document.getElementById("resultado-trato-bot").style.color = "var(--rojo)";
+                   document.getElementById("resultado-trato-bot").innerText = data.mensaje;
+                   document.getElementById("btn-ejecutar-trato").disabled = false;
+              }
+         } catch (err) {
+              console.error(err);
+              document.getElementById("btn-ejecutar-trato").disabled = false;
+         }
+    };
+}
