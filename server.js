@@ -1587,14 +1587,14 @@ app.post('/api/mundial/jugar', async (req, res) => {
         const chanceVictoria = 0.20 + (estrellas * 0.10); 
 
         // 3. SIMULACIÓN FASE 1: Partido único de Clasificación
-        if (Math.random() > chanceVictoria) {
-            await pool.query("UPDATE usuarios SET ultima_timba_mundial = NOW() WHERE id = $1", [usuario_id]);
-            return res.json({
-                ok: true,
-                progreso: { ganoClasificacion: false },
-                mensaje: `❌ Fuiste eliminado en la Clasificación por ${rivalClasificacion}. Volvé a intentarlo en 3 horas.`
-            });
-        }
+        //if (Math.random() > chanceVictoria) {
+            //await pool.query("UPDATE usuarios SET ultima_timba_mundial = NOW() WHERE id = $1", [usuario_id]);
+            //return res.json({
+                //ok: true,
+                //progreso: { ganoClasificacion: false },
+                //mensaje: `❌ Fuiste eliminado en la Clasificación por ${rivalClasificacion}. Volvé a intentarlo en 3 horas.`
+            //});
+        //}
 
         // 4. SIMULACIÓN FASE 2: FASE DE GRUPOS
         let botsDisponibles = SELECCIONES_BOTS.filter(s => s !== seleccionElegida);
