@@ -65,6 +65,7 @@
             <button class="btn-modulo-match" onclick="cambiarModulo('modulo-album', this)">📖 MI ÁLBUM</button>
             <button class="btn-modulo-match" onclick="cambiarModulo('modulo-penales', this)">⚽ PENALES</button>
             <button class="btn-modulo-match" onclick="cambiarModulo('modulo-timba', this)">🎰 TIMBA</button>
+            <button type="button" class="btn-modulo-match" id="btn-nav-mercado" onclick="cambiarModulo('modulo-mercado-pases', this)"> 💸 MERCADO</button>
             <button class="btn-modulo-match" onclick="cambiarModulo('modulo-minimundial', this)">🏆 MUNDIAL</button>
             <button class="btn-modulo-match" style="border-color: var(--dorado); color: var(--dorado);" onclick="cambiarModulo('modulo-mundial-multi', this)">👥 MULTIJUGADOR</button>
         </nav>
@@ -245,6 +246,33 @@
                             <div id="contenedor-opciones-goles" class="grid-opciones-goles-match" style="display: none;"></div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- ========================================================================
+                🏪 MÓDULO INDEPENDIENTE: MERCADO DE PASES ENTRE JUGADORES (P2P)
+                ======================================================================== -->
+            <div id="modulo-mercado-pases" class="modulo-contenido" style="display: none; padding: 15px;">
+                <div class="caja-modulo-estadio" style="background: #0f172a; border: 2px solid var(--dorado); padding: 20px; border-radius: 12px; max-width: 900px; margin: 20px auto;">
+                    
+                    <h2 style="text-align: center; color: var(--dorado); font-family: 'Oswald'; margin-bottom: 20px; font-size: 1.8rem;">💸 MERCADO DE PASES P2P</h2>
+                    
+                    <!-- Caja de publicación -->
+                    <div style="background: rgba(0,0,0,0.4); padding: 15px; border-radius: 12px; border: 1px solid #1a2436; margin-bottom: 25px; text-align: center;">
+                        <h3 style="color: #fff; font-family: 'Oswald'; font-size: 1.2rem; margin-top:0; letter-spacing: 0.5px;">💼 PONER REPETIDA EN VENTA</h3>
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; margin-top: 10px;">
+                            <select id="select-mercado-vender" class="select-estadio-custom" style="max-width: 250px; width: 100%; padding: 8px; background: #020617; color: #fff; border-radius: 6px; border: 1px solid #334155;"></select>
+                            <input type="number" id="input-mercado-precio" placeholder="Precio en Oro" min="50" class="input-estadio-numeric" style="max-width: 130px; padding: 8px; background: #020617; color: #fff; border-radius: 6px; border: 1px solid #334155;">
+                            <button type="button" class="btn-estadio" style="background: var(--verde-match); color:#000; font-weight: bold; padding: 8px 15px; border-radius: 6px; cursor: pointer;" onclick="publicarCartaMercado()">PUBLICAR</button>
+                        </div>
+                    </div>
+
+                    <h3 style="color: var(--celeste); font-family: 'Oswald'; text-align: center; font-size: 1.4rem; margin-bottom: 15px;">🏪 VITRINA DE TRANSFERENCIAS INTERNACIONALES</h3>
+                    
+                    <div id="grid-mercado-pases" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; max-height: 450px; overflow-y: auto; padding: 5px;">
+                        <!-- Render dinámico de ofertas -->
+                    </div>
+                    
                 </div>
             </div>
 
