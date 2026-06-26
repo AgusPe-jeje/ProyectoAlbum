@@ -28,10 +28,9 @@ let multiIntervaloLobby = null;
 let multiApuestaFijada = 0;
 window.multiTipoApuestaActual = 'amistoso'; // Opciones: 'amistoso', 'oro', 'carta'
 
-// Mapeos Estáticos de Diseño y Lógica de Puntos
+// Mapeos EstStaticos de Diseño y Lógica de Puntos
 const MAPA_PUNTOS_RAREZA = { 
     'comun': 60, 
-    'especial': 68, 
     'rara': 75, 
     'epica': 85, 
     'legendaria': 96 
@@ -92,7 +91,7 @@ function cambiarModulo(idModulo, botonPresionado) {
      if (idModulo === 'modulo-timba') {
         // Ejecuta la carga automática de la cartelera rotativa
         if (typeof cargarPartidosQuinielaUI === "function") {
-            cargarPartidosQuinielaUI();
+             cargarPartidosQuinielaUI();
             }
      }   
 
@@ -145,6 +144,11 @@ async function autenticarUsuario(accion) {
           if (data.error) {
                alert(data.error);
           } else {
+               // 🔥 CAMBIO AQUÍ: Si el servidor blindado nos manda un token, lo encanutamos en el navegador
+               if (data.token) {
+                    localStorage.setItem("arena_token", data.token);
+               }
+
                usuarioActual = data.usuario;
                document.getElementById("seccion-login").style.display = "none";
                
@@ -171,6 +175,14 @@ async function autenticarUsuario(accion) {
           console.error(err);
           ocultarCarga();
      }
+}
+
+function obtenerHeadersSeguros() {
+    const token = localStorage.getItem("arena_token");
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : ''
+    };
 }
 
 // 🔥 CAPTURA DE ENTER PARA INICIAR SESIÓN EN LA ARENA
@@ -243,7 +255,9 @@ async function cargarAlbumLocal() {
      const contenedorPaises = document.getElementById("selector-paises");
      
      try {
-          const res = await fetch(`${URL_BASE}/album/${usuarioActual.id}`);
+          const res = await fetch(`${URL_BASE}/album/${usuarioActual.id}`, {
+               headers: obtenerHeadersSeguros() // 🔥 Blindado con JWT
+          });
           const data = await res.json();
           
           albumCompleto = data.album;
@@ -389,18 +403,19 @@ async function comprarSobreEspecifico(tipoCofre) {
 
      try {
           const res = await fetch(`${URL_BASE}/comprar-sobre`, {
-               method: 'POST',
-               headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify({ usuario_id: usuarioActual.id, tipoCofre: tipoCofre })
+                method: 'POST',
+                headers: obtenerHeadersSeguros(), // 🔥 Inyecta el token en el encabezado
+                body: JSON.stringify({ tipoCofre: tipoCofre }) // ❌ usuario_id ELIMINADO
           });
           
           const data = await res.json();
           ocultarCarga();
 
+          // 🛡️ REGLA DE ORO IMPLEMENTADA: La UI se actualiza con el Oro exacto recalculado por Neon
           if (data.error_oro) return alert(data.mensaje);
           if (data.error) return alert("❌ Error: " + data.error);
 
-          usuarioActual.monedas = data.monedas;
+          usuarioActual.monedas = data.monedas; // Tomamos el value real del backend
           actualizarInterfazUI();
 
           colaCartasPack = data.sobre;
@@ -674,10 +689,11 @@ async function ejecutarPenalLocal(direccionElegida) {
      try {
           const res = await fetch(`${URL_BASE}/jugar-penal`, {
                method: 'POST',
-               headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify({ usuario_id: usuarioActual.id, gano: esGol })
+               headers: obtenerHeadersSeguros(), // 🔥 Cambiado por Headers Seguros (Ya no viaja Content-Type manual)
+               body: JSON.stringify({ gano: esGol }) // ❌ usuario_id ELIMINADO COMPLETAMENTE
           });
           const data = await res.json();
+          ocultarCarga();
           
           if (data.error_limite) {
                alert(data.mensaje);
@@ -746,14 +762,12 @@ async function actualizarTimbasRestantesUI() {
      if (!lblCronometro) return;
 
      try {
-          const res = await fetch(URL_BASE + '/timbas-restantes/' + usuarioActual.id);
+          const res = await fetch(`${URL_BASE}/timbas-restantes/${usuarioActual.id}`);
           const datos = await res.json();
           
-          // 🔥 1. FRENAR EL RELOJ VIEJO INMEDIATAMENTE
-          // Buscá cómo se llama la variable global de tu setInterval del reloj (suele ser 'timerTimba', 'intervaloCronometro', etc.)
-          // Reemplazá 'intervaloCronometroVisual' por el nombre real de tu variable global:
-          if (typeof intervaloCronometroVisual !== "undefined") {
-               clearInterval(intervaloCronometroVisual);
+          // 🔥 CORREGIDO: Usamos la variable global correcta del loop de la timba
+          if (intervaloCronometroTimba) {
+               clearInterval(intervaloCronometroTimba);
           }
           
           // 2. Pintamos el estado actual de tus apuestas
@@ -872,11 +886,12 @@ async function prepararOpcionesApuesta() {
      try {
           const res = await fetch(`${URL_BASE}/timba/preparar`, {
                method: 'POST',
-               headers: { 'Content-Type': 'application/json' },
+               headers: obtenerHeadersSeguros(),
                body: JSON.stringify({
-                    usuario_id: usuarioActual.id, tipoApuesta, montoApuesta,
+                    tipoApuesta, 
+                    montoApuesta,
                     jugadorIdApostado: jugadorIdApostado ? parseInt(jugadorIdApostado) : null
-               })
+               }) // ❌ usuario_id eliminado
           });
           const data = await res.json();
           ocultarCarga();
@@ -913,8 +928,8 @@ async function procesarEleccionTimbaSegura(idOpcionElegida) {
     try {
         const res = await fetch(`${URL_BASE}/timba/procesar`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ usuario_id: usuarioActual.id, idOpcionElegida })
+            headers: obtenerHeadersSeguros(),
+            body: JSON.stringify({ idOpcionElegida })
         });
         const data = await res.json();
         ocultarCarga();
@@ -931,9 +946,12 @@ async function procesarEleccionTimbaSegura(idOpcionElegida) {
         if (document.getElementById("select-tipo-apuesta").value === "cromo") cargarRepetidasEnDesplegableUI();
 
         actualizarHistorialUI({
-            local: `${bandLoc} ${nomLoc}`, visitor: `${bandVis} ${nomVis}`, res: `${data.golesLReal} - ${data.golesVReal}`
-        });
-        timbaPreparada = false; rotarPartidoTimba();
+          local: `${bandLoc} ${nomLoc}`, 
+          visitante: `${bandVis} ${nomVis}`, // 🔥 MAPEO CORREGIDO
+          res: `${data.golesLReal} - ${data.golesVReal}`
+          });
+          timbaPreparada = false; 
+          rotarPartidoTimba();
     } catch (err) { console.error(err); ocultarCarga(); }
 }
 
@@ -1002,30 +1020,22 @@ async function prepararInscripcionMundial() {
 
      try {
           const res = await fetch(`${URL_BASE}/mundial/preparar`, {
-               method: 'POST',
-               headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify({ usuario_id: usuarioActual.id })
+                 method: 'POST',
+                 headers: obtenerHeadersSeguros(), // 🔥 Token inyectado
+                 body: JSON.stringify({}) // ❌ usuario_id ELIMINADO
           });
           const data = await res.json();
           ocultarCarga();
 
           if (!data.ok) return alert(data.mensaje);
 
-          // 🪙 Sincronizamos las monedas exactas que mandó el servidor
-          if (data.monedasActualizadas !== undefined) {
-               usuarioActual.monedas = data.monedasActualizadas;
-          } else {
-               usuarioActual.monedas -= 1500;
-          }
+          // 🛡️ REGLA DE ORO: Sincronizamos estrictamente las monedas que recalculó Neon
+          usuarioActual.monedas = data.monedasActualizadas;
           actualizarInterfazUI();
 
-          // ⏱️ TRUCO DE SINCRONIZACIÓN INMEDIATA:
-          // Como ya pagaste la entrada, le clavamos las 3 horas de Cooldown al reloj principal 
-          // para que si salís o volvés atrás, ya esté contando de forma fluida.
           const COOLDOWN_MUNDIAL_MS = 3 * 60 * 60 * 1000; 
           arrancarCronometroMundialVisual(COOLDOWN_MUNDIAL_MS);
 
-          // Bloqueos estéticos de navegación en pleno torneo
           const barraNavegacion = document.querySelector(".nav-modulos-estadio");
           if (barraNavegacion) barraNavegacion.style.display = "none"; 
           const btnSalir = document.querySelector(".btn-logout-kick");
@@ -1120,11 +1130,12 @@ async function ejecutarTorneoMundial() {
      try {
           const res = await fetch(`${URL_BASE}/mundial/jugar`, {
                method: 'POST',
-               headers: { 'Content-Type': 'application/json' },
+               headers: obtenerHeadersSeguros(), // 🔥 Token inyectado
                body: JSON.stringify({
-                    usuario_id: usuarioActual.id, seleccionElegida: window.mundialSeleccionUsuario,
-                    rivalClasificacion: mundialRivalClasif, jugadorIds: jugadoresSeleccionadosDraft
-               })
+                    seleccionElegida: window.mundialSeleccionUsuario,
+                    rivalClasificacion: mundialRivalClasif, 
+                    jugadorIds: jugadoresSeleccionadosDraft
+               }) // ❌ usuario_id eliminado
           });
           const data = await res.json(); ocultarCarga();
 
@@ -1235,13 +1246,13 @@ async function ejecutarTorneoMundial() {
 
 function simularMarcadorPantalla(contenedor, ronda, tuPais, rival, ganoUsuario) {
     return new Promise(async (resolve) => {
-         const filaPartido = document.createElement("div");
-         filaPartido.className = "item-historial-partido"; 
-         filaPartido.style.cssText = "flex-direction: column; background: #0b111e; padding: 15px; margin-bottom: 20px; border-left: 4px solid var(--celeste); transition: all 0.3s ease;";
-         
-         const idUnico = ronda.replace(/ /g,'') + Math.floor(Math.random() * 1000);
-         
-         filaPartido.innerHTML = `
+          const filaPartido = document.createElement("div");
+          filaPartido.className = "item-historial-partido"; 
+          filaPartido.style.cssText = "flex-direction: column; background: #0b111e; padding: 15px; margin-bottom: 20px; border-left: 4px solid var(--celeste); transition: all 0.3s ease;";
+          
+          const idUnico = ronda.replace(/ /g,'') + Math.floor(Math.random() * 1000);
+          
+          filaPartido.innerHTML = `
               <div style="display:flex; justify-content:space-between; color:var(--dorado); border-bottom:1px solid #1a2436; padding-bottom:5px;">
                    <span style="text-transform: uppercase; font-family:'Oswald';">📋 ${ronda}</span>
                    <span id="reloj-vivo-${idUnico}" style="font-weight:bold; color:var(--celeste);">⏱️ MINUTO 00:00</span>
@@ -1251,149 +1262,146 @@ function simularMarcadorPantalla(contenedor, ronda, tuPais, rival, ganoUsuario) 
                    <span id="score-vivo-${idUnico}" style="font-family:'Oswald'; font-size:1.8rem; background:#000; padding:4px 16px; border-radius:6px; color:var(--verde-match); min-width:70px; text-align:center; box-shadow: inset 0 0 10px rgba(0,255,136,0.2);">0 - 0</span>
                    <span style="width:40%; text-align:right; font-weight:bold; font-size:1.1rem;">${rival} 🤖</span>
               </div>
-              <!-- Consola de Incidencias en Vivo -->
               <div id="consola-incidencias-${idUnico}" style="margin-top:12px; padding:8px; background:rgba(0,0,0,0.3); border-radius:6px; font-size:0.85rem; color:#94a3b8; min-height:35px; text-align:center; font-style:italic; border: 1px dashed #1e293b;">
                    ⚽ El árbitro da la orden... ¡Comienza el partido!
               </div>
-              <!-- Zona Interactiva de Entretiempo -->
               <div id="zona-entretiempo-${idUnico}" style="display:none; margin-top:10px; text-align:center; padding:10px; background:rgba(234,179,8,0.1); border: 1px solid var(--dorado); border-radius:6px;">
                    <p style="margin:0 0 8px 0; font-size:0.85rem; color:var(--dorado); font-weight:bold;">👔 ¡ENTRETIEMPO! Tenés 5 segundos para dar la Charla Técnica</p>
                    <button type="button" id="btn-charla-${idUnico}" class="btn-estadio" style="background:var(--dorado); color:#000; font-size:0.8rem; padding:4px 12px;">📣 Arengar Equipo (+15% Ataque)</button>
               </div>
-         `;
-         contenedor.appendChild(filaPartido); 
-         filaPartido.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          `;
+          contenedor.appendChild(filaPartido); 
+          filaPartido.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-         // Generación de goles esperados
-         let golesTu = Math.floor(Math.random() * 3); 
-         let golesRival = Math.floor(Math.random() * 3);
-         if (ganoUsuario && golesTu <= golesRival) golesTu = golesRival + Math.floor(Math.random() * 2) + 1;
-         else if (!ganoUsuario && golesRival <= golesTu) golesRival = golesTu + Math.floor(Math.random() * 2) + 1;
+          // Generación de goles esperados
+          let golesTu = Math.floor(Math.random() * 3); 
+          let golesRival = Math.floor(Math.random() * 3);
+          if (ganoUsuario && golesTu <= golesRival) golesTu = golesRival + Math.floor(Math.random() * 2) + 1;
+          else if (!ganoUsuario && golesRival <= golesTu) golesRival = golesTu + Math.floor(Math.random() * 2) + 1;
 
-         // Simulación local de incidencias si el backend no las manda
-         let incidenciasSimuladas = {
-              15: `⚠️ Presiona ${rival}, bombazo que pasa cerca del ángulo izquierdo.`,
-              45: "⏳ ENTRETIEMPO: Los jugadores se retiran al descanso a recomponer ideas.",
-              72: `🟥 ¡Falta durísima! Tarjeta amarilla para el capitán de ${rival}.`,
-              85: `🔥 ¡Zafarrancho en el área! La hinchada empuja con el alma.`
-         };
+          // Simulación local de incidencias si el backend no las manda
+          let incidenciasSimuladas = {
+               15: `⚠️ Presiona ${rival}, bombazo que pasa cerca del ángulo izquierdo.`,
+               45: "⏳ ENTRETIEMPO: Los jugadores se retiran al descanso a recomponer ideas.",
+               72: `🟥 ¡Falta durísima! Tarjeta amarilla para el capitán de ${rival}.`,
+               85: `🔥 ¡Zafarrancho en el área! La hinchada empuja con el alma.`
+          };
 
-         let golesTuActuales = 0; 
-         let golesRivalActuales = 0; 
-         let segundoVirtual = 0;
-         let tieneBoost = false;
+          let golesTuActuales = 0; 
+          let golesRivalActuales = 0; 
+          let segundoVirtual = 0;
+          let tieneBoost = false;
 
-         // BOTÓN CHARLA TÉCNICA
-         document.getElementById(`btn-charla-${idUnico}`).onclick = () => {
-              tieneBoost = true;
-              document.getElementById(`boost-badge-${idUnico}`).style.display = "inline-block";
-              document.getElementById(`btn-charla-${idUnico}`).disabled = true;
-              document.getElementById(`btn-charla-${idUnico}`).innerText = "✅ ¡EQUIPO MOTIVADO!";
-              // Si el usuario tiene boost, aumentamos la chance de que meta un gol extra si iba perdiendo
-              if (!ganoUsuario && Math.random() < 0.4) {
-                   golesTu++; // Ventaja táctica de cambiar el destino
-              }
-         };
+          // BOTÓN CHARLA TÉCNICA
+          document.getElementById(`btn-charla-${idUnico}`).onclick = () => {
+               tieneBoost = true;
+               document.getElementById(`boost-badge-${idUnico}`).style.display = "inline-block";
+               document.getElementById(`btn-charla-${idUnico}`).disabled = true;
+               document.getElementById(`btn-charla-${idUnico}`).innerText = "✅ ¡EQUIPO MOTIVADO!";
+               // Si el usuario tiene boost, aumentamos la chance de que meta un gol extra si iba perdiendo
+               if (!ganoUsuario && Math.random() < 0.4) {
+                    golesTu++; // Ventaja táctica de cambiar el destino
+               }
+          };
 
-         // Reloj más lento y emocionante: Avanza de a 3 minutos cada 400ms (Unos 12 segundos reales por partido)
-         const timer = setInterval(async () => {
-             if (segundoVirtual === 45 && !document.getElementById(`zona-entretiempo-${idUnico}`).classList.contains("pausado")) {
-                 // Pausa de Entretiempo Interactiva
-                 document.getElementById(`zona-entretiempo-${idUnico}`).classList.add("pausado");
-                 document.getElementById(`zona-entretiempo-${idUnico}`).style.display = "block";
-                 document.getElementById(`consola-incidencias-${idUnico}`).innerText = "📣 Charla técnica en curso en los vestuarios...";
-                 
-                 clearInterval(timer); // Frenamos el reloj del partido
-                 
-                 setTimeout(() => {
-                     // Reanudamos a los 5 segundos
-                     document.getElementById(`zona-entretiempo-${idUnico}`).style.display = "none";
-                     segundoVirtual += 3;
-                     rearrancarReloj();
-                 }, 5000);
-                 return;
-             }
+          // Reloj más lento y emocionante: Avanza de a 3 minutos cada 400ms (Unos 12 segundos reales por partido)
+          const timer = setInterval(async () => {
+               if (segundoVirtual === 45 && !document.getElementById(`zona-entretiempo-${idUnico}`).classList.contains("pausado")) {
+                    // Pausa de Entretiempo Interactiva
+                    document.getElementById(`zona-entretiempo-${idUnico}`).classList.add("pausado");
+                    document.getElementById(`zona-entretiempo-${idUnico}`).style.display = "block";
+                    document.getElementById(`consola-incidencias-${idUnico}`).innerText = "📣 Charla técnica en curso en los vestuarios...";
+                    
+                    clearInterval(timer); // Frenamos el reloj del partido
+                    
+                    setTimeout(() => {
+                         // Reanudamos a los 5 segundos
+                         document.getElementById(`zona-entretiempo-${idUnico}`).style.display = "none";
+                         segundoVirtual += 3;
+                         rearrancarReloj();
+                    }, 5000);
+                    return;
+               }
 
-             segundoVirtual += 3; 
-             if (segundoVirtual > 90) segundoVirtual = 90;
+               segundoVirtual += 3; 
+               if (segundoVirtual > 90) segundoVirtual = 90;
 
-             // Distribución orgánica de goles a lo largo del tiempo
-             if (segundoVirtual >= 20 && segundoVirtual < 45 || segundoVirtual >= 55) {
-                 if (golesTuActuales < golesTu && Math.random() < (tieneBoost ? 0.18 : 0.10)) {
-                      golesTuActuales++;
-                      inyectarAlertaIncidencia(idUnico, `⚽ ¡GOOOL DE ${tuPais.toUpperCase()}! 🔥`);
-                 }
-                 if (golesRivalActuales < golesRival && Math.random() < 0.09) {
-                      golesRivalActuales++;
-                      inyectarAlertaIncidencia(idUnico, `💥 Gol de ${rival.toUpperCase()}. Se grita fuerte en el banco rival.`);
-                 }
-             }
+               // Distribución orgánica de goles a lo largo del tiempo
+               if (segundoVirtual >= 20 && segundoVirtual < 45 || segundoVirtual >= 55) {
+                    if (golesTuActuales < golesTu && Math.random() < (tieneBoost ? 0.18 : 0.10)) {
+                         golesTuActuales++;
+                         inyectarAlertaIncidencia(idUnico, `⚽ ¡GOOOL DE ${tuPais.toUpperCase()}! 🔥`);
+                    }
+                    if (golesRivalActuales < golesRival && Math.random() < 0.09) {
+                         golesRivalActuales++;
+                         inyectarAlertaIncidencia(idUnico, `💥 Gol de ${rival.toUpperCase()}. Se grita fuerte en el banco rival.`);
+                    }
+               }
 
-             if (segundoVirtual === 90) { 
-                 golesTuActuales = golesTu; 
-                 golesRivalActuales = golesRival; 
-             }
+               if (segundoVirtual === 90) { 
+                    golesTuActuales = golesTu; 
+                    golesRivalActuales = golesRival; 
+               }
 
-             // Actualizar UI
-             document.getElementById(`reloj-vivo-${idUnico}`).innerText = `⏱️ MINUTO ${segundoVirtual.toString().padStart(2,'0')}:00`;
-             document.getElementById(`score-vivo-${idUnico}`).innerText = `${golesTuActuales} - ${golesRivalActuales}`;
+               // Actualizar UI
+               document.getElementById(`reloj-vivo-${idUnico}`).innerText = `⏱️ MINUTO ${segundoVirtual.toString().padStart(2,'0')}:00`;
+               document.getElementById(`score-vivo-${idUnico}`).innerText = `${golesTuActuales} - ${golesRivalActuales}`;
 
-             // Mostrar incidencias narrativas por minuto
-             if (incidenciasSimuladas[segundoVirtual]) {
-                  document.getElementById(`consola-incidencias-${idUnico}`).innerText = incidenciasSimuladas[segundoVirtual];
-             }
+               // Mostrar incidencias narrativas por minuto
+               if (incidenciasSimuladas[segundoVirtual]) {
+                    document.getElementById(`consola-incidencias-${idUnico}`).innerText = incidenciasSimuladas[segundoVirtual];
+               }
 
-             if (segundoVirtual >= 90) {
-                 clearInterval(timer); 
-                 filaPartido.style.borderColor = ganoUsuario ? "var(--verde-match)" : "var(--rojo)";
-                 
-                 const finLabel = document.createElement("div");
-                 finLabel.style.cssText = `text-align:right; font-size:0.85rem; font-weight:bold; margin-top:5px; color:${ganoUsuario ? 'var(--verde-match)' : 'var(--rojo)'};`;
-                 finLabel.innerText = ganoUsuario ? "🏁 FINALIZADO - AVANZAS ✅" : "🏁 FINALIZADO - ELIMINADO ❌";
-                 filaPartido.appendChild(finLabel);
-                 
-                 document.getElementById(`consola-incidencias-${idUnico}`).innerText = ganoUsuario ? "🎉 ¡Silbatazo final! Triunfo histórico para meterse en el bolsillo a la hinchada." : "😢 Final del partido. Rendimiento amargo, toca pensar en el próximo torneo.";
-                 resolve();
-             }
-         }, 400);
+               if (segundoVirtual >= 90) {
+                    clearInterval(timer); 
+                    filaPartido.style.borderColor = ganoUsuario ? "var(--verde-match)" : "var(--rojo)";
+                    
+                    const finLabel = document.createElement("div");
+                    finLabel.style.cssText = `text-align:right; font-size:0.85rem; font-weight:bold; margin-top:5px; color:${ganoUsuario ? 'var(--verde-match)' : 'var(--rojo)'};`;
+                    finLabel.innerText = ganoUsuario ? "🏁 FINALIZADO - AVANZAS ✅" : "🏁 FINALIZADO - ELIMINADO ❌";
+                    filaPartido.appendChild(finLabel);
+                    
+                    document.getElementById(`consola-incidencias-${idUnico}`).innerText = ganoUsuario ? "🎉 ¡Silbatazo final! Triunfo histórico para meterse en el bolsillo a la hinchada." : "😢 Final del partido. Rendimiento amargo, toca pensar en el próximo torneo.";
+                    resolve();
+               }
+          }, 400);
 
-         function rearrancarReloj() {
-              // Función auxiliar para reanudar el bucle después del entretiempo
-              // (Misma lógica exacta de arriba para continuar del 48 al 90)
-              const resumeTimer = setInterval(() => {
-                   segundoVirtual += 3;
-                   if (segundoVirtual > 90) segundoVirtual = 90;
+          function rearrancarReloj() {
+               // Función auxiliar para reanudar el bucle después del entretiempo
+               const resumeTimer = setInterval(() => {
+                    segundoVirtual += 3;
+                    if (segundoVirtual > 90) segundoVirtual = 90;
 
-                   if (golesTuActuales < golesTu && Math.random() < (tieneBoost ? 0.22 : 0.12)) {
-                        golesTuActuales++;
-                        inyectarAlertaIncidencia(idUnico, `⚽ ¡GOOOL DE ${tuPais.toUpperCase()}! 🚀`);
-                   }
-                   if (golesRivalActuales < golesRival && Math.random() < 0.09) {
-                        golesRivalActuales++;
-                        inyectarAlertaIncidencia(idUnico, `💥 Gol de ${rival.toUpperCase()}. Silencio sepulcral.`);
-                   }
+                    if (golesTuActuales < golesTu && Math.random() < (tieneBoost ? 0.22 : 0.12)) {
+                         golesTuActuales++;
+                         inyectarAlertaIncidencia(idUnico, `⚽ ¡GOOOL DE ${tuPais.toUpperCase()}! 🚀`);
+                    }
+                    if (golesRivalActuales < golesRival && Math.random() < 0.09) {
+                         golesRivalActuales++;
+                         inyectarAlertaIncidencia(idUnico, `💥 Gol de ${rival.toUpperCase()}. Silencio sepulcral.`);
+                    }
 
-                   if (segundoVirtual === 90) { golesTuActuales = golesTu; golesRivalActuales = golesRival; }
-                   
-                   document.getElementById(`reloj-vivo-${idUnico}`).innerText = `⏱️ MINUTO ${segundoVirtual.toString().padStart(2,'0')}:00`;
-                   document.getElementById(`score-vivo-${idUnico}`).innerText = `${golesTuActuales} - ${golesRivalActuales}`;
+                    if (segundoVirtual === 90) { golesTuActuales = golesTu; golesRivalActuales = golesRival; }
+                    
+                    document.getElementById(`reloj-vivo-${idUnico}`).innerText = `⏱️ MINUTO ${segundoVirtual.toString().padStart(2,'0')}:00`;
+                    document.getElementById(`score-vivo-${idUnico}`).innerText = `${golesTuActuales} - ${golesRivalActuales}`;
 
-                   if (incidenciasSimuladas[segundoVirtual]) {
-                        document.getElementById(`consola-incidencias-${idUnico}`).innerText = incidenciasSimuladas[segundoVirtual];
-                   }
+                    if (incidenciasSimuladas[segundoVirtual]) {
+                         document.getElementById(`consola-incidencias-${idUnico}`).innerText = incidenciasSimuladas[segundoVirtual];
+                    }
 
-                   if (segundoVirtual >= 90) {
-                        clearInterval(resumeTimer);
-                        filaPartido.style.borderColor = ganoUsuario ? "var(--verde-match)" : "var(--rojo)";
-                        const finLabel = document.createElement("div");
-                        finLabel.style.cssText = `text-align:right; font-size:0.85rem; font-weight:bold; margin-top:5px; color:${ganoUsuario ? 'var(--verde-match)' : 'var(--rojo)'};`;
-                        finLabel.innerText = ganoUsuario ? "🏁 FINALIZADO - AVANZAS ✅" : "🏁 FINALIZADO - ELIMINADO ❌";
-                        filaPartido.appendChild(finLabel);
-                        document.getElementById(`consola-incidencias-${idUnico}`).innerText = ganoUsuario ? "🎉 ¡Victoria épica! Los jugadores festejan de cara a la tribuna." : "❌ Derrota dolorosa. El vestuario quedó golpeado.";
-                        resolve();
-                   }
-              }, 400);
-         }
+                    if (segundoVirtual >= 90) {
+                         clearInterval(resumeTimer);
+                         filaPartido.style.borderColor = ganoUsuario ? "var(--verde-match)" : "var(--rojo)";
+                         const finLabel = document.createElement("div");
+                         finLabel.style.cssText = `text-align:right; font-size:0.85rem; font-weight:bold; margin-top:5px; color:${ganoUsuario ? 'var(--verde-match)' : 'var(--rojo)'};`;
+                         finLabel.innerText = ganoUsuario ? "🏁 FINALIZADO - AVANZAS ✅" : "🏁 FINALIZADO - ELIMINADO ❌";
+                         filaPartido.appendChild(finLabel);
+                         document.getElementById(`consola-incidencias-${idUnico}`).innerText = ganoUsuario ? "🎉 ¡Victoria épica! Los jugadores festejan de cara a la tribuna." : "❌ Derrota dolorosa. El vestuario quedó golpeado.";
+                         resolve();
+                    }
+               }, 400);
+          }
     });
 }
 
@@ -1522,7 +1530,6 @@ function iniciarDraftJugadoresMundialMulti(paisElegido) {
      document.getElementById("multi-fase-draft").style.display = "block";
      document.getElementById("multi-lbl-tu-seleccion").innerText = paisElegido.toUpperCase();
 
-     // Limpieza de selectores manuales obsoletos: El backend resuelve el cobro solo
      const wrapperApuestaInvitado = document.getElementById("multi-wrapper-apuesta-invitado");
      if (wrapperApuestaInvitado) wrapperApuestaInvitado.style.display = "none";
      
@@ -1818,14 +1825,11 @@ window.renderizarFixturePasoAPaso = function(bitacora, premio, apuestasTexto) {
                if (premio.tipo_apuesta === 'oro') {
                     textoPremio = `🏆 ¡FIN DEL TORNEO! 🏆\n👑 Campeón: ${premio.ganador_username.toUpperCase()}\n🎁 ¡Se lleva 🪙 ${premio.pozo} de Oro!`;
                     
-                    // 🔥 PARCHE MATEMÁTICO CORREGIDO: Ajustamos el HUD según los débitos reales de la Opción A
                     if (usuarioActual) {
                         if (premio.ganador_username.toLowerCase() === usuarioActual.username.toLowerCase()) {
-                            // Sumamos la ganancia neta (la entrada del rival) ya que la suya se debitó en backend
-                            usuarioActual.monedas += (premio.pozo / 2); 
+                             usuarioActual.monedas += (premio.pozo / 2); 
                         } else {
-                            // Restamos una entrada neta porque no se le había cobrado en el Draft
-                            usuarioActual.monedas -= (premio.pozo / 2); 
+                             usuarioActual.monedas -= (premio.pozo / 2); 
                         }
                         const elMonedas = document.getElementById("lbl-monedas");
                         if (elMonedas) elMonedas.innerText = usuarioActual.monedas;
@@ -1835,7 +1839,6 @@ window.renderizarFixturePasoAPaso = function(bitacora, premio, apuestasTexto) {
                     textoPremio = `🏆 ¡FIN DEL TORNEO! 🏆\n👑 Campeón: ${premio.ganador_username.toUpperCase()}\n\n🎉 ¡Conservás tu cromo y ganaste a:\n🌟 [ ${premio.nombreCartaPremio || 'Jugador Épico'} ]!\n\n💀 Los perdedores perdieron su cromo permanentemente.`;
                }
           } else if (premio && premio.ganoBot) {
-               // 🔥 CORREGIDO: Cambiado 'prempeón' por 'premio' para evitar el crash en consola
                textoPremio = premio.tipo_apuesta === 'carta' ? `🤖 ¡El torneo fue conquistado por un Bot (${premio.ganador_username.toUpperCase()})!\n\n💀 Ambos jugadores perdieron sus cartas permanentemente.` : `🤖 ¡Torneo conquistado por un Bot (${premio.ganador_username.toUpperCase()})!\n💸 El pozo se disolvió.`;
                
                if (premio.tipo_apuesta === 'oro' && usuarioActual) {
@@ -1887,14 +1890,14 @@ function conmutarInputsMultiUI() {
             const repetidas = miAlbumReal.filter(f => f && f.obtenido > 1);
 
             if (repetidas.length === 0) {
-                const opt = document.createElement("option"); opt.value = ""; opt.innerText = "❌ Sin cromos repetidos";
-                selectCromoMulti.appendChild(opt);
+                 const opt = document.createElement("option"); opt.value = ""; opt.innerText = "❌ Sin cromos repetidos";
+                 selectCromoMulti.appendChild(opt);
             } else {
-                repetidas.forEach(figu => {
-                    const opt = document.createElement("option"); opt.value = figu.id;
-                    opt.innerText = `${figu.bandera || '🃏'} ${figu.nombre.toUpperCase()} (x${figu.obtenido})`;
-                    selectCromoMulti.appendChild(opt);
-                });
+                 repetidas.forEach(figu => {
+                      const opt = document.createElement("option"); opt.value = figu.id;
+                      opt.innerText = `${figu.bandera || '🃏'} ${figu.nombre.toUpperCase()} (x${figu.obtenido})`;
+                      selectCromoMulti.appendChild(opt);
+                 });
             }
         }
     } else {
@@ -1982,7 +1985,6 @@ async function iniciarControladorAnunciosSeguro() {
         const anuncio = await res.json();
         if (!anuncio || !anuncio.activo) return;
 
-        // 🔥 NUEVO: Guardamos el objeto informe (si es que existe en la respuesta del backend)
         datosInformeParcheCache = anuncio.informe || null;
 
         const modal = document.getElementById('modalAnuncioGlobal');
@@ -2008,7 +2010,6 @@ async function iniciarControladorAnunciosSeguro() {
     } catch (err) { console.error("Error en banner de novedades:", err); }
 }
 
-// 🔥 ACTUALIZADO: Al cerrar el banner principal, abre el segundo modal de inmediato
 function cerrarAnuncioGlobal() {
     const modal = document.getElementById('modalAnuncioGlobal');
     if (modal) { 
@@ -2016,13 +2017,11 @@ function cerrarAnuncioGlobal() {
         document.getElementById('anuncioCuerpo').innerHTML = ""; 
     }
 
-    // 🎯 ENGANCHE SECUENCIAL: Si habia un informe guardado, lo renderizamos ahora
     if (datosInformeParcheCache) {
         abrirInformeActualizacionUI(datosInformeParcheCache);
     }
 }
 
-// 🔥 NUEVA FUNCIÓN: Inyecta los cambios y levanta el cartel técnico del parche
 function abrirInformeActualizacionUI(info) {
     const elVersion = document.getElementById("informe-txt-version");
     const elFecha = document.getElementById("informe-txt-fecha");
@@ -2037,26 +2036,22 @@ function abrirInformeActualizacionUI(info) {
             info.cambios.forEach(cambio => {
                 const p = document.createElement("p");
                 p.style.margin = "0";
-                // Reemplaza los asteriscos ** por etiquetas bold doradas con tus variables de CSS
                 p.innerHTML = cambio.replace(/\*\*(.*?)\*\*/g, '<b style="color:var(--dorado);">$1</b>');
                 contenedorCambios.appendChild(p);
             });
         }
     }
     
-    // Mostramos el modal secundario que creamos en el HTML
     const modalParche = document.getElementById("modal-informe-parche");
     if (modalParche) modalParche.style.display = "flex";
 }
 
-// 🔥 NUEVA FUNCIÓN: Cierra definitivamente el informe de parche
 function cerrarInformeParche() {
     const modalParche = document.getElementById("modal-informe-parche");
     if (modalParche) modalParche.style.display = "none";
-    datosInformeParcheCache = null; // Limpiamos la caché por el resto de la sesión del cliente
+    datosInformeParcheCache = null; 
 }
 
-// Función para abrir la interfaz del Bot en el Front
 function abrirMercadoBot(listaTusRepetidas) {
     const contenedorBot = document.getElementById("modulo-comerciante-bot");
     contenedorBot.style.display = "block";
@@ -2132,13 +2127,14 @@ function abrirMercadoBot(listaTusRepetidas) {
          document.getElementById("resultado-trato-bot").style.color = "#fff";
          document.getElementById("resultado-trato-bot").innerText = "⏳ El bot está tasando tus cartas...";
 
-         try {
-              const res = await fetch('/api/album/comerciar-bot', {
-                   method: 'POST',
-                   headers: { 'Content-Type': 'application/json' },
-                   body: JSON.stringify({ usuario_id: usuarioActual.id, jugadorIdsASacar: seleccionados })
-              });
-              const data = await res.json();
+          try {
+               // 🔥 CORREGIDO: URL absoluta con URL_BASE
+               const res = await fetch(`${URL_BASE}/album/comerciar-bot`, {
+                    method: 'POST',
+                    headers: obtenerHeadersSeguros(), 
+                    body: JSON.stringify({ jugadorIdsASacar: seleccionados }) 
+               });
+               const data = await res.json();
 
               if (data.ok) {
                    document.getElementById("resultado-trato-bot").style.color = "var(--verde-match)";
@@ -2148,7 +2144,6 @@ function abrirMercadoBot(listaTusRepetidas) {
                         🌟 CROMO RECIBIDO: <span style="color: var(--dorado);">${data.cartaGanada.nombre} [${data.cartaGanada.rareza}]</span>
                    `;
 
-                   // 🔥 Muestra el cartel con animación si ligaste el evento raro (8% de probabilidad)
                    if (data.eventoEspecial) {
                         plantillaMensaje += `<br><br><span style="color: #38bdf8; font-weight: bold; font-size: 0.95rem; display: block; padding: 8px; background: #0c4a6e; border-radius: 6px; border: 1px dashed #0284c7;">${data.eventoEspecial}</span>`;
                         alert(`🎁 ¡EVENTO ULTRA RARO ACTIVADO!\n\n${data.eventoEspecial}`);
@@ -2156,7 +2151,6 @@ function abrirMercadoBot(listaTusRepetidas) {
 
                    document.getElementById("resultado-trato-bot").innerHTML = plantillaMensaje;
                    
-                   // Damos 3.5 segundos para que pueda leer la recompensa en pantalla antes de recargar
                    setTimeout(() => { 
                        cargarAlbumLocal(); 
                        cambiarModulo('modulo-album', null);
@@ -2175,7 +2169,6 @@ function abrirMercadoBot(listaTusRepetidas) {
     };
 }
 
-// Llena el select usando las copias del álbum global de forma adaptada
 function cargarMisRepetidasParaVenta() {
     const select = document.getElementById("select-mercado-vender");
     if (!select) return;
@@ -2190,9 +2183,9 @@ function cargarMisRepetidasParaVenta() {
     });
 }
 
-// Envía el cromo a la vitrina
 async function publicarCartaMercado() {
-    const jugadorId = document.getElementById("select-mercado-vender").value;
+    // 🔥 CORREGIDO: ID alineado con el HTML nativo ("select-mercado-vender")
+    const jugadorId = document.getElementById("select-mercado-vender").value; 
     const precio = parseInt(document.getElementById("input-mercado-precio").value);
 
     if (!jugadorId || !precio || precio < 50) {
@@ -2201,17 +2194,18 @@ async function publicarCartaMercado() {
     }
 
     try {
-        const res = await fetch('/api/mercado/publicar', {
+        // 🔥 CORREGIDO: URL absoluta con URL_BASE
+        const res = await fetch(`${URL_BASE}/mercado/publicar`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ usuario_id: parseInt(usuarioActual.id), jugador_id: parseInt(jugadorId), precio })
+            headers: obtenerHeadersSeguros(), 
+            body: JSON.stringify({ jugador_id: parseInt(jugadorId), precio }) 
         });
         const data = await res.json();
         
         if (data.ok) {
             alert("✨ Cromo publicado en la vitrina internacional.");
             document.getElementById("input-mercado-precio").value = "";
-            cargarAlbumLocal(); // Sincroniza stock nativo
+            cargarAlbumLocal();
             setTimeout(() => { cambiarModulo('modulo-mercado-pases', document.getElementById('btn-nav-mercado')); }, 500);
         } else {
             alert(data.mensaje);
@@ -2221,7 +2215,6 @@ async function publicarCartaMercado() {
     }
 }
 
-// Renderiza todas las ofertas y aplica estilos condicionales si el cromo es tuyo
 async function obtenerOfertasMercado() {
     const grid = document.getElementById("grid-mercado-pases");
     if (!grid) return;
@@ -2235,7 +2228,8 @@ async function obtenerOfertasMercado() {
     }
 
     try {
-        const res = await fetch(`/api/mercado/ofertas?usuario_id=${idLimpio}`);
+        // 🔥 CORREGIDO: URL absoluta con URL_BASE
+        const res = await fetch(`${URL_BASE}/mercado/ofertas?usuario_id=${idLimpio}`);
         const data = await res.json();
 
         if (!data.ok) {
@@ -2252,9 +2246,8 @@ async function obtenerOfertasMercado() {
         data.ofertas.forEach(oferta => {
             const esMia = (parseInt(oferta.vendedor_id) === idLimpio);
             
-            // ⏱️ PARCHE DE RECUENTO DINÁMICO (24 HORAS LÍMITE)
             let etiquetaTiempo = "⏱️ Vence en 1 día";
-            let colorTiempo = "var(--celeste)"; // Celeste amigable por defecto
+            let colorTiempo = "var(--celeste)"; 
 
             if (oferta.segundos_restantes !== undefined && oferta.segundos_restantes !== null) {
                 const segundos = parseFloat(oferta.segundos_restantes);
@@ -2265,7 +2258,6 @@ async function obtenerOfertasMercado() {
                     if (horasTotales > 0) {
                         etiquetaTiempo = `⏱️ Quedan: ${horasTotales}h ${minutosRestantes}m`;
                     } else {
-                        // Si le queda menos de una hora se pone picante la cosa
                         etiquetaTiempo = `🚨 ¡Vence en: ${minutosRestantes} min!`;
                         colorTiempo = "var(--rojo)";
                     }
@@ -2275,7 +2267,6 @@ async function obtenerOfertasMercado() {
                 }
             }
 
-            // Si el cromo es tuyo, el botón cambia de color y se bloquea
             const btnAccion = esMia 
                 ? `<button type="button" class="btn-estadio" style="background: #475569; color:#fff; width:100%; font-size:0.8rem; padding: 5px 0; cursor: not-allowed;" disabled>TU PUBLICACIÓN</button>`
                 : `<button type="button" class="btn-estadio" style="background: var(--dorado); color:#000; width:100%; font-size:0.8rem; padding: 5px 0;" onclick="comprarCartaMercado(${oferta.id})">COMPRAR</button>`;
@@ -2287,8 +2278,6 @@ async function obtenerOfertasMercado() {
                         <strong style="color: #fff; font-size: 0.95rem; display:block;">${oferta.nombre}</strong>
                         <span style="font-size:0.75rem; color:var(--celeste); font-weight:bold; display:block; margin-top:2px;">${(oferta.rareza || 'comun').toUpperCase()}</span>
                         <span style="font-size:0.75rem; color:#94a3b8; display:block; margin-top:4px;">${esMia ? '✨ Tuya' : 'Vendedor: ' + (oferta.nombre_vendedor || 'Usuario')}</span>
-                        
-                        <!-- 🎯 NUEVO: RENDER DEL RELOJ DE EXPIRACIÓN -->
                         <span style="font-size:0.75rem; color:${colorTiempo}; font-weight:bold; display:block; margin-top:4px; font-family:'Oswald';">${etiquetaTiempo}</span>
                     </div>
                     <div style="margin-top: 10px;">
@@ -2304,10 +2293,10 @@ async function obtenerOfertasMercado() {
     }
 }
 
-// Procesa la compra usando la respuesta directa del Backend y actualiza el HUD real
 async function comprarCartaMercado(ofertaId) {
     try {
-        const res = await fetch('/api/mercado/comprar', {
+        // 🔥 CORREGIDO: URL absoluta con URL_BASE
+        const res = await fetch(`${URL_BASE}/mercado/comprar`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ usuario_id: parseInt(usuarioActual.id), oferta_id: ofertaId })
@@ -2330,7 +2319,7 @@ async function comprarCartaMercado(ofertaId) {
             if (typeof actualizarPerfilUI === "function") actualizarPerfilUI();
 
             cargarAlbumLocal(); 
-            obtenerOfertasMercado();
+            obtenerOffersMercado();
 
         } else {
             alert(data.mensaje);
@@ -2341,20 +2330,19 @@ async function comprarCartaMercado(ofertaId) {
     }
 }
 
-// Memoria local temporal para guardar lo que va marcando el jugador
 let eleccionesQuiniela = { p1: null, p2: null, p3: null };
 
-// 🔄 NUEVA: Pide los partidos activos al backend y arma el HTML con tus estilos nativos
 async function cargarPartidosQuinielaUI() {
     const contenedor = document.getElementById("contenedor-lista-quiniela");
     if (!contenedor) return;
 
     try {
-        const res = await fetch('/api/timba/quiniela/partidos');
+        // 🔥 CORREGIDO: URL absoluta con URL_BASE
+        const res = await fetch(`${URL_BASE}/timba/quiniela/partidos`);
         const data = await res.json();
 
         if (data.ok && data.partidos.length === 3) {
-            contenedor.innerHTML = ""; // Limpiamos el loader sutil
+            contenedor.innerHTML = ""; 
 
             data.partidos.forEach((partido, index) => {
                 const numP = index + 1;
@@ -2378,30 +2366,23 @@ async function cargarPartidosQuinielaUI() {
     }
 }
 
-// Maneja los clicks y pinta el botón seleccionado con color dorado
 function seleccionarQuiniela(partido, prediccion, boton) {
-    // Apaga el estilo de los otros botones de ese mismo partido
     document.querySelectorAll(`.btn-quiniela-p${partido}`).forEach(btn => {
         btn.style.background = "#1e293b";
         btn.style.color = "#fff";
         btn.style.borderColor = "#475569";
     });
 
-    // Enciende el botón actual con tu mística clásica
     boton.style.background = "var(--dorado, #fbbf24)";
     boton.style.color = "#000";
     boton.style.borderColor = "var(--dorado, #fbbf24)";
 
-    // Guarda la selección en la boleta temporal
     eleccionesQuiniela[`p${partido}`] = prediccion;
 }
 
-// Envía la boleta combinada compartiendo los límites de la timba individual
 async function enviarBoletaQuiniela() {
     const monto = parseInt(document.getElementById("input-monto-quiniela").value);
     const divRes = document.getElementById("resultado-quiniela");
-
-    // 🛡️ REGLA DE ORO: Validar la energía mirando únicamente el botón nativo
     const btnTimbaComun = document.getElementById("btn-preparar-apuesta"); 
 
     if (btnTimbaComun && btnTimbaComun.disabled) {
@@ -2422,7 +2403,8 @@ async function enviarBoletaQuiniela() {
     divRes.innerText = "⏳ Procesando boleta combinada...";
 
     try {
-        const res = await fetch('/api/timba/quiniela', {
+        // 🔥 CORREGIDO: URL absoluta con URL_BASE
+        const res = await fetch(`${URL_BASE}/timba/quiniela`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -2434,18 +2416,14 @@ async function enviarBoletaQuiniela() {
         const data = await res.json();
 
         if (data.ok) {
-            // 1. Sincroniza Oro en el objeto y en el HUD de inmediato
             if (usuarioActual && data.nuevoOro !== undefined) usuarioActual.monedas = data.nuevoOro;
             const elMonedas = document.getElementById("lbl-monedas");
             if (elMonedas && data.nuevoOro !== undefined) elMonedas.innerText = data.nuevoOro;
 
-            // 2. 🔥 IMPACTO VISUAL INMEDIATO DE ENERGÍA NATIVA
-            // Forzamos a tu sistema core a re-calcular y dibujar los intentos restantes en pantalla
             if (typeof actualizarTimbasRestantesUI === "function") {
                 actualizarTimbasRestantesUI();
             }
 
-            // 3. Render del Desglose de Resultados
             const trad = (sigla) => sigla === 'L' ? 'Local' : (sigla === 'E' ? 'Empate' : 'Visita');
             
             const p1 = data.partidosSimulados[0];
@@ -2466,7 +2444,6 @@ async function enviarBoletaQuiniela() {
                 divRes.innerHTML = `❌ ${data.mensaje}${desglose}`;
             }
 
-            // 4. Limpieza ordenada del formulario
             document.getElementById("input-monto-quiniela").value = "100";
             eleccionesQuiniela = { p1: null, p2: null, p3: null };
             
@@ -2476,7 +2453,6 @@ async function enviarBoletaQuiniela() {
                 btn.style.borderColor = "#475569";
             });
 
-            // Rotamos cartelera de partidos
             cargarPartidosQuinielaUI();
 
         } else {
