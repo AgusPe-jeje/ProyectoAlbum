@@ -513,143 +513,6 @@ img.emoji {
     box-shadow: 0 0 10px rgba(0, 204, 255, 0.3);
 }
 
-/* Colores temáticos sutiles para los botones de rareza activos */
-.btn-filtro-tv.f-comun.activo { background: #a2b4cc; color: #000; }
-.btn-filtro-tv.f-rara.activo { background: #0066ff; color: #fff; }
-.btn-filtro-tv.f-epica.activo { background: #aa00ff; color: #fff; }
-.btn-filtro-tv.f-legendaria.activo { background: #ff9900; color: #000; }
-
-/* Adaptación para celulares */
-@media (max-width: 768px) {
-    .contenedor-filtros-album { padding: 10px; gap: 10px; }
-    .grupo-filtro { gap: 6px; }
-    .btn-filtro-tv { padding: 5px 8px; font-size: 0.8rem; }
-    .filtro-label { width: 100%; margin-bottom: 2px; }
-}
-
-/* ========================================================================
-   📱 REINGENIERÍA EXCLUSIVA RESPONSIVA PARA CELULARES (MÁXIMO 768px) - FIXED
-   ======================================================================== */
-@media (max-width: 768px) {
-    body { padding: 8px; }
-    .titulo-copa-pe { font-size: 2rem; }
-    
-    /* 📊 MARCADOR DE ESTADO: Ahora es un Grid limpio de 2x2 para que no se pise nada */
-    .header-status-scoreboard { 
-        display: grid !important; 
-        grid-template-columns: repeat(2, 1fr) !important; 
-        gap: 12px !important; 
-        padding: 12px !important; 
-        width: 100% !important;
-        box-sizing: border-box !important;
-    }
-    
-    /* Cada estadística ocupa su celda prolija con contenido justificado */
-    .stat-box-tv { 
-        width: 100% !important; 
-        flex-direction: column !important; 
-        align-items: center !important;
-        justify-content: center !important; 
-        border-bottom: none !important;
-        background: rgba(15, 23, 42, 0.5);
-        padding: 6px !important;
-        border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        box-sizing: border-box !important;
-    }
-    .stat-label { font-size: 0.75rem; margin-bottom: 2px; }
-    .stat-valor { font-size: 1.25rem !important; }
-    
-    /* 🧭 MENÚ MODULAR: Cambia a Flex con Scroll Horizontal Infinito. 
-       ¡Ideal para que entren los 5 botones prolijos en una sola fila deslizable! */
-    .nav-modulos-estadio { 
-        display: flex !important; 
-        flex-direction: row !important; 
-        overflow-x: auto !important; 
-        white-space: nowrap !important;
-        gap: 8px !important; 
-        width: 100% !important;
-        padding: 5px 0 10px 0 !important;
-        -webkit-overflow-scrolling: touch;
-    }
-    .nav-modulos-estadio::-webkit-scrollbar { display: none; } /* Oculta barra molesta */
-    
-    .btn-modulo-match { 
-        flex: 0 0 auto !important; /* Evita que el celular achique los botones */
-        padding: 10px 16px !important; 
-        font-size: 0.95rem !important; 
-    }
-    
-    /* 🛍️ TIENDA Y CONTENEDORES */
-    .contenedor-tienda-cofres { flex-direction: column; align-items: center; width: 100%; }
-    .tarjeta-cofre-match { width: 100%; max-width: 100%; box-sizing: border-box; }
-    
-    /* Ajuste de Banners para que respiren los textos */
-    .banner-modulo-imagen { height: 160px !important; }
-    .overlay-banner-texto { padding-left: 15px !important; padding-right: 15px !important; }
-    .overlay-banner-texto h2 { font-size: 1.6rem !important; }
-    .overlay-banner-texto p { font-size: 0.95rem !important; }
-
-    /* 🎬 APERTURA DE SOBRES */
-    .pack-opening-escenario { min-height: 320px; padding: 15px; }
-    .pistas-pack-container { gap: 6px !important; width: 100% !important; box-sizing: border-box !important; justify-content: center !important; }
-    .pista-bloque { min-width: 0 !important; flex: 1 !important; max-width: 85px !important; font-size: 1.1rem !important; padding: 6px 8px !important; white-space: nowrap !important; }
-    .carta-presentada-wrapper { min-height: 180px; margin-bottom: 15px; }
-    .carta-clash.caminante-entrada { animation: entradaFIFAMovil 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards !important; }
-
-    /* 🃏 GRILLAS DE CROMOS (Álbum e Inventario) */
-    .grid-album-match, .grid-album, .grid-sobre, #grid-sobre-abierto, #grid-cartas-draft-mundial { 
-        grid-template-columns: repeat(3, 1fr) !important; 
-        gap: 8px !important; 
-        display: grid !important; 
-    }
-    .carta-clash { width: 100% !important; height: auto !important; aspect-ratio: 2 / 3 !important; }
-    .rareza-vertical { font-size: 0.5rem; left: 3px; bottom: 6px; padding: 3px 1px; }
-    .badge-repetidas { font-size: 0.75rem; padding: 1px 5px; }
-
-    /* ⚽ ARCO DE PENALES */
-    .contenedor-penales-layout-estadio { flex-direction: column; gap: 15px; }
-    .arco-futbol-stadium { width: 100% !important; max-width: 340px !important; height: 160px !important; border-width: 4px !important; margin: 15px auto !important; }
-    #arquero-animado { font-size: 1.6rem !important; top: 45px !important; margin-left: -13px !important; }
-    #balon-animado { font-size: 1.3rem !important; bottom: 10px !important; margin-left: -10px !important; }
-
-    /* 🎰 TIMBA Y FIXTURE */
-    .grid-opciones-goles-match { grid-template-columns: repeat(2, 1fr); }
-    #lista-cruces-mundial-simulacion .item-historial-partido { font-size: 0.95rem; padding: 10px 12px; flex-direction: column; align-items: flex-start; gap: 6px; }
-    #lista-cruces-mundial-simulacion .item-historial-partido b { align-self: flex-end; }
-    
-    /* 🚪 BOTÓN SALIR RESPONSIVO */
-    .btn-logout-premium { width: 100% !important; padding: 12px !important; font-size: 1.1rem !important; margin-top: 5px; }
-}
-
-@keyframes entradaFIFAMovil { 
-    0% { opacity: 0; transform: translateX(-80px) scale(0.6) rotate(-10deg); filter: blur(3px) brightness(2); } 
-    100% { opacity: 1; transform: translateX(0) scale(1) rotate(0deg); filter: blur(0) brightness(1); } 
-}
-
-/* Adaptación para celulares */
-@media (max-width: 768px) {
-    .contenedor-filtros-album { padding: 10px; gap: 10px; }
-    .grupo-filtro { gap: 6px; }
-    .btn-filtro-tv { padding: 5px 8px; font-size: 0.8rem; }
-    .filtro-label { width: 100%; margin-bottom: 2px; }
-}
-
-.grid-cartas-draft-mundial {
-    display: flex;
-    flex-wrap: wrap;       /* 🔥 Esto es lo que rompe la verticalidad */
-    justify-content: center;
-    gap: 10px;
-    padding: 15px;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 8px;
-}
-
-.carta-clash {
-    width: 80px;           /* Ajustá el ancho a tu gusto */
-    flex: 0 0 auto;        /* Evita que se estiren */
-}
-
 /* ========================================================================
    📺 HUD SCOREBOARD SUPERIOR (ESTILO PREMIUM TV)
    ======================================================================== */
@@ -845,3 +708,141 @@ img.emoji {
     background: linear-gradient(135deg, #fef08a 0%, #f59e0b 100%) !important;
     box-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
 }
+
+/* Colores temáticos sutiles para los botones de rareza activos */
+.btn-filtro-tv.f-comun.activo { background: #a2b4cc; color: #000; }
+.btn-filtro-tv.f-rara.activo { background: #0066ff; color: #fff; }
+.btn-filtro-tv.f-epica.activo { background: #aa00ff; color: #fff; }
+.btn-filtro-tv.f-legendaria.activo { background: #ff9900; color: #000; }
+
+/* Adaptación para celulares */
+@media (max-width: 768px) {
+    .contenedor-filtros-album { padding: 10px; gap: 10px; }
+    .grupo-filtro { gap: 6px; }
+    .btn-filtro-tv { padding: 5px 8px; font-size: 0.8rem; }
+    .filtro-label { width: 100%; margin-bottom: 2px; }
+}
+
+/* ========================================================================
+   📱 REINGENIERÍA EXCLUSIVA RESPONSIVA PARA CELULARES (MÁXIMO 768px) - FIXED
+   ======================================================================== */
+@media (max-width: 768px) {
+    body { padding: 8px; }
+    .titulo-copa-pe { font-size: 2rem; }
+    
+    /* 📊 MARCADOR DE ESTADO: Ahora es un Grid limpio de 2x2 para que no se pise nada */
+    .header-status-scoreboard { 
+        display: grid !important; 
+        grid-template-columns: repeat(2, 1fr) !important; 
+        gap: 12px !important; 
+        padding: 12px !important; 
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Cada estadística ocupa su celda prolija con contenido justificado */
+    .stat-box-tv { 
+        width: 100% !important; 
+        flex-direction: column !important; 
+        align-items: center !important;
+        justify-content: center !important; 
+        border-bottom: none !important;
+        background: rgba(15, 23, 42, 0.5);
+        padding: 6px !important;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-sizing: border-box !important;
+    }
+    .stat-label { font-size: 0.75rem; margin-bottom: 2px; }
+    .stat-valor { font-size: 1.25rem !important; }
+    
+    /* 🧭 MENÚ MODULAR: Cambia a Flex con Scroll Horizontal Infinito. 
+       ¡Ideal para que entren los 5 botones prolijos en una sola fila deslizable! */
+    .nav-modulos-estadio { 
+        display: flex !important; 
+        flex-direction: row !important; 
+        overflow-x: auto !important; 
+        white-space: nowrap !important;
+        gap: 8px !important; 
+        width: 100% !important;
+        padding: 5px 0 10px 0 !important;
+        -webkit-overflow-scrolling: touch;
+    }
+    .nav-modulos-estadio::-webkit-scrollbar { display: none; } /* Oculta barra molesta */
+    
+    .btn-modulo-match { 
+        flex: 0 0 auto !important; /* Evita que el celular achique los botones */
+        padding: 10px 16px !important; 
+        font-size: 0.95rem !important; 
+    }
+    
+    /* 🛍️ TIENDA Y CONTENEDORES */
+    .contenedor-tienda-cofres { flex-direction: column; align-items: center; width: 100%; }
+    .tarjeta-cofre-match { width: 100%; max-width: 100%; box-sizing: border-box; }
+    
+    /* Ajuste de Banners para que respiren los textos */
+    .banner-modulo-imagen { height: 160px !important; }
+    .overlay-banner-texto { padding-left: 15px !important; padding-right: 15px !important; }
+    .overlay-banner-texto h2 { font-size: 1.6rem !important; }
+    .overlay-banner-texto p { font-size: 0.95rem !important; }
+
+    /* 🎬 APERTURA DE SOBRES */
+    .pack-opening-escenario { min-height: 320px; padding: 15px; }
+    .pistas-pack-container { gap: 6px !important; width: 100% !important; box-sizing: border-box !important; justify-content: center !important; }
+    .pista-bloque { min-width: 0 !important; flex: 1 !important; max-width: 85px !important; font-size: 1.1rem !important; padding: 6px 8px !important; white-space: nowrap !important; }
+    .carta-presentada-wrapper { min-height: 180px; margin-bottom: 15px; }
+    .carta-clash.caminante-entrada { animation: entradaFIFAMovil 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards !important; }
+
+    /* 🃏 GRILLAS DE CROMOS (Álbum e Inventario) */
+    .grid-album-match, .grid-album, .grid-sobre, #grid-sobre-abierto, #grid-cartas-draft-mundial { 
+        grid-template-columns: repeat(3, 1fr) !important; 
+        gap: 8px !important; 
+        display: grid !important; 
+    }
+    .carta-clash { width: 100% !important; height: auto !important; aspect-ratio: 2 / 3 !important; }
+    .rareza-vertical { font-size: 0.5rem; left: 3px; bottom: 6px; padding: 3px 1px; }
+    .badge-repetidas { font-size: 0.75rem; padding: 1px 5px; }
+
+    /* ⚽ ARCO DE PENALES */
+    .contenedor-penales-layout-estadio { flex-direction: column; gap: 15px; }
+    .arco-futbol-stadium { width: 100% !important; max-width: 340px !important; height: 160px !important; border-width: 4px !important; margin: 15px auto !important; }
+    #arquero-animado { font-size: 1.6rem !important; top: 45px !important; margin-left: -13px !important; }
+    #balon-animado { font-size: 1.3rem !important; bottom: 10px !important; margin-left: -10px !important; }
+
+    /* 🎰 TIMBA Y FIXTURE */
+    .grid-opciones-goles-match { grid-template-columns: repeat(2, 1fr); }
+    #lista-cruces-mundial-simulacion .item-historial-partido { font-size: 0.95rem; padding: 10px 12px; flex-direction: column; align-items: flex-start; gap: 6px; }
+    #lista-cruces-mundial-simulacion .item-historial-partido b { align-self: flex-end; }
+    
+    /* 🚪 BOTÓN SALIR RESPONSIVO */
+    .btn-logout-premium { width: 100% !important; padding: 12px !important; font-size: 1.1rem !important; margin-top: 5px; }
+}
+
+@keyframes entradaFIFAMovil { 
+    0% { opacity: 0; transform: translateX(-80px) scale(0.6) rotate(-10deg); filter: blur(3px) brightness(2); } 
+    100% { opacity: 1; transform: translateX(0) scale(1) rotate(0deg); filter: blur(0) brightness(1); } 
+}
+
+/* Adaptación para celulares */
+@media (max-width: 768px) {
+    .contenedor-filtros-album { padding: 10px; gap: 10px; }
+    .grupo-filtro { gap: 6px; }
+    .btn-filtro-tv { padding: 5px 8px; font-size: 0.8rem; }
+    .filtro-label { width: 100%; margin-bottom: 2px; }
+}
+
+.grid-cartas-draft-mundial {
+    display: flex;
+    flex-wrap: wrap;       /* 🔥 Esto es lo que rompe la verticalidad */
+    justify-content: center;
+    gap: 10px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+}
+
+.carta-clash {
+    width: 80px;           /* Ajustá el ancho a tu gusto */
+    flex: 0 0 auto;        /* Evita que se estiren */
+}
+
