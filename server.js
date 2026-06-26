@@ -2391,7 +2391,9 @@ app.get('/api/mercado/ofertas', async (req, res) => {
         }
 
         const ofertas = await pool.query(
-            `SELECT m.id, m.precio_oro, m.vendedor_id, j.nombre, j.rareza, j.bandera, u.username AS nombre_vendedor
+            `SELECT m.id, m.precio_oro, m.vendedor_id, j.nombre, j.rareza, j.bandera, u.username AS nombre_vendedor,
+                    -- 🔥 NUEVO: Calculamos cuántos segundos le quedan de vida antes de cumplir el día
+                    EXTRACT(EPOCH FROM (m.fecha_publicacion + INTERVAL '1 day' - NOW())) AS segundos_restantes
              FROM mercado_pases m
              JOIN jugadores j ON m.jugador_id = j.id
              JOIN usuarios u ON m.vendedor_id = u.id
