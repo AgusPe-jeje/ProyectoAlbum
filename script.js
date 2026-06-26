@@ -1435,7 +1435,11 @@ async function abrirDraftMulti(esCreador) {
 
         mostrarCarga("Validando credenciales de la sala...");
         try {
-            const res = await fetch(`${URL_BASE}/multijugador/consultar-sala/${cod}`);
+            // 🔥 REPARADO: Se usa URL_BASE limpia (ya incluye /api) y se inyecta Authorization para evitar el 403
+            const res = await fetch(`${URL_BASE}/multijugador/consultar-sala/${cod}`, {
+                method: 'GET',
+                headers: obtenerHeadersSeguros()
+            });
             const data = await res.json();
 
             if (!data.ok) {
@@ -1465,7 +1469,11 @@ async function abrirDraftMulti(esCreador) {
                 return;
             }
 
-            const resSala = await fetch(`${URL_BASE}/multijugador/sala/${cod}`);
+            // 🔥 REPARADO: URL corregida para evitar /api/api y protegida con headers seguros
+            const resSala = await fetch(`${URL_BASE}/multijugador/sala/${cod}`, {
+                method: 'GET',
+                headers: obtenerHeadersSeguros()
+            });
             const dataSala = await resSala.json();
             if (dataSala.ok) {
                 multiSalaId = dataSala.sala_id;
@@ -1492,14 +1500,11 @@ async function prepararInscripcionMundialMulti() {
      mostrarCarga("Conectando con la central de la Arena Online...");
 
      try {
-          // 🔥 REPARADO: Se agregó '/api' a la ruta y la cabecera 'Authorization' con el token
+          // 🔥 REPARADO: Quitamos el 'api/' redundante porque URL_BASE ya lo trae de fábrica
           const res = await fetch(`${URL_BASE}/multijugador/preparar-draft`, {
                method: 'POST',
-               headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token_arena')}`
-               },
-               body: JSON.stringify({}) // El server saca el ID del token, no hace falta mandarlo acá
+               headers: obtenerHeadersSeguros(),
+               body: JSON.stringify({})
           });
           
           const data = await res.json(); 
@@ -1601,7 +1606,7 @@ async function confirmarInscripcionMultiServidor(paisElegido, arrayIdsJugadores)
 
     mostrarCarga("Enviando planilla de vestuarios a la Arena Online...");
     
-    // 🔥 REPARADO: Se agregó '/api' a las rutas de crear y unirse
+    // 🔥 REPARADO: Quitamos el 'api/' redundante de las variables base
     let url = `${URL_BASE}/multijugador/crear`;
     let cuerpo = {
         seleccion: paisElegido, 
@@ -1622,12 +1627,8 @@ async function confirmarInscripcionMultiServidor(paisElegido, arrayIdsJugadores)
     try {
         const res = await fetch(url, {
             method: 'POST', 
-            headers: { 
-                'Content-Type': 'application/json',
-                // 🔥 REPARADO: Inyección obligatoria del token para que el server te deje pasar
-                'Authorization': `Bearer ${localStorage.getItem('token_arena')}`
-            }, 
-            body: JSON.stringify(cuerpo) // El server saca tu usuario_id del token, no hace falta en el body
+            headers: obtenerHeadersSeguros(), 
+            body: JSON.stringify(cuerpo)
         });
         
         const data = await res.json();
@@ -1651,7 +1652,11 @@ async function actualizarLobbyEnVivo() {
     if (!multiCodigoSala) return;
 
     try {
-        const res = await fetch(`${URL_BASE}/multijugador/sala/${multiCodigoSala}`);
+        // 🔥 REPARADO: Removido el '/api/' de más para limpiar el 404 y blindado con Token
+        const res = await fetch(`${URL_BASE}/multijugador/sala/${multiCodigoSala}`, {
+            method: 'GET',
+            headers: obtenerHeadersSeguros()
+        });
         const data = await res.json();
 
         if (!data.ok) { clearInterval(multiIntervaloLobby); return; }
@@ -1706,14 +1711,12 @@ async function lanzarSimulacionMulti() {
     mostrarCarga("Sorteando las llaves y cerrando las planillas online...");
     clearInterval(multiIntervaloLobby);
     try {
-        const res = await fetch(`${URL_BASE}/api/multijugador/jugar`, { // 👈 Con '/api'
+        // 🔥 REPARADO: Quitamos el 'api/' de más para evitar /api/api
+        const res = await fetch(`${URL_BASE}/multijugador/jugar`, { 
           method: 'POST', 
-          headers: { 
-               'Content-Type': 'application/json',
-               'Authorization': `Bearer ${localStorage.getItem('token_arena')}` // 👈 Clave para que valide el Host
-          },
+          headers: obtenerHeadersSeguros(),
           body: JSON.stringify({ sala_id: multiSalaId, usuario_id: usuarioActual.id })
-          });
+        });
         const data = await res.json(); ocultarCarga();
         if (!data.ok) { alert(data.mensaje); multiIntervaloLobby = setInterval(actualizarLobbyEnVivo, 3000); return; }
 
@@ -1724,8 +1727,11 @@ async function lanzarSimulacionMulti() {
 async function consultarResultadoInvitado(intento = 1) {
      if (intento === 1) mostrarCarga("¡El Torneo comenzó! Recibiendo transmisión oficial...");
      try {
-          // 🔥 REPARADO: Se agregó '/api' a la ruta espejo para el invitado
-          const res = await fetch(`${URL_BASE}/api/multijugador/resultado-invitado/${multiSalaId}`);
+          // 🔥 REPARADO: Quitamos el 'api/' redundante para limpiar la consulta espejo
+          const res = await fetch(`${URL_BASE}/multijugador/resultado-invitado/${multiSalaId}`, {
+              method: 'GET',
+              headers: obtenerHeadersSeguros()
+          });
           const data = await res.json();
           
           if (data.ok && (!data.bitacora || data.bitacora.length <= 1)) {
