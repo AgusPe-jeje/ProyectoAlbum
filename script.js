@@ -173,6 +173,23 @@ async function autenticarUsuario(accion) {
      }
 }
 
+// 🔥 CAPTURA DE ENTER PARA INICIAR SESIÓN EN LA ARENA
+document.addEventListener("DOMContentLoaded", () => {
+    const inputUser = document.getElementById("input-usuario");
+    const inputPass = document.getElementById("input-pass");
+
+    const manejarEnterLogin = (event) => {
+        if (event.key === "Enter") {
+            event.preventDefault(); // Evita cualquier recarga de página molesta
+            autenticarUsuario('login');
+        }
+    };
+
+    // Asignamos el evento a ambos campos para máxima comodidad
+    if (inputUser) inputUser.addEventListener("keydown", manejarEnterLogin);
+    if (inputPass) inputPass.addEventListener("keydown", manejarEnterLogin);
+});
+
 function actualizarInterfazUI() {
      if (!usuarioActual) return;
      document.getElementById("lbl-usuario").innerText = usuarioActual.username.toUpperCase();
