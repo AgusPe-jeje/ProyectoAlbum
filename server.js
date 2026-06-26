@@ -2415,9 +2415,15 @@ app.get('/api/mercado/ofertas', async (req, res) => {
 
 // 3. Procesar la compra de un cromo expuesto de forma atómica
 app.post('/api/mercado/comprar', async (req, res) => {
-    const { usuario_id, oferta_id } = req.body; 
+    let { usuario_id, oferta_id } = req.body; 
 
     try {
+        // 🛡️ Blindaje por si el Front todavía arrastra un ID corrupto tipo "1:1"
+        if (usuario_id && String(usuario_id).includes(":")) {
+            usuario_id = String(usuario_id).split(":")[0];
+        }
+        usuario_id = parseInt(usuario_id);
+
         const buscarOferta = await pool.query(
             "SELECT vendedor_id, jugador_id, precio_oro FROM mercado_pases WHERE id = $1",
             [oferta_id]
@@ -2429,7 +2435,7 @@ app.post('/api/mercado/comprar', async (req, res) => {
 
         const { vendedor_id, jugador_id, precio_oro } = buscarOferta.rows[0];
 
-        if (parseInt(vendedor_id) === parseInt(usuario_id)) {
+        if (parseInt(vendedor_id) === usuario_id) {
             return res.json({ ok: false, mensaje: "❌ No podés comprar tu propia publicación." });
         }
 
@@ -2438,20 +2444,33 @@ app.post('/api/mercado/comprar', async (req, res) => {
             return res.json({ ok: false, mensaje: "❌ No tenés suficiente Oro en tu cuenta para este fichaje." });
         }
 
+        // Transferencia económica segura
         await pool.query("UPDATE usuarios SET monedas = monedas - $1 WHERE id = $2", [precio_oro, usuario_id]);
         await pool.query("UPDATE usuarios SET monedas = monedas + $1 WHERE id = $2", [precio_oro, vendedor_id]);
 
+        // Transferir el cromo al inventario
         await pool.query(
             `INSERT INTO usuario_progreso (usuario_id, jugador_id, cantidad) VALUES ($1, $2, 1)
              ON CONFLICT (usuario_id, jugador_id) DO UPDATE SET cantidad = usuario_progreso.cantidad + 1`,
             [usuario_id, jugador_id]
         );
 
+        // Sacamos la oferta de la vitrina
         await pool.query("DELETE FROM mercado_pases WHERE id = $1", [oferta_id]);
 
+        // Traemos el nombre del jugador para el Front
         const infoJugador = await pool.query("SELECT nombre FROM jugadores WHERE id = $1", [jugador_id]);
 
-        return res.json({ ok: true, jugador: infoJugador.rows[0].nombre });
+        // 🔥 NUEVO: Consultamos el saldo final real directamente de la base de datos de Neon
+        const checkOroNuevo = await pool.query("SELECT monedas FROM usuarios WHERE id = $1", [usuario_id]);
+        const nuevoOro = checkOroNuevo.rows[0].monedas;
+
+        // Devuelve todo al Front, incluyendo las monedas actualizadas
+        return res.json({ 
+            ok: true, 
+            jugador: infoJugador.rows[0].nombre,
+            nuevoOro: nuevoOro 
+        });
     } catch (err) {
         console.error(err);
         return res.status(500).json({ ok: false, error: err.message });
