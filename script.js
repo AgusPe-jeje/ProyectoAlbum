@@ -1011,9 +1011,21 @@ async function prepararInscripcionMundial() {
 
           if (!data.ok) return alert(data.mensaje);
 
-          usuarioActual.monedas = data.monedasActualizadas !== undefined ? data.monedasActualizadas : usuarioActual.monedas - 500;
+          // 🪙 Sincronizamos las monedas exactas que mandó el servidor
+          if (data.monedasActualizadas !== undefined) {
+               usuarioActual.monedas = data.monedasActualizadas;
+          } else {
+               usuarioActual.monedas -= 1500;
+          }
           actualizarInterfazUI();
 
+          // ⏱️ TRUCO DE SINCRONIZACIÓN INMEDIATA:
+          // Como ya pagaste la entrada, le clavamos las 3 horas de Cooldown al reloj principal 
+          // para que si salís o volvés atrás, ya esté contando de forma fluida.
+          const COOLDOWN_MUNDIAL_MS = 3 * 60 * 60 * 1000; 
+          arrancarCronometroMundialVisual(COOLDOWN_MUNDIAL_MS);
+
+          // Bloqueos estéticos de navegación en pleno torneo
           const barraNavegacion = document.querySelector(".nav-modulos-estadio");
           if (barraNavegacion) barraNavegacion.style.display = "none"; 
           const btnSalir = document.querySelector(".btn-logout-kick");
@@ -1024,7 +1036,7 @@ async function prepararInscripcionMundial() {
           jugadoresSeleccionadosDraft = [];
 
           const contenedorTerna = document.getElementById("zona-eleccion-pais-mundial");
-          contenedorTerna.innerHTML = "";
+          if (contenedorTerna) contenedorTerna.innerHTML = "";
           
           document.getElementById("fase-inscripcion-mundial").style.display = "block";
           document.getElementById("fase-draft-mundial").style.display = "none";
@@ -1035,7 +1047,7 @@ async function prepararInscripcionMundial() {
                btn.className = "btn-estadio btn-modulo-match"; btn.style.margin = "8px";
                btn.innerText = `⚽ ${pais.toUpperCase()}`;
                btn.onclick = () => iniciarDraftJugadoresMundial(pais);
-               contenedorTerna.appendChild(btn);
+               if (contenedorTerna) contenedorTerna.appendChild(btn);
           });
      } catch (err) { console.error(err); ocultarCarga(); }
 }
