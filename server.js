@@ -2514,11 +2514,11 @@ app.get('/api/timba/quiniela/partidos', (req, res) => {
 });
 
 // 2. Endpoint para procesar la boleta combinada de forma segura
+// Endpoint para procesar la boleta compartiendo la energía nativa de la timba
 app.post('/api/timba/quiniela', async (req, res) => {
-    let { usuario_id, monto, elecciones } = req.body; // elecciones viene como { p1: 'L', p2: 'E', p3: 'V' }
+    let { usuario_id, monto, elecciones } = req.body;
 
     try {
-        // Blindaje de seguridad por si las moscas con el ID "1:1"
         if (usuario_id && String(usuario_id).includes(":")) {
             usuario_id = String(usuario_id).split(":")[0];
         }
@@ -2529,16 +2529,39 @@ app.post('/api/timba/quiniela', async (req, res) => {
             return res.json({ ok: false, mensaje: "⚠️ El monto mínimo para la boleta es de 50 de Oro." });
         }
 
-        // Validar fondos del apostador en Neon
-        const checkUser = await pool.query("SELECT monedas FROM usuarios WHERE id = $1", [usuario_id]);
-        if (checkUser.rows.length === 0 || checkUser.rows[0].monedas < monto) {
+        // 1. Validar fondos y energía en simultáneo desde la tabla usuarios
+        const checkUser = await pool.query("SELECT monedas, ultimo_giro_timestamp, timbas_hoy FROM usuarios WHERE id = $1", [usuario_id]);
+        if (checkUser.rows.length === 0) {
+            return res.json({ ok: false, mensaje: "❌ Usuario no encontrado." });
+        }
+
+        const usuario = checkUser.rows[0];
+
+        if (usuario.monedas < monto) {
             return res.json({ ok: false, mensaje: "❌ No tenés suficiente Oro en tu cuenta para esta jugada." });
         }
 
-        // Descontamos el costo de la boleta inmediatamente
-        await pool.query("UPDATE usuarios SET monedas = monedas - $1 WHERE id = $2", [monto, usuario_id]);
+        // 2. 🔥 REPARADO: Calcular energía real con tu función core
+        let { timbasActuales } = calcularTimbasActuales(usuario);
 
-        // SIMULACIÓN INTERNA DE LOS 3 ENCUENTROS ACTIVOS
+        if (timbasActuales <= 0) {
+            return res.json({ 
+                ok: false, 
+                mensaje: "❌ ¡Te quedaste sin energía para apostar en la quiniela! Esperá a que recargue el cronómetro de la banca. ⏱️" 
+            });
+        }
+
+        // Quemamos 1 intento de energía y actualizamos los timestamps igual que tu timba común
+        const nuevasTimbasGuardadas = timbasActuales - 1;
+        const ahora = new Date();
+
+        // Descontamos Oro y cobramos 1 punto de energía en la misma transacción
+        await pool.query(
+            `UPDATE usuarios SET monedas = monedas - $1, ultimo_giro_timestamp = $2, timbas_hoy = $3 WHERE id = $4`,
+            [monto, ahora, nuevasTimbasGuardadas, usuario_id]
+        );
+
+        // 3. SIMULACIÓN INTERNA DE LOS 3 ENCUENTROS ACTIVOS
         const opciones = ['L', 'E', 'V'];
         const reales = {
             p1: opciones[Math.floor(Math.random() * 3)],
@@ -2546,45 +2569,34 @@ app.post('/api/timba/quiniela', async (req, res) => {
             p3: opciones[Math.floor(Math.random() * 3)]
         };
 
-        // Verificamos si clavó el triple acierto combinado
-        const aciertoP1 = (elecciones.p1 === reales.p1);
-        const aciertoP2 = (elecciones.p2 === reales.p2);
-        const aciertoP3 = (elecciones.p3 === reales.p3);
-        const boletaGanadora = (aciertoP1 && aciertoP2 && aciertoP3);
-
+        const boletaGanadora = (elecciones.p1 === reales.p1 && elecciones.p2 === reales.p2 && elecciones.p3 === reales.p3);
         let premio = 0;
         let mensaje = "";
 
         if (boletaGanadora) {
-            premio = monto * 10; // Multiplicador x10 de la casa
+            premio = monto * 10;
             await pool.query("UPDATE usuarios SET monedas = monedas + $1 WHERE id = $2", [premio, usuario_id]);
             mensaje = `🔥 ¡QUINIELA DE ORO PERFECTA! Acertaste los 3 partidos y ganaste 🪙${premio}.`;
-            
-            // 🔥 Si gana de forma perfecta, barajamos partidos nuevos para la próxima boleta
-            rotarFixtureQuiniela();
         } else {
             mensaje = "❌ Boleta perdedora. Fallaste en el pronóstico combinado.";
-            // Opcional: Podés forzar la rotación también en la derrota descomentando abajo
-            rotarFixtureQuiniela();
         }
 
-        // Guardamos el registro de la jugada en la tabla independiente
+        // Guardamos el registro en la tabla de la quiniela
         await pool.query(
             "INSERT INTO quiniela_apuestas (usuario_id, monto_apostado, predicciones, ganada, premio_entregado) VALUES ($1, $2, $3, $4, $5)",
             [usuario_id, monto, JSON.stringify(elecciones), boletaGanadora, premio]
         );
 
-        // Traemos el saldo fresco final de Neon
+        // Traemos el saldo fresco final de Neon para actualizar la UI del cliente
         const checkOroFinal = await pool.query("SELECT monedas FROM usuarios WHERE id = $1", [usuario_id]);
         const nuevoOro = checkOroFinal.rows[0].monedas;
 
-        // Retornamos la respuesta enviando también los partidos simulados de esta jugada
         return res.json({
             ok: true,
             ganó: boletaGanadora,
             mensaje: mensaje,
             resultadosReales: reales,
-            partidosSimulados: partidosActivosQuiniela, // 🔥 Clave para evitar el 'undefined' en el Frontend
+            partidosSimulados: partidosActivosQuiniela,
             nuevoOro: nuevoOro
         });
 
