@@ -2478,8 +2478,42 @@ app.post('/api/mercado/comprar', async (req, res) => {
 });
 
 /* ========================================================================
-   🎰 ENGINE QUINIELA COMBINADA (X10 MULTIPLICADOR)
+   🎰 ENGINE QUINIELA COMBINADA (ROTATIVA Y ATÓMICA)
    ======================================================================== */
+
+// Banco de partidos para que el sistema elija 3 al azar y vayan rotando
+const BANCO_PARTIDOS_QUINIELA = [
+    { local: "BOCA", visitante: "RIVER", emoji: "🔥" },
+    { local: "REAL MADRID", visitante: "BARCELONA", emoji: "👑" },
+    { local: "MANCHESTER CITY", visitante: "ARSENAL", emoji: "🦈" },
+    { local: "RACING", visitante: "INDEPENDIENTE", emoji: "🎓" },
+    { local: "MILAN", visitante: "INTER", emoji: "⚔️" },
+    { local: "FLAMENGO", visitante: "PALMEIRAS", emoji: "🇧🇷" },
+    { local: "LIVERPOOL", visitante: "MAN. UNITED", emoji: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+    { local: "HURACÁN", visitante: "SAN LORENZO", emoji: "🎈" },
+    { local: "BAYERN MUNICH", visitante: "DORTMUND", emoji: "🇩🇪" },
+    { local: "JUVENTUS", visitante: "ROMA", emoji: "🇮🇹" }
+];
+
+// Almacén temporal en memoria para los 3 partidos activos de la fecha
+let partidosActivosQuiniela = [];
+
+// Mezcla el banco de datos y clava 3 partidos nuevos
+function rotarFixtureQuiniela() {
+    const copia = [...BANCO_PARTIDOS_QUINIELA];
+    const mezclados = copia.sort(() => 0.5 - Math.random());
+    partidosActivosQuiniela = mezclados.slice(0, 3);
+}
+
+// Inicializamos la primera tanda de partidos al arrancar el servidor
+rotarFixtureQuiniela();
+
+// 1. Endpoint para darle la cartelera rotativa actual al Frontend
+app.get('/api/timba/quiniela/partidos', (req, res) => {
+    res.json({ ok: true, partidos: partidosActivosQuiniela });
+});
+
+// 2. Endpoint para procesar la boleta combinada de forma segura
 app.post('/api/timba/quiniela', async (req, res) => {
     let { usuario_id, monto, elecciones } = req.body; // elecciones viene como { p1: 'L', p2: 'E', p3: 'V' }
 
@@ -2495,7 +2529,7 @@ app.post('/api/timba/quiniela', async (req, res) => {
             return res.json({ ok: false, mensaje: "⚠️ El monto mínimo para la boleta es de 50 de Oro." });
         }
 
-        // 1. Validar fondos del apostador en Neon
+        // Validar fondos del apostador en Neon
         const checkUser = await pool.query("SELECT monedas FROM usuarios WHERE id = $1", [usuario_id]);
         if (checkUser.rows.length === 0 || checkUser.rows[0].monedas < monto) {
             return res.json({ ok: false, mensaje: "❌ No tenés suficiente Oro en tu cuenta para esta jugada." });
@@ -2504,7 +2538,7 @@ app.post('/api/timba/quiniela', async (req, res) => {
         // Descontamos el costo de la boleta inmediatamente
         await pool.query("UPDATE usuarios SET monedas = monedas - $1 WHERE id = $2", [monto, usuario_id]);
 
-        // 2. SIMULACIÓN INTERNA DE LOS 3 ENCUENTROS
+        // SIMULACIÓN INTERNA DE LOS 3 ENCUENTROS ACTIVOS
         const opciones = ['L', 'E', 'V'];
         const reales = {
             p1: opciones[Math.floor(Math.random() * 3)],
@@ -2512,7 +2546,7 @@ app.post('/api/timba/quiniela', async (req, res) => {
             p3: opciones[Math.floor(Math.random() * 3)]
         };
 
-        // Verificamos si clavó el triple acierto
+        // Verificamos si clavó el triple acierto combinado
         const aciertoP1 = (elecciones.p1 === reales.p1);
         const aciertoP2 = (elecciones.p2 === reales.p2);
         const aciertoP3 = (elecciones.p3 === reales.p3);
@@ -2525,8 +2559,13 @@ app.post('/api/timba/quiniela', async (req, res) => {
             premio = monto * 10; // Multiplicador x10 de la casa
             await pool.query("UPDATE usuarios SET monedas = monedas + $1 WHERE id = $2", [premio, usuario_id]);
             mensaje = `🔥 ¡QUINIELA DE ORO PERFECTA! Acertaste los 3 partidos y ganaste 🪙${premio}.`;
+            
+            // 🔥 Si gana de forma perfecta, barajamos partidos nuevos para la próxima boleta
+            rotarFixtureQuiniela();
         } else {
             mensaje = "❌ Boleta perdedora. Fallaste en el pronóstico combinado.";
+            // Opcional: Podés forzar la rotación también en la derrota descomentando abajo
+            rotarFixtureQuiniela();
         }
 
         // Guardamos el registro de la jugada en la tabla independiente
@@ -2539,11 +2578,13 @@ app.post('/api/timba/quiniela', async (req, res) => {
         const checkOroFinal = await pool.query("SELECT monedas FROM usuarios WHERE id = $1", [usuario_id]);
         const nuevoOro = checkOroFinal.rows[0].monedas;
 
+        // Retornamos la respuesta enviando también los partidos simulados de esta jugada
         return res.json({
             ok: true,
             ganó: boletaGanadora,
             mensaje: mensaje,
             resultadosReales: reales,
+            partidosSimulados: partidosActivosQuiniela, // 🔥 Clave para evitar el 'undefined' en el Frontend
             nuevoOro: nuevoOro
         });
 
