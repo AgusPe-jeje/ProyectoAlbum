@@ -1493,7 +1493,7 @@ async function prepararInscripcionMundialMulti() {
 
      try {
           // 🔥 REPARADO: Se agregó '/api' a la ruta y la cabecera 'Authorization' con el token
-          const res = await fetch(`${URL_BASE}/api/multijugador/preparar-draft`, {
+          const res = await fetch(`${URL_BASE}/multijugador/preparar-draft`, {
                method: 'POST',
                headers: { 
                     'Content-Type': 'application/json',
@@ -1602,7 +1602,7 @@ async function confirmarInscripcionMultiServidor(paisElegido, arrayIdsJugadores)
     mostrarCarga("Enviando planilla de vestuarios a la Arena Online...");
     
     // 🔥 REPARADO: Se agregó '/api' a las rutas de crear y unirse
-    let url = `${URL_BASE}/api/multijugador/crear`;
+    let url = `${URL_BASE}/multijugador/crear`;
     let cuerpo = {
         seleccion: paisElegido, 
         jugador_ids: arrayIdsJugadores,
@@ -1611,7 +1611,7 @@ async function confirmarInscripcionMultiServidor(paisElegido, arrayIdsJugadores)
     };
 
     if (!multiEsCreador) {
-        url = `${URL_BASE}/api/multijugador/unirse`;
+        url = `${URL_BASE}/multijugador/unirse`;
         cuerpo = {
             seleccion: paisElegido, 
             jugador_ids: arrayIdsJugadores,
