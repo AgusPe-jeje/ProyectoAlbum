@@ -2361,7 +2361,6 @@ app.post('/api/mercado/publicar', async (req, res) => {
     const { usuario_id, jugador_id, precio } = req.body;
 
     try {
-        // Verificar stock de seguridad del vendedor en la columna 'cantidad'
         const checkStock = await pool.query(
             "SELECT cantidad FROM usuario_progreso WHERE usuario_id = $1 AND jugador_id = $2",
             [usuario_id, jugador_id]
@@ -2371,13 +2370,11 @@ app.post('/api/mercado/publicar', async (req, res) => {
             return res.json({ ok: false, mensaje: "❌ No tenés copias repetidas suficientes de esta carta para vender." });
         }
 
-        // Restamos una unidad del inventario físico del vendedor
         await pool.query(
             "UPDATE usuario_progreso SET cantidad = cantidad - 1 WHERE usuario_id = $1 AND jugador_id = $2",
             [usuario_id, jugador_id]
         );
 
-        // Insertamos la publicación en la vitrina
         await pool.query(
             "INSERT INTO mercado_pases (vendedor_id, jugador_id, precio_oro) VALUES ($1, $2, $3)",
             [usuario_id, jugador_id, precio]
@@ -2390,11 +2387,19 @@ app.post('/api/mercado/publicar', async (req, res) => {
     }
 });
 
-// 2. 🔥 REPARADO: Traer TODAS las ofertas incluyendo el vendedor_id para el Front
+// 2. 🔥 REPARADO, BLINDADO Y ADAPTADO A 'u.username'
 app.get('/api/mercado/ofertas', async (req, res) => {
+    let { usuario_id } = req.query;
+
     try {
+        // 🛡️ Parche por si el Front todavía manda el bardo del ID "1:1"
+        if (usuario_id && String(usuario_id).includes(":")) {
+            usuario_id = String(usuario_id).split(":")[0];
+        }
+
+        // 🔥 CORRECCIÓN CRUCIAL: Cambiado u.usuario por u.username de Neon
         const ofertas = await pool.query(
-            `SELECT m.id, m.precio_oro, m.vendedor_id, j.nombre, j.rareza, j.bandera, u.usuario AS nombre_vendedor
+            `SELECT m.id, m.precio_oro, m.vendedor_id, j.nombre, j.rareza, j.bandera, u.username AS nombre_vendedor
              FROM mercado_pases m
              JOIN jugadores j ON m.jugador_id = j.id
              JOIN usuarios u ON m.vendedor_id = u.id
@@ -2404,16 +2409,15 @@ app.get('/api/mercado/ofertas', async (req, res) => {
         return res.json({ ok: true, ofertas: ofertas.rows });
     } catch (err) {
         console.error("❌ Error en GET ofertas mercado:", err);
-        return res.status(500).json({ ok: false, error: err.message });
+        return res.json({ ok: false, error: err.message, mensaje: "Error al sincronizar con Neon." });
     }
 });
 
 // 3. Procesar la compra de un cromo expuesto de forma atómica
 app.post('/api/mercado/comprar', async (req, res) => {
-    const { usuario_id, oferta_id } = req.body; // El usuario_id es el COMPRADOR
+    const { usuario_id, oferta_id } = req.body; 
 
     try {
-        // Traemos los datos clave de la oferta seleccionada
         const buscarOferta = await pool.query(
             "SELECT vendedor_id, jugador_id, precio_oro FROM mercado_pases WHERE id = $1",
             [oferta_id]
@@ -2425,32 +2429,26 @@ app.post('/api/mercado/comprar', async (req, res) => {
 
         const { vendedor_id, jugador_id, precio_oro } = buscarOferta.rows[0];
 
-        // Evitar que un usuario se compre a sí mismo
         if (parseInt(vendedor_id) === parseInt(usuario_id)) {
             return res.json({ ok: false, mensaje: "❌ No podés comprar tu propia publicación." });
         }
 
-        // Traemos el balance en oro del comprador (columna 'monedas')
         const checkOro = await pool.query("SELECT monedas FROM usuarios WHERE id = $1", [usuario_id]);
         if (checkOro.rows.length === 0 || checkOro.rows[0].monedas < precio_oro) {
             return res.json({ ok: false, mensaje: "❌ No tenés suficiente Oro en tu cuenta para este fichaje." });
         }
 
-        // Transferencia de dinero económica segura
         await pool.query("UPDATE usuarios SET monedas = monedas - $1 WHERE id = $2", [precio_oro, usuario_id]);
         await pool.query("UPDATE usuarios SET monedas = monedas + $1 WHERE id = $2", [precio_oro, vendedor_id]);
 
-        // Transferir el cromo al inventario del comprador sumando a 'cantidad'
         await pool.query(
             `INSERT INTO usuario_progreso (usuario_id, jugador_id, cantidad) VALUES ($1, $2, 1)
              ON CONFLICT (usuario_id, jugador_id) DO UPDATE SET cantidad = usuario_progreso.cantidad + 1`,
             [usuario_id, jugador_id]
         );
 
-        // Sacamos la oferta de la vitrina internacional
         await pool.query("DELETE FROM mercado_pases WHERE id = $1", [oferta_id]);
 
-        // Traemos el nombre del jugador para mandárselo al front
         const infoJugador = await pool.query("SELECT nombre FROM jugadores WHERE id = $1", [jugador_id]);
 
         return res.json({ ok: true, jugador: infoJugador.rows[0].nombre });
