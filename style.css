@@ -110,7 +110,34 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
 .titulo-sobre-loot { font-family: 'Oswald', sans-serif; color: var(--dorado); font-size: 1.5rem; text-transform: uppercase; text-shadow: 2px 2px 0px #000; margin-bottom: 15px; }
 #grid-sobre-abierto { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
 
-.grid-album-match, .grid-album, .grid-sobre { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)) !important; justify-content: center; gap: 20px; margin-top: 15px; width: 100%; box-sizing: border-box; }
+/* 🃏 GRILLAS DE CROMOS REPARADAS (Álbum, Inventario, Draft Singleplayer y MULTIJUGADOR) */
+.grid-album-match, .grid-album, .grid-sobre, #grid-sobre-abierto, #grid-cartas-draft-mundial, #multi-grid-cartas-draft { 
+        display: grid !important; 
+        grid-template-columns: repeat(3, 1fr) !important; 
+        gap: 8px !important; 
+        width: 100% !important;
+        padding: 8px !important;
+        box-sizing: border-box !important;
+}    
+
+/* ========================================================================
+   🏆 ESTILOS PREMIUM PARA EL COLISEO DEL MINIMUNDIAL (SINGLE & MULTI)
+   ======================================================================== */
+#grid-cartas-draft-mundial, #multi-grid-cartas-draft {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+    gap: 15px !important;
+    padding: 15px !important;
+    background: rgba(4, 6, 12, 0.4) !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    scrollbar-width: thin;
+    scrollbar-color: var(--celeste) rgba(0, 0, 0, 0.3);
+}
+
+#grid-cartas-draft-mundial::-webkit-scrollbar, #multi-grid-cartas-draft::-webkit-scrollbar { width: 6px; }
+#grid-cartas-draft-mundial::-webkit-scrollbar-track, #multi-grid-cartas-draft::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); border-radius: 4px; }
+#grid-cartas-draft-mundial::-webkit-scrollbar-thumb, #multi-grid-cartas-draft::-webkit-scrollbar-thumb { background: var(--celeste); border-radius: 4px; }
 .carta-clash { width: 145px !important; height: 205px !important; border-radius: 12px; position: relative; box-sizing: border-box; background: #04060a; cursor: pointer; overflow: visible; transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s; animation: aparecerCarta 0.4s ease-out backwards; margin: 0 auto; }
 .carta-clash:hover { transform: translateY(-8px) scale(1.03); z-index: 10; }
 .carta-foto { width: 100%; height: 100%; object-fit: fill; border-radius: 12px; display: block; }
