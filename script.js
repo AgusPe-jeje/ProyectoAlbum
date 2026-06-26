@@ -2269,8 +2269,7 @@ async function enviarBoletaQuiniela() {
     const monto = parseInt(document.getElementById("input-monto-quiniela").value);
     const divRes = document.getElementById("resultado-quiniela");
 
-    // 🛡️ REGLA DE ORO CORREGIDA: Validar la energía mirando únicamente el botón nativo
-    // Si el botón principal ya está bloqueado, rebotamos la jugada de una sin importar el texto del reloj
+    // 🛡️ REGLA DE ORO: Validar si la timba combinada está bloqueada por falta de energía
     const btnTimbaComun = document.getElementById("btn-preparar-apuesta"); 
 
     if (btnTimbaComun && btnTimbaComun.disabled) {
@@ -2336,16 +2335,13 @@ async function enviarBoletaQuiniela() {
                 btn.style.borderColor = "#475569";
             });
 
-            // 🔥 COMPARTIR LIMITACIÓN DE INTENTOS
+            // 🔥 Sincroniza el consumo de intentos de energía con la pasarela de la Banka
             if (typeof forzarCooldownTimbaLocal === "function") {
                 forzarCooldownTimbaLocal();
-            } else {
-                if (btnTimbaComun) {
-                    console.log("Sincronizando gasto de intento con la Banka...");
-                }
             }
 
-            cargarPartidosQuinielaUI();
+            // Refresca la marquesina al instante
+            await cargarPartidosQuinielaUI();
 
         } else {
             divRes.style.color = "var(--rojo)";
