@@ -32,7 +32,7 @@ function generarCodigoSala() {
 /* ========================================================================
    🛠️ MIDDLEWARE: MODO MANTENIMIENTO / ACCESO SELECTIVO TESTERS
    ======================================================================== */
-const MODO_MANTENIMIENTO = false; 
+const MODO_MANTENIMIENTO = true; 
 // 👥 Agregá o sacá acá los usuarios permitidos en minúscula para las pruebas
 const TESTERS_PERMITIDOS = ["aguspe", "evevea"]; 
 
@@ -2633,12 +2633,24 @@ const CONFIG_ANUNCIO_SERVIDOR = {
     activo: true,       // true = encendido | false = apagado
     tipo: "video",      // "texto" | "imagen" | "video"
     titulo: "¡ACTUALIZACIÓN DE TEMPORADA!",
-    texto: "Prendete a los nuevos torneos en vivo. Calibramos el MiniMundial para que sea más justo.",
+    texto: "Prendete a los nuevos torneos en vivo. Calibramos el MiniMundial para que sea más justo y lanzamos el Mercado P2P.",
     urlImagen: "https://albumpe.onrender.com/assets/novedad.png", 
-    urlVideo: "https://www.youtube.com/embed/6DTWH9kYAiY" 
+    urlVideo: "https://www.youtube.com/embed/6DTWH9kYAiY",
+    
+    // 🔥 NUEVO: Informe detallado de actualización (Patch Notes)
+    informe: {
+        version: "v2.4.1-Arena",
+        fecha: "Junio 2026",
+        cambios: [
+            "🏆 **Mini-Mundial Atómico:** Inscripciones gratuitas en el Draft. El Oro o cartas repetidas se debitan en Neon recién al presionar 'Iniciar'.",
+            "💸 **Mercado de Pases P2P:** Vitrina internacional activa. Las ofertas duran 24 horas y devuelven el cromo automáticamente si nadie compra.",
+            "⏱️ **Reloj de Expiración:** Añadido temporizador visual en las tarjetas de fichajes con alerta roja en la última hora de oferta.",
+            "🛡️ **Blindaje de ID:** Limpieza y parseo de strings corruptos (:1) en las solicitudes de red de la Arena."
+        ]
+    }
 };
 
-// Endpoint público para que el juego consulte el anuncio
+// Endpoint público para que el juego consulte el anuncio (Mantiene tu estructura directa)
 app.get('/api/anuncio-actual', (req, res) => {
     return res.json(CONFIG_ANUNCIO_SERVIDOR);
 });
