@@ -2084,7 +2084,7 @@ async function publicarCartaMercado() {
         const res = await fetch('/api/mercado/publicar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ usuario_id: usuarioActual.id, jugador_id: parseInt(jugadorId), precio })
+            body: JSON.stringify({ usuario_id: parseInt(usuarioActual.id), jugador_id: parseInt(jugadorId), precio })
         });
         const data = await res.json();
         
@@ -2101,40 +2101,61 @@ async function publicarCartaMercado() {
     }
 }
 
-// Renderiza todas las publicaciones activas ajenas
+// 🔥 REPARADO: Renderiza todas las ofertas y aplica estilos condicionales si el cromo es tuyo
 async function obtenerOfertasMercado() {
     const grid = document.getElementById("grid-mercado-pases");
     if (!grid) return;
     grid.innerHTML = "<p style='color:#64748b; grid-column:1/-1; text-align:center;'>⏳ Cargando vitrina de pases...</p>";
 
+    // Blindaje del ID para evitar bardo de "1:1"
+    const idLimpio = usuarioActual && usuarioActual.id ? parseInt(usuarioActual.id) : null;
+
+    if (!idLimpio || isNaN(idLimpio)) {
+        grid.innerHTML = "<p style='color:var(--rojo); grid-column:1/-1; text-align:center;'>❌ Sesión de usuario inválida.</p>";
+        return;
+    }
+
     try {
-        const res = await fetch(`/api/mercado/ofertas?usuario_id=${usuarioActual.id}`);
+        const res = await fetch(`/api/mercado/ofertas?usuario_id=${idLimpio}`);
         const data = await res.json();
 
-        if (!data.ok || data.ofertas.length === 0) {
+        if (!data.ok) {
+            grid.innerHTML = `<p style='color:var(--rojo); grid-column:1/-1; text-align:center;'>❌ Error del servidor: ${data.error || 'Consola backend'}</p>`;
+            return;
+        }
+
+        if (data.ofertas.length === 0) {
             grid.innerHTML = "<p style='color:#64748b; grid-column:1/-1; text-align:center;'>🏪 La vitrina está vacía en este momento.</p>";
             return;
         }
 
         grid.innerHTML = "";
         data.ofertas.forEach(oferta => {
+            const esMia = (parseInt(oferta.vendedor_id) === idLimpio);
+            
+            // Si el cromo es tuyo, el botón cambia de color y se bloquea
+            const btnAccion = esMia 
+                ? `<button type="button" class="btn-estadio" style="background: #475569; color:#fff; width:100%; font-size:0.8rem; padding: 5px 0; cursor: not-allowed;" disabled>TU PUBLICACIÓN</button>`
+                : `<button type="button" class="btn-estadio" style="background: var(--dorado); color:#000; width:100%; font-size:0.8rem; padding: 5px 0;" onclick="comprarCartaMercado(${oferta.id})">COMPRAR</button>`;
+
             grid.innerHTML += `
-                <div style="background: #1e293b; border: 1px solid var(--dorado); border-radius: 8px; padding: 12px; text-align: center; display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="background: #1e293b; border: 1px solid ${esMia ? '#475569' : 'var(--dorado)'}; border-radius: 8px; padding: 12px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; opacity: ${esMia ? '0.8' : '1'};">
                     <div>
                         <span style="font-size: 1.5rem; display:block; margin-bottom:5px;">${oferta.bandera || '🛡️'}</span>
                         <strong style="color: #fff; font-size: 0.95rem; display:block;">${oferta.nombre}</strong>
-                        <span style="font-size:0.75rem; color:var(--celeste); font-weight:bold; display:block; margin-top:2px;">${oferta.rareza.toUpperCase()}</span>
-                        <span style="font-size:0.75rem; color:#94a3b8; display:block; margin-top:4px;">Vendedor: ${oferta.nombre_vendedor}</span>
+                        <span style="font-size:0.75rem; color:var(--celeste); font-weight:bold; display:block; margin-top:2px;">${(oferta.rareza || 'comun').toUpperCase()}</span>
+                        <span style="font-size:0.75rem; color:#94a3b8; display:block; margin-top:4px;">${esMia ? '✨ Tuya' : 'Vendedor: ' + (oferta.nombre_vendedor || 'Usuario')}</span>
                     </div>
                     <div style="margin-top: 10px;">
                         <div style="color: var(--dorado); font-weight: bold; font-size: 1rem; margin-bottom: 8px;">🪙 ${oferta.precio_oro}</div>
-                        <button type="button" class="btn-estadio" style="background: var(--dorado); color:#000; width:100%; font-size:0.8rem; padding: 5px 0;" onclick="comprarCartaMercado(${oferta.id})">COMPRAR</button>
+                        ${btnAccion}
                     </div>
                 </div>
             `;
         });
     } catch (err) {
         console.error(err);
+        grid.innerHTML = "<p style='color:var(--rojo); grid-column:1/-1; text-align:center;'>❌ Error de red en la Arena.</p>";
     }
 }
 
@@ -2144,14 +2165,14 @@ async function comprarCartaMercado(ofertaId) {
         const res = await fetch('/api/mercado/comprar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ usuario_id: usuarioActual.id, oferta_id: ofertaId })
+            body: JSON.stringify({ usuario_id: parseInt(usuarioActual.id), oferta_id: ofertaId })
         });
         const data = await res.json();
 
         if (data.ok) {
             alert(`🎉 ¡Fichaje cerrado! Recibiste a ${data.jugador}. El Oro fue transferido.`);
             cargarAlbumLocal(); // Actualiza el álbum nativo
-            setTimeout(() => { cambiarModulo('modulo-mercado-pases', document.getElementById('btn-nav-mercado')); }, 500);
+            setTimeout(() => { cambiarModulo('modulo-market-pases' ? 'modulo-mercado-pases' : 'modulo-mercado-pases', document.getElementById('btn-nav-mercado')); }, 500);
         } else {
             alert(data.mensaje);
         }
