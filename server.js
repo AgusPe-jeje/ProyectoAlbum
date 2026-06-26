@@ -2236,7 +2236,7 @@ app.get('/api/multijugador/resultado-invitado/:sala_id', async (req, res) => {
 });
 
 /* ========================================================================
-   🃏 MERCADO DE PASES AI: TRADEO DE REPETIDAS (FIJADO EN 'CANTIDAD')
+   🃏 BOT COMERCIANTE MUTADO: ESCALERA DE RAREZAS + EVENTOS ULTRA RAROS
    ======================================================================== */
 app.post('/api/album/comerciar-bot', async (req, res) => {
     const { usuario_id, jugadorIdsASacar } = req.body; 
@@ -2246,32 +2246,49 @@ app.post('/api/album/comerciar-bot', async (req, res) => {
     }
 
     try {
+        // 1. Mapeamos el conteo solicitado en memoria
         const conteoSolicitado = {};
         jugadorIdsASacar.forEach(id => {
             conteoSolicitado[id] = (conteoSolicitado[id] || 0) + 1;
         });
 
-        for (let jId of Object.keys(conteoSolicitado)) {
-            const cantidadPedida = conteoSolicitado[jId];
+        // 2. Traemos las rarezas reales de esas cartas haciendo un JOIN seguro
+        // Esto nos permite saber de qué rareza es cada cromo que se está entregando
+        const cartasInfo = await pool.query(
+            `SELECT up.jugador_id, up.cantidad, j.rareza 
+             FROM usuario_progreso up 
+             JOIN jugadores j ON up.jugador_id = j.id 
+             WHERE up.usuario_id = $1 AND up.jugador_id = ANY($2)`,
+            [usuario_id, jugadorIdsASacar]
+        );
 
-            // 📋 Consulta directa a la columna 'cantidad' de tu tabla usuario_progreso
-            const checkRepetida = await pool.query(
-                "SELECT cantidad FROM usuario_progreso WHERE usuario_id = $1 AND jugador_id = $2",
-                [usuario_id, parseInt(jId)]
-            );
-            
-            if (checkRepetida.rows.length === 0) {
-                return res.json({ ok: false, mensaje: "❌ Uno de los cromos seleccionados no está en tu inventario." });
-            }
+        if (cartasInfo.rows.length === 0) {
+            return res.json({ ok: false, mensaje: "❌ No se encontraron los cromos seleccionados en tu inventario." });
+        }
 
-            const cantidadActual = checkRepetida.rows[0].cantidad;
-
-            if (cantidadActual - cantidadPedida < 1) {
+        // Validamos el stock real de cada una de ellas antes de tocarlas
+        for (let row of cartasInfo.rows) {
+            const pedidas = conteoSolicitado[row.jugador_id];
+            if (row.cantidad - pedidas < 1) {
                 return res.json({ ok: false, mensaje: "❌ No tenés repetidas suficientes de alguno de los jugadores elegidos." });
             }
         }
 
-        // Si todo está OK, restamos en la columna 'cantidad'
+        // 🔥 VALIDACIÓN CRUCIAL: Las 3 cartas entregadas deben ser de la misma rareza
+        const rarezaBase = cartasInfo.rows[0].rareza.toLowerCase();
+        const todasIgualRareza = cartasInfo.rows.every(row => row.rareza.toLowerCase() === rarezaBase);
+
+        if (!todasIgualRareza) {
+            return res.json({ ok: false, mensaje: "❌ El Bot exige que las 3 cartas sacrificadas sean de la misma rareza para calcular el escalón." });
+        }
+
+        // 3. Sistema de Escalera: Definimos qué rareza va a recibir a cambio
+        let rarezaRecompensa = "rara"; // Por defecto (si mete común)
+        if (rarezaBase === "rara") rarezaRecompensa = "epica";
+        else if (rarezaBase === "epica") rarezaRecompensa = "legendaria";
+        else if (rarezaBase === "legendaria") rarezaRecompensa = "legendaria"; // Tope de gama
+
+        // 4. Procedemos a descontar el stock en Neon (columna 'cantidad')
         for (let jId of jugadorIdsASacar) {
             await pool.query(
                 "UPDATE usuario_progreso SET cantidad = cantidad - 1 WHERE usuario_id = $1 AND jugador_id = $2",
@@ -2279,31 +2296,58 @@ app.post('/api/album/comerciar-bot', async (req, res) => {
             );
         }
 
-        // Sorteamos premio de élite
+        // 5. Sorteamos el jugador de premio con la rareza superior garantizada
         const lootBot = await pool.query(
-            "SELECT id, nombre, rareza FROM jugadores WHERE rareza IN ('epica', 'legendaria') ORDER BY RANDOM() LIMIT 1"
+            "SELECT id, nombre, rareza FROM jugadores WHERE rareza = $1 ORDER BY RANDOM() LIMIT 1",
+            [rarezaRecompensa]
         );
         const cartaPremio = lootBot.rows[0];
 
-        // Sumamos a 'cantidad'
+        // Inyectamos la recompensa al usuario
         await pool.query(
             `INSERT INTO usuario_progreso (usuario_id, jugador_id, cantidad) VALUES ($1, $2, 1) 
              ON CONFLICT (usuario_id, jugador_id) DO UPDATE SET cantidad = usuario_progreso.cantidad + 1`,
             [usuario_id, cartaPremio.id]
         );
 
+        // ========================================================================
+        // 🎰 6. EVENTOS ULTRA RAROS (Solo con Épicas o Legendarias - 8% de Chance)
+        // ========================================================================
+        let eventoActivado = null;
+        const esElite = (rarezaBase === "epica" || rarezaBase === "legendaria");
+
+        if (esElite && Math.random() <= 0.08) { // 8% de probabilidad de romper el juego
+            const dadosEvento = Math.random();
+
+            if (dadosEvento < 0.50) {
+                // Evento A: Reiniciar los tiros de penales (Ej: Actualizamos tu columna de energía/tiros a 10)
+                // (Nota: Ajustá el nombre de la columna según manejes tus tiros en la tabla 'usuarios')
+                await pool.query("UPDATE usuarios SET tiros_penales_disponibles = 10 WHERE id = $1", [usuario_id]);
+                eventoActivado = "⚡ ¡EL BOT SE COPO! Te recargó el cargador: Volvés a tener 10 penales disponibles al toque.";
+            } else {
+                // Evento B: Limpiar el cooldown del mundial (Seteamos la última timba al pasado lejano)
+                await pool.query(
+                    "UPDATE usuarios SET ultima_timba_mundial = NOW() - INTERVAL '4 hours' WHERE id = $1", 
+                    [usuario_id]
+                );
+                eventoActivado = "⏳ ¡CONTRABANDO TÁCTICO! El Bot alteró los papeles del vestuario. ¡Podés jugar el Mundial de vuelta YA sin esperar!";
+            }
+        }
+
+        // 7. Retorno de respuesta limpia al Front
         return res.json({
             ok: true,
-            mensaje: `🤝 ¡Trato hecho! El Bot Comerciante aceptó el intercambio.`,
+            mensaje: `🤝 ¡Trato hecho! Cambiaste 3 cartas de tipo [${rarezaBase.toUpperCase()}] por un escalón superior.`,
             cartaGanada: {
                 id: cartaPremio.id,
                 nombre: cartaPremio.nombre,
                 rareza: cartaPremio.rareza.toUpperCase()
-            }
+            },
+            eventoEspecial: eventoActivado // Si es null, el front lo ignora
         });
 
     } catch (err) {
-        console.error("❌ Error en Mercado Bot:", err);
+        console.error("❌ Error en Mercado Bot Mutado:", err);
         return res.status(500).json({ ok: false, error: err.message });
     }
 });
