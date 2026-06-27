@@ -1810,6 +1810,7 @@ function rotarFixtureQuiniela() {
     partidosActivosQuiniela = mezclados.slice(0, 3);
 }
 
+// Genera la terna inicial al prender el servidor
 rotarFixtureQuiniela();
 
 app.get('/api/timba/quiniela/partidos', (req, res) => {
@@ -1835,7 +1836,7 @@ app.post('/api/timba/quiniela', verificarToken, async (req, res) => {
         const usuario = checkUser.rows[0];
 
         if (usuario.monedas < monto) {
-            return res.json({ ok: false, mensaje: "❌ No tenés suficiente Oro en tu cuenta para esta jugada." });
+            return res.json({ ok: false, mensaje: "❌ No tenés suficiente Oro in tu cuenta para esta jugada." });
         }
 
         let { timbasActuales } = calcularTimbasActuales(usuario);
@@ -1849,6 +1850,10 @@ app.post('/api/timba/quiniela', verificarToken, async (req, res) => {
 
         const nuevasTimbasGuardadas = timbasActuales - 1;
         const ahora = new Date();
+
+        // Guardamos una copia exacta de los partidos con los que el usuario jugó esta boleta
+        // antes de tirarlos a la basura y rotar la cartelera
+        const partidosDeEstaBoleta = [...partidosActivosQuiniela];
 
         await pool.query(
             `UPDATE usuarios SET monedas = monedas - $1, ultimo_giro_timestamp = $2, timbas_hoy = $3 WHERE id = $4`,
@@ -1881,12 +1886,16 @@ app.post('/api/timba/quiniela', verificarToken, async (req, res) => {
 
         const checkOroFinal = await pool.query("SELECT monedas FROM usuarios WHERE id = $1", [usuario_id]);
 
+        // 🔥 LA SOLUCIÓN: Forzamos la rotación inmediata acá en el servidor.
+        // La próxima consulta que haga el frontend va a encontrar una terna nuevita de la tartera.
+        rotarFixtureQuiniela();
+
         return res.json({
             ok: true,
             ganó: boletaGanadora,
             mensaje: mensaje,
             resultadosReales: reales,
-            partidosSimulados: partidosActivosQuiniela,
+            partidosSimulados: partidosDeEstaBoleta, // Le mandamos los que corresponden a la jugada real
             nuevoOro: checkOroFinal.rows[0].monedas
         });
 
