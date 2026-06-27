@@ -575,6 +575,43 @@ img.emoji {
 }
 
 /* ========================================================================
+   🎮 SISTEMA DE FOCO AVANZADO (KEYBOARD ACCESSIBILITY)
+   ======================================================================== */
+
+/* 1. Quitamos el outline feo por defecto del navegador */
+button:focus, 
+input:focus, 
+select:focus {
+    outline: none !important;
+}
+
+/* 2. Efecto Gamer de Foco Dorado Brillante */
+button:focus-visible, 
+input:focus-visible, 
+select:focus-visible,
+.carta-clash:focus-visible {
+    border-color: var(--dorado, #fbbf24) !important;
+    box-shadow: 0 0 15px rgba(251, 191, 36, 0.8), 
+                inset 0 0 8px rgba(251, 191, 36, 0.4) !important;
+    transform: scale(1.03) !important;
+    animation: pulsoFocoGamer 1.5s infinite ease-in-out;
+    transition: all 0.2s ease;
+}
+
+/* 3. Animación de respiración para el botón seleccionado */
+@keyframes pulsoFocoGamer {
+    0% {
+        box-shadow: 0 0 12px rgba(251, 191, 36, 0.6);
+    }
+    50% {
+        box-shadow: 0 0 22px rgba(251, 191, 36, 0.9), 0 0 30px rgba(251, 191, 36, 0.3);
+    }
+    100% {
+        box-shadow: 0 0 12px rgba(251, 191, 36, 0.6);
+    }
+}
+
+/* ========================================================================
    📱 REINGENIERÍA EXCLUSIVA RESPONSIVA PARA CELULARES (MÁXIMO 768px) - FIXED
    ======================================================================== */
 @media (max-width: 768px) {
