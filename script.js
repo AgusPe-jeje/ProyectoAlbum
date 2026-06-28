@@ -2139,21 +2139,26 @@ function abrirMercadoBot(listaTusRepetidas) {
 
     const listaCheckboxes = document.getElementById("lista-checks-repetidas");
     
-    // Mapeo estricto para agrupar y ordenar las rarezas con sus respectivos estilos visuales
+    // 🔥 CORREGIDO: Propiedades cambiadas a 'listado' para coincidir exactamente con el push
     const mapeoRarezas = {
-        'legendaria': { titulo: "👑 REPETIDAS LEGENDARIAS", color: "#ffb100", lista: [] },
-        'epica': { titulo: "🔮 REPETIDAS ÉPICAS", color: "#a335ee", lista: [] },
-        'rara': { titulo: "⚡ REPETIDAS RARAS", color: "#0074e8", lista: [] },
-        'comun': { titulo: "⚪ REPETIDAS COMUNES", color: "#8e9bb0", lista: [] }
+        'legendaria': { titulo: "👑 REPETIDAS LEGENDARIAS", color: "#ffb100", listado: [] },
+        'epica': { titulo: "🔮 REPETIDAS ÉPICAS", color: "#a335ee", listado: [] },
+        'rara': { titulo: "⚡ REPETIDAS RARAS", color: "#0074e8", listado: [] },
+        'comun': { titulo: "⚪ REPETIDAS COMUNES", color: "#8e9bb0", listado: [] }
     };
 
     let totalRepetidasValidas = 0;
 
-    // Clasificamos las cartas en sus respectivas bandejas de rarezas
     listaTusRepetidas.forEach(jugador => {
         const copias = jugador.obtenido !== undefined ? jugador.obtenido : (jugador.cantidad || 0);
+        
         if (copias > 1) {
-            let rarezaLimpia = (jugador.rareza || 'comun').toLowerCase();
+            // Limpiamos acentos y pasamos a minúsculas para un emparejamiento perfecto
+            let rarezaLimpia = (jugador.rareza || 'comun')
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, ""); // Borra acentos (común -> comun)
+
             if (rarezaLimpia === 'especial') rarezaLimpia = 'rara';
             
             if (mapeoRarezas[rarezaLimpia]) {
@@ -2185,13 +2190,13 @@ function abrirMercadoBot(listaTusRepetidas) {
         if (bloque.listado.length > 0) {
             htmlBolsas += `
                 <div class="grupo-rareza-bot" style="border-left: 3px solid ${bloque.color}; padding-left: 10px; margin-bottom: 5px;">
-                    <div style="color: ${bloque.color}; font-size: 0.8rem; font-weight: bold; font-family: 'Oswald'; margin-bottom: 8px; letter-spacing: 0.5px;">${bloque.titulo}</div>
-                    <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
+                    <div style="color: ${bloque.color}; font-size: 0.85rem; font-weight: bold; font-family: 'Oswald'; margin-bottom: 8px; letter-spacing: 0.5px;">${bloque.titulo}</div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
             `;
             
             bloque.listado.forEach(j => {
                 htmlBolsas += `
-                    <label class="item-checkbox-premium" style="display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.02); padding: 8px 12px; border-radius: 6px; border: 1px solid #1e293b; cursor: pointer; transition: background 0.2s ease;">
+                    <label class="item-checkbox-premium" style="display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.02); padding: 10px 12px; border-radius: 6px; border: 1px solid #1a2436; cursor: pointer; transition: all 0.2s ease;">
                         <input type="checkbox" class="check-cromo-bot" value="${j.id}" data-rareza="${key}" style="width: 18px; height: 18px; accent-color: var(--verde-match); cursor: pointer; flex-shrink: 0;">
                         <span style="font-size: 1.1rem; flex-shrink: 0;">${j.bandera || '🃏'}</span>
                         <span style="flex-grow: 1; color: #cbd5e1; font-size: 0.85rem; font-weight: 500;">${j.nombre.toUpperCase()}</span>
@@ -2221,7 +2226,7 @@ function abrirMercadoBot(listaTusRepetidas) {
                 chk.parentElement.style.borderColor = "var(--verde-match)";
             } else {
                 chk.parentElement.style.background = "rgba(255,255,255,0.02)";
-                chk.parentElement.style.borderColor = "#1e293b";
+                chk.parentElement.style.borderColor = "#1a2436";
             }
 
             // Validación avanzada: Bloquear checkboxes si ya hay 3 seleccionados
