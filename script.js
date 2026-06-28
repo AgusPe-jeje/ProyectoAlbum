@@ -1030,7 +1030,7 @@ function actualizarHistorialUI(infoPartido) {
 // ========================================================================
 async function actualizarHistorialTransferenciasUI() {
     // Buscá el contenedor de tu vitrina P2P en el DOM
-    const contenedorMercado = document.getElementById("modulo-mercado-p2p"); 
+    const contenedorMercado = document.getElementById("modulo-mercado-pases"); 
     if (!contenedorMercado) return;
 
     // Buscamos o creamos el bloque del feed abajo de todo en el módulo
