@@ -2109,6 +2109,9 @@ async function cargarRankingMundialesLocal() {
 // Variable global temporal para retener los datos del informe que vienen de Neon
 let datosInformeParcheCache = null;
 
+/* ========================================================================
+   📢 CONTROLADOR DE NOVEDADES Y PARCHES DE LA ARENA (MULTIMEDIA NATIVO)
+   ======================================================================== */
 async function iniciarControladorAnunciosSeguro() {
     try {
         const res = await fetch(`${URL_BASE}/anuncio-actual`);
@@ -2120,24 +2123,53 @@ async function iniciarControladorAnunciosSeguro() {
         const modal = document.getElementById('modalAnuncioGlobal');
         const tituloHtml = document.getElementById('anuncioTitulo');
         const cuerpoHtml = document.getElementById('anuncioCuerpo');
+        const btnEntendido = modal?.querySelector('button, .btn-estadio');
+        
         if (!modal || !tituloHtml || !cuerpoHtml) return;
 
+        // Renderizado limpio de cabeceras
         tituloHtml.textContent = anuncio.titulo.toUpperCase();
         cuerpoHtml.innerHTML = ""; 
 
+        // Inyección de Texto base
         if (anuncio.texto) {
-            const p = document.createElement('p'); p.textContent = anuncio.texto; cuerpoHtml.appendChild(p);
+            const p = document.createElement('p'); 
+            p.style.cssText = "color: #cbd5e1; font-size: 0.95rem; line-height: 1.5; margin-bottom: 15px; text-align: center;";
+            p.textContent = anuncio.texto; 
+            cuerpoHtml.appendChild(p);
         }
+        
+        // Inyección de Imagen
         if (anuncio.tipo === "imagen" && anuncio.urlImagen) {
-            const img = document.createElement('img'); img.src = anuncio.urlImagen; img.className = "anuncio-media"; img.alt = "Novedades";
+            const img = document.createElement('img'); 
+            img.src = anuncio.urlImagen; 
+            img.className = "anuncio-media"; 
+            img.alt = "Novedades";
             cuerpoHtml.appendChild(img);
-        } else if (anuncio.tipo === "video" && anuncio.urlVideo) {
-            const containerVideo = document.createElement('div'); containerVideo.className = "anuncio-video-container";
-            const iframe = document.createElement('iframe'); iframe.src = anuncio.urlVideo; iframe.setAttribute('allowfullscreen', 'true'); iframe.style.border = "none";
-            containerVideo.appendChild(iframe); cuerpoHtml.appendChild(containerVideo);
+        } 
+        // Inyección de Video Iframe
+        else if (anuncio.tipo === "video" && anuncio.urlVideo) {
+            const containerVideo = document.createElement('div'); 
+            containerVideo.className = "anuncio-video-container";
+            const iframe = document.createElement('iframe'); 
+            iframe.src = anuncio.urlVideo; 
+            iframe.setAttribute('allowfullscreen', 'true'); 
+            iframe.style.border = "none";
+            containerVideo.appendChild(iframe); 
+            cuerpoHtml.appendChild(containerVideo);
         }
+
+        // 🔥 RESTAURACIÓN DE BOTÓN: Devolvemos el click nativo de cierre de la v2.4.1
+        if (btnEntendido) {
+            btnEntendido.onclick = () => {
+                if (typeof cerrarAnuncioGlobal === 'function') cerrarAnuncioGlobal();
+            };
+        }
+
         modal.style.display = "flex";
-    } catch (err) { console.error("Error en banner de novedades:", err); }
+    } catch (err) { 
+        console.error("Error en banner de novedades:", err); 
+    }
 }
 
 function cerrarAnuncioGlobal() {
@@ -2893,10 +2925,10 @@ async function verificarRecompensaDiaria() {
             if (usuarioActual) usuarioActual.monedas = data.monedas;
             actualizarInterfazUI();
 
-            // 👑 INTERFAZ INMERSIVA: En lugar de alert(), usamos el modal de Anuncio Global
             const modal = document.getElementById('modalAnuncioGlobal');
             const tituloHtml = document.getElementById('anuncioTitulo');
             const cuerpoHtml = document.getElementById('anuncioCuerpo');
+            const btnEntendido = modal?.querySelector('button, .btn-estadio');
 
             if (modal && tituloHtml && cuerpoHtml) {
                 tituloHtml.textContent = "🔥 ARENA DAILY REWARDS 🔥";
@@ -2910,27 +2942,32 @@ async function verificarRecompensaDiaria() {
                     </div>
                 `;
                 modal.style.display = "flex";
-            }
 
-            // 🏎️ Si completó el Día 7, preparamos el reclamo del pack Legendario sin alertas
-            if (data.regaloSobre && typeof comprarSobreEspecifico === 'function') {
-                // Modificamos el comportamiento del botón del anuncio temporalmente para que al cerrar abra el sobre
-                const btnEntendido = document.getElementById('modalAnuncioGlobal')?.querySelector('button, .btn-estadio');
+                // INTERCEPCIÓN CONTROLADA DEL BOTÓN DE CIERRE
                 if (btnEntendido) {
-                    const funcionOriginalCierre = btnEntendido.onclick;
                     btnEntendido.onclick = () => {
-                        if (typeof cerrarAnuncioGlobal === 'function') cerrarAnuncioGlobal();
-                        // Devolvemos el click original
-                        btnEntendido.onclick = funcionOriginalCierre;
-                        // Ejecutamos la cinemática dramática del sobre
-                        comprarSobreEspecifico("legendaria");
+                        // Limpiamos el modal por completo para la siguiente carga
+                        modal.style.display = "none";
+                        cuerpoHtml.innerHTML = "";
+
+                        // 🏁 SECUENCIA A: Si completó el Día 7, prioridad máxima al sobre Legendario
+                        if (data.regaloSobre && typeof comprarSobreEspecifico === 'function') {
+                            comprarSobreEspecifico("legendaria");
+                        } else {
+                            // 🏁 SECUENCIA B: Pasamos al anuncio multimedia normal de forma fluida
+                            iniciarControladorAnunciosSeguro();
+                        }
                     };
                 }
             }
         } else {
             console.log(`ℹ️ Control diario: ${data.mensaje}`);
+            // Si ya reclamó hoy, abrimos el controlador de novedades multimedia directamente
+            iniciarControladorAnunciosSeguro();
         }
     } catch (err) {
         console.error("Error al gestionar el bono de racha diario:", err);
+        // Resguardo por si falla la API de racha, que no tape las novedades
+        iniciarControladorAnunciosSeguro();
     }
 }
