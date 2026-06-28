@@ -1269,11 +1269,11 @@ function simularMarcadorPantalla(contenedor, ronda, tuPais, rival, ganoUsuario) 
               </div>
               <div style="display:flex; justify-content:space-between; align-items:center; padding: 5px 0;">
                    <span style="width:42%; text-align:left; font-weight:bold; font-size:1.1rem; color: #fff;">
-                       ⚽ ${tuPais.toUpperCase()} <span id="boost-badge-${idUnico}" class="boost-badge-gaming" style="display:none;">BOOSTED</span>
+                        ⚽ ${tuPais.toUpperCase()} <span id="boost-badge-${idUnico}" class="boost-badge-gaming" style="display:none; margin-left: 6px;">BOOSTED</span>
                    </span>
                    <span id="score-vivo-${idUnico}" style="font-family:'Oswald'; font-size:1.9rem; background:#020617; padding:4px 18px; border-radius:8px; color:var(--verde-match); min-width:80px; text-align:center; box-shadow: inset 0 0 12px rgba(0,255,136,0.15); border: 1px solid #1e293b; letter-spacing: 1px;">0 - 0</span>
                    <span style="width:42%; text-align:right; font-weight:bold; font-size:1.1rem; color: #fff;">
-                       ${rival.toUpperCase()} 🤖
+                        ${rival.toUpperCase()} 🤖
                    </span>
               </div>
               <div id="consola-incidencias-${idUnico}" class="consola-incidencias-tv">
@@ -1287,12 +1287,13 @@ function simularMarcadorPantalla(contenedor, ronda, tuPais, rival, ganoUsuario) 
           contenedor.appendChild(filaPartido); 
           filaPartido.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-          // Generación balanceada de goles reales finales
+          // Generación lógica de goles esperados finales
           let golesTu = Math.floor(Math.random() * 3); 
           let golesRival = Math.floor(Math.random() * 3);
           if (ganoUsuario && golesTu <= golesRival) golesTu = golesRival + Math.floor(Math.random() * 2) + 1;
           else if (!ganoUsuario && golesRival <= golesTu) golesRival = golesTu + Math.floor(Math.random() * 2) + 1;
 
+          // Relatos dinámicos por minuto
           let incidenciasSimuladas = {
                15: `⚠️ Presiona ${rival.toUpperCase()}, bombazo que pasa cerca del ángulo izquierdo.`,
                45: "⏳ ENTRETIEMPO: Los jugadores se retiran al descanso a recomponer ideas.",
@@ -1304,33 +1305,41 @@ function simularMarcadorPantalla(contenedor, ronda, tuPais, rival, ganoUsuario) 
           let golesRivalActuales = 0; 
           let segundoVirtual = 0;
           let tieneBoost = false;
-          let partidoPausado = false; // 🟢 CONTROL ÚNICO DE FLUJO
+          let partidoPausado = false; // Flag para el control del entretiempo
 
-          // BOTÓN CHARLA TÉCNICA
+          // GESTIÓN DEL CLICK EN CHARLA TÉCNICA
           document.getElementById(`btn-charla-${idUnico}`).onclick = () => {
                tieneBoost = true;
-               document.getElementById(`boost-badge-${idUnico}`).style.display = "inline-block";
-               document.getElementById(`btn-charla-${idUnico}`).disabled = true;
-               document.getElementById(`btn-charla-${idUnico}`).style.background = "#1e293b";
-               document.getElementById(`btn-charla-${idUnico}`).style.color = "#64748b";
-               document.getElementById(`btn-charla-${idUnico}`).innerText = "✅ ¡EQUIPO MOTIVADO!";
+               
+               // Encendemos el badge con la clase .boost-badge-gaming que le da el neón verde
+               const badge = document.getElementById(`boost-badge-${idUnico}`);
+               if (badge) badge.style.display = "inline-block";
+               
+               const btnCharla = document.getElementById(`btn-charla-${idUnico}`);
+               btnCharla.disabled = true;
+               btnCharla.style.background = "#1e293b";
+               btnCharla.style.color = "#64748b";
+               btnCharla.innerText = "✅ ¡EQUIPO MOTIVADO!";
+               
+               // Ventaja táctica: si iba perdiendo, le da una mano extra de remontar
                if (!ganoUsuario && Math.random() < 0.4) {
                     golesTu++; 
                }
           };
 
-          // 🟢 UN SOLO TIMER CONTROLADO
+          // LOOP ÚNICO DE CRONÓMETRO IN-GAME
           const timer = setInterval(() => {
-               if (partidoPausado) return; // Si está en entretiempo, frena la ejecución
+               if (partidoPausado) return; // Si estamos en los 5 segundos de charla, congelamos el tiempo
 
                if (segundoVirtual === 45) {
                     partidoPausado = true;
                     document.getElementById(`zona-entretiempo-${idUnico}`).style.display = "block";
                     document.getElementById(`consola-incidencias-${idUnico}`).innerText = "📣 Charla técnica en curso en los vestuarios...";
                     
+                    // Reanudación limpia tras el entretiempo
                     setTimeout(() => {
                          document.getElementById(`zona-entretiempo-${idUnico}`).style.display = "none";
-                         partidoPausado = false; // Reanuda limpiamente sin crear otros intervalos
+                         partidoPausado = false;
                          segundoVirtual += 3;
                     }, 5000);
                     return;
@@ -1339,7 +1348,7 @@ function simularMarcadorPantalla(contenedor, ronda, tuPais, rival, ganoUsuario) 
                segundoVirtual += 3; 
                if (segundoVirtual > 90) segundoVirtual = 90;
 
-               // Distribución de goles a lo largo de los minutos
+               // Simulación orgánica de la evolución del tanteador
                if ((segundoVirtual >= 10 && segundoVirtual < 45) || segundoVirtual >= 50) {
                     if (golesTuActuales < golesTu && Math.random() < (tieneBoost ? 0.20 : 0.11)) {
                          golesTuActuales++;
@@ -1356,7 +1365,7 @@ function simularMarcadorPantalla(contenedor, ronda, tuPais, rival, ganoUsuario) 
                     golesRivalActuales = golesRival; 
                }
 
-               // Sincronizar tablero virtual
+               // Actualizar los elementos dinámicos en el DOM
                document.getElementById(`reloj-vivo-${idUnico}`).innerText = `⏱️ MINUTO ${segundoVirtual.toString().padStart(2,'0')}:00`;
                document.getElementById(`score-vivo-${idUnico}`).innerText = `${golesTuActuales} - ${golesRivalActuales}`;
 
@@ -1364,7 +1373,7 @@ function simularMarcadorPantalla(contenedor, ronda, tuPais, rival, ganoUsuario) 
                     document.getElementById(`consola-incidencias-${idUnico}`).innerText = incidenciasSimuladas[segundoVirtual];
                }
 
-               // Cierre definitivo del partido
+               // PITAZO FINAL DEL ENCUENTRO
                if (segundoVirtual >= 90) {
                     clearInterval(timer); 
                     filaPartido.style.borderColor = ganoUsuario ? "var(--verde-match)" : "var(--rojo)";
@@ -1378,7 +1387,7 @@ function simularMarcadorPantalla(contenedor, ronda, tuPais, rival, ganoUsuario) 
                         ? "🎉 ¡Silbatazo final! Triunfo histórico para meterse en el bolsillo a la hinchada." 
                         : "😢 Final del partido. Rendimiento amargo, toca pensar en el próximo torneo.";
                     
-                    resolve(); // Dispara la resolución única de la promesa
+                    resolve(); // Resuelve la promesa de forma limpia hacia el fixture global
                }
           }, 400);
     });
