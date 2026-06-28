@@ -53,7 +53,7 @@ const verificarToken = (req, res, next) => {
 };
 
 /* ========================================================================
-   🛠️ MIDDLEWARE: MODO MANTENIMIENTO / ACCESO SELECTIVO TESTERS (FIXED)
+   🛠️ MIDDLEWARE: MODO MANTENIMIENTO / ACCESO SELECTIVO TESTERS (FIXED DEFINITIVO)
    ======================================================================== */
 const MODO_MANTENIMIENTO = true; 
 const TESTERS_PERMITIDOS = ["aguspe", "evepro"]; 
@@ -88,12 +88,23 @@ app.use((req, res, next) => {
         });
     }
 
-    // C. 🛡️ FILTRO DE CONTROL: Si la petición va a cualquier ruta de la API privada (/api/...)
-    // Dejamos pasar la petición SÓLO si trae un token de autorización en los headers.
-    // Como los únicos que pueden conseguir un token válido en mantenimiento son los testers permitidos, la API queda blindada.
+    // C. 🛡️ FILTRO DE CONTROL: Excepciones para endpoints sin token y validación de testers
+    
+    // 1️⃣ Dejamos pasar las peticiones de base o logout que no siempre mandan cabecera Bearer
+    if (
+        req.path.startsWith('/api/anuncio-actual') || 
+        req.path.startsWith('/api/timbas-restantes') || 
+        req.path.startsWith('/api/tiros-restantes') || 
+        req.path.startsWith('/api/logout') ||
+        req.path.startsWith('/api/misiones')
+    ) {
+        return next();
+    }
+
+    // 2️⃣ Para cualquier otra ruta privada del juego, exigimos el token del tester autorizado
     const authHeader = req.headers['authorization'];
     if (authHeader && authHeader.split(' ')[1]) {
-        return next(); // Es un tester con sesión iniciada, puede consumir las misiones, sobres, etc.
+        return next(); // Es un tester con sesión iniciada (sobres, trading, mundial, etc.)
     }
 
     // D. Si no es un archivo estático, ni un login de tester, ni tiene sesión iniciada, rebota acá:
