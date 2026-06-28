@@ -99,7 +99,9 @@ app.use((req, res, next) => {
         req.path.startsWith('/api/misiones') ||
         req.path.startsWith('/api/ranking') ||       // 🌟 Para el Top 10 de la Arena / Penales
         req.path.startsWith('/api/mundial') ||       // 🌟 Para los Reyes del Mundo y el contador de tiempo
-        req.path.startsWith('/api/mercado')
+        req.path.startsWith('/api/mercado') || 
+        req.path.startsWith('/api/usuarios/reclamar-diario')
+        
     ) {
         return next();
     }
@@ -2747,6 +2749,87 @@ app.post('/api/misiones/reclamar', verificarToken, async (req, res) => {
     } catch (err) {
         console.error("❌ Error en /misiones/reclamar:", err.message);
         res.status(500).json({ error: "Error al procesar el cobro en el servidor." });
+    }
+});
+
+// ========================================================================
+// 🎁 RECOMPENSAS DIARIAS: RECLAMO ATÓMICO Y CONTROL DE RACHAS (NEON)
+// ========================================================================
+app.post('/api/usuarios/reclamar-diario', verificarToken, async (req, res) => {
+    try {
+        const usuarioId = req.usuarioLogueado.id;
+        
+        // 1. Buscamos el estado actual del usuario
+        const queryUser = "SELECT monedas, racha_login, ultimo_login_timestamp FROM usuarios WHERE id = $1";
+        const userRes = await pool.query(queryUser, [usuarioId]);
+        
+        if (userRes.rows.length === 0) return res.status(404).json({ error: "Usuario no encontrado." });
+        
+        const user = userRes.rows[0];
+        const ahora = new Date();
+        let rachaActual = user.racha_login || 0;
+        let ultimoLogin = user.ultimo_login_timestamp;
+        
+        // Tabla de premios del Coliseo (Día 1 al 6: Oro incremental, Día 7: Premio gordo)
+        const premiosOro = { 1: 100, 2: 200, 3: 350, 4: 500, 5: 750, 6: 1000, 7: 2500 };
+
+        if (ultimoLogin) {
+            const ultimaFecha = new Date(ultimoLogin);
+            
+            // Forzamos el cálculo eliminando horas, minutos y segundos para comparar días calendario puros
+            const fechaHoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+            const fechaUltimo = new Date(ultimaFecha.getFullYear(), ultimaFecha.getMonth(), ultimaFecha.getDate());
+            
+            const diferenciaDias = Math.floor((fechaHoy - fechaUltimo) / (1000 * 60 * 60 * 24));
+
+            if (diferenciaDias === 0) {
+                // A. Ya reclamó hoy calendario
+                return res.json({ 
+                    ok: false, 
+                    mensaje: `⏳ Ya reclamaste tu premio de hoy, crack. ¡Volvé mañana para avanzar al Día ${rachaActual === 7 ? 1 : rachaActual + 1}!`,
+                    racha: rachaActual
+                });
+            } else if (diferenciaDias === 1) {
+                // B. Entró al día siguiente consecutivo. Avanza racha.
+                rachaActual = rachaActual >= 7 ? 1 : rachaActual + 1;
+            } else {
+                // C. Pasaron 2 o más días. Racha rota, vuelve al Día 1.
+                rachaActual = 1;
+            }
+        } else {
+            // Primer login histórico del usuario en este sistema
+            rachaActual = 1;
+        }
+
+        const premioOtorgado = premiosOro[rachaActual] || 100;
+        let regaloSobre = false;
+
+        // Regalo extra: Si llega al Día 7, además del oro, le avisamos al front que le tire un cofre promocional
+        if (rachaActual === 7) {
+            regaloSobre = true;
+        }
+
+        // 2. Registramos el impacto en Postgres de forma atómica
+        const queryUpdate = `
+            UPDATE usuarios 
+            SET monedas = monedas + $1, racha_login = $2, ultimo_login_timestamp = NOW() 
+            WHERE id = $3 
+            RETURNING monedas;
+        `;
+        const updateRes = await pool.query(queryUpdate, [premioOtorgado, rachaActual, usuarioId]);
+        const nuevoOroTotal = updateRes.rows[0].monedas;
+
+        res.json({
+            ok: true,
+            mensaje: `🎁 ¡DÍA ${rachaActual} COMPLETO! Se te acreditaron 🪙${premioOtorgado} de Oro.`,
+            racha: rachaActual,
+            monedas: nuevoOroTotal,
+            regaloSobre: regaloSobre
+        });
+
+    } catch (err) {
+        console.error("❌ Error en /usuarios/reclamar-diario:", err.message);
+        res.status(500).json({ error: "Error interno al procesar recompensa diaria." });
     }
 });
 
