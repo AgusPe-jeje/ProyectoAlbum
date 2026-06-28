@@ -35,47 +35,6 @@ body.ambiente-mundial {
     letter-spacing: 0.5px;
 }
 
-/* ========================================================================
-   ⚡ COMPONENTES DINÁMICOS DEL ENCUENTRO (SINGLE & MULTI)
-   ======================================================================== */
-.partido-simulado-card {
-    background: #0f172a !important;
-    border: 1px solid #1e293b !important;
-    border-radius: 12px !important;
-    padding: 16px !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.4) !important;
-    transition: all 0.3s ease;
-}
-
-.consola-incidencias-tv {
-    margin-top: 12px;
-    padding: 10px 14px !important;
-    background: #020617 !important;
-    border-radius: 8px !important;
-    font-size: 0.85rem !important;
-    color: #cbd5e1 !important;
-    text-align: center;
-    font-style: italic;
-    border-left: 3px solid var(--dorado) !important;
-    box-shadow: inset 0 2px 6px rgba(0,0,0,0.6);
-}
-
-.box-entretiempo-tactico {
-    margin-top: 15px !important;
-    text-align: center;
-    padding: 12px !important;
-    background: rgba(255, 177, 0, 0.04) !important;
-    border: 1px dashed var(--dorado) !important;
-    border-radius: 8px !important;
-    animation: pulsoBordeTactico 2s infinite ease-in-out;
-}
-
-@keyframes pulsoBordeTactico {
-    0% { border-color: rgba(255, 177, 0, 0.4); }
-    50% { border-color: rgba(255, 177, 0, 1); }
-    100% { border-color: rgba(255, 177, 0, 0.4); }
-}
-
 /* ⚡ BADGE DE CHARLA TÉCNICA ACTIVA IN-GAME */
 .boost-badge-gaming {
     background: rgba(0, 255, 136, 0.15) !important;
@@ -103,9 +62,6 @@ body.ambiente-mundial {
     to { box-shadow: 0 0 10px rgba(0, 255, 136, 0.5); }
 }
 
-/* ========================================================================
-   🖼️ BANNERS, HEADERS Y COMPONENTES FORMULARES
-   ======================================================================== */
 .banner-tienda { background: url('./static/sobres.jpg') no-repeat center center; background-size: cover; }
 .banner-penales { background: url('./static/penales.jpg') no-repeat center center; background-size: cover; }
 .banner-casino { background: url('./static/casino.jpg') no-repeat center center; background-size: cover; }
@@ -158,9 +114,6 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
 .overlay-banner-texto h2 { font-family: 'Oswald', sans-serif; font-size: 2rem; margin: 0; color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); }
 .overlay-banner-texto p { margin: 4px 0 0 0; color: #94a3b8; font-size: 1.1rem; }
 
-/* ========================================================================
-   🛍️ TIENDA DE COFRES Y APERTURA DE SOBRES (PACK OPENING)
-   ======================================================================== */
 .contenedor-tienda-cofres { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
 .tarjeta-cofre-match { background: linear-gradient(180deg, rgba(16, 24, 43, 0.5) 0%, rgba(9, 13, 22, 0.85) 100%) !important; border: 1px solid rgba(255, 255, 255, 0.05) !important; border-radius: 14px; padding: 20px; width: 240px; text-align: center; position: relative; overflow: hidden; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.05) !important; transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s, box-shadow 0.25s; }
 .tarjeta-cofre-match:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6) !important; }
@@ -182,32 +135,21 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
 
 .seccion-sobre-abierto-arena { margin-top: 30px; padding: 20px; background: rgba(5, 8, 14, 0.6); border-radius: 16px; border: 2px dashed #1f293d; }
 .titulo-sobre-loot { font-family: 'Oswald', sans-serif; color: var(--dorado); font-size: 1.5rem; text-transform: uppercase; text-shadow: 2px 2px 0px #000; margin-bottom: 15px; }
+#grid-sobre-abierto { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+
+/* 🃏 GRILLAS DE CROMOS REPARADAS (Álbum, Inventario, Draft Singleplayer y MULTIJUGADOR) */
+.grid-album-match, .grid-album, .grid-sobre, #grid-sobre-abierto, #grid-cartas-draft-mundial, #multi-grid-cartas-draft { 
+        display: grid !important; 
+        grid-template-columns: repeat(3, 1fr) !important; 
+        gap: 8px !important; 
+        width: 100% !important;
+        padding: 8px !important;
+        box-sizing: border-box !important;
+}    
 
 /* ========================================================================
-   🃏 SECTOR GRILLAS UNIFICADAS Y CALIBRADAS (ÁLBUM 4X4 VS SOBRES 3X3)
+   🏆 ESTILOS PREMIUM PARA EL COLISEO DEL MINIMUNDIAL (SINGLE & MULTI)
    ======================================================================== */
-
-/* El Álbum y la terna se consolidan en un ecosistema limpio de 4x4 columnas */
-#contenedor-grid-album, .grid-album-match, .grid-album {
-    display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important; 
-    gap: 15px !important;
-    width: 100% !important;
-    padding: 10px !important;
-    box-sizing: border-box !important;
-}
-
-/* Los sobres y el Loot se quedan fijos en 3x3 columnas para lucir mejor en PC */
-.grid-sobre, #grid-sobre-abierto {
-    display: grid !important;
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 12px !important;
-    width: 100% !important;
-    padding: 8px !important;
-    box-sizing: border-box !important;
-}
-
-/* El Draft Singleplayer y Multijugador mantienen auto-llenado HUD */
 #grid-cartas-draft-mundial, #multi-grid-cartas-draft {
     display: grid !important;
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
@@ -223,10 +165,6 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
 #grid-cartas-draft-mundial::-webkit-scrollbar, #multi-grid-cartas-draft::-webkit-scrollbar { width: 6px; }
 #grid-cartas-draft-mundial::-webkit-scrollbar-track, #multi-grid-cartas-draft::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); border-radius: 4px; }
 #grid-cartas-draft-mundial::-webkit-scrollbar-thumb, #multi-grid-cartas-draft::-webkit-scrollbar-thumb { background: var(--celeste); border-radius: 4px; }
-
-/* ========================================================================
-   🎴 CARDS COMPONENT (ESTILIZACIÓN DE CHROMOS Y CARTAS CLASH)
-   ======================================================================== */
 .carta-clash { width: 145px !important; height: 205px !important; border-radius: 12px; position: relative; box-sizing: border-box; background: #04060a; cursor: pointer; overflow: visible; transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s; animation: aparecerCarta 0.4s ease-out backwards; margin: 0 auto; }
 .carta-clash:hover { transform: translateY(-8px) scale(1.03); z-index: 10; }
 .carta-foto { width: 100%; height: 100%; object-fit: fill; border-radius: 12px; display: block; }
@@ -245,9 +183,6 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
 
 .badge-repetidas { position: absolute; top: -6px; right: -6px; background: #ff0055; color: #fff; font-family: 'Oswald', sans-serif; font-size: 0.85rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; border: 2px solid #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.4); z-index: 12; }
 
-/* ========================================================================
-   📊 SCROLLBARS, NAVEGACIÓN DE PAÍSES Y HUD DE FILTROS
-   ======================================================================== */
 .custom-scrollbar-paises { display: flex; gap: 6px; overflow-x: auto; padding: 5px 5px 12px 5px; margin-bottom: 15px; width: 100%; }
 .custom-scrollbar-paises::-webkit-scrollbar { height: 6px; }
 .custom-scrollbar-paises::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); border-radius: 10px; }
@@ -263,27 +198,10 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
 .progreso-barra-estadio-fondo { background: #161c30; height: 14px; border-radius: 10px; padding: 2px; }
 .progreso-barra-estadio-llenado { background: linear-gradient(90deg, #00ff66 0%, #00aa44 100%); height: 100%; width: 0%; border-radius: 10px; transition: width 0.5s ease-out; }
 
-.contenedor-filtros-album { display: flex; flex-direction: column; gap: 12px; background: rgba(11, 15, 25, 0.6) !important; border: 1px solid rgba(0, 204, 255, 0.15) !important; padding: 15px 20px; border-radius: 14px; margin-bottom: 15px; width: 100%; box-sizing: border-box; box-shadow: 0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05); }
-.grupo-filtro { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.filtro-label { font-family: 'Oswald', sans-serif; font-size: 0.95rem; color: #64748b; font-weight: 700; min-width: 75px; text-transform: uppercase; letter-spacing: 0.5px; }
-
-.btn-filtro-tv { background: #0b0f19; border: 1px solid #232d45; color: #94a3b8; padding: 7px 14px; font-family: 'Oswald', sans-serif; font-size: 0.9rem; font-weight: 700; border-radius: 8px; cursor: pointer; text-transform: uppercase; transition: all 0.2s ease; }
-.btn-filtro-tv:hover { color: #fff; border-color: var(--celeste); box-shadow: 0 0 8px rgba(0, 204, 255, 0.1); }
-.btn-filtro-tv.activo { background: var(--celeste); color: #000; border-color: #fff; box-shadow: 0 0 12px rgba(0, 204, 255, 0.4); }
-
-.btn-filtro-tv.f-comun.activo { background: var(--color-comun); color: #000; box-shadow: var(--shadow-comun); }
-.btn-filtro-tv.f-rara.activo { background: var(--color-rara); color: #fff; box-shadow: var(--shadow-rara); }
-.btn-filtro-tv.f-epica.activo { background: var(--color-epica); color: #fff; box-shadow: var(--shadow-epica); }
-.btn-filtro-tv.f-legendaria.activo { background: var(--color-legendaria); color: #000; box-shadow: var(--shadow-legendaria); }
-
-/* ========================================================================
-   ⚽ SECTOR MINI-JUEGO DE PENALES PROFESIONAL (ARCO GIGANTE)
-   ======================================================================== */
 .contenedor-penales-layout-estadio { display: flex; gap: 20px; width: 100%; }
 .juego-penales-principal { flex: 2; }
 .panel-lateral-ranking-tv { flex: 1; background: linear-gradient(135deg, rgba(14, 22, 38, 0.75) 0%, rgba(8, 12, 20, 0.9) 100%); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 20px; padding: 20px; box-sizing: border-box; box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5); }
 .titulo-tabla-tv { font-family: 'Oswald', sans-serif; color: var(--dorado); margin: 0 0 15px 0; text-align: center; font-size: 1.3rem; letter-spacing: 0.5px; }
-
 .tabla-ranking-stadium { width: 100%; border-collapse: collapse; font-size: 1.05rem; }
 .tabla-ranking-stadium th { background: rgba(0,0,0,0.3); color: #64748b; padding: 10px; font-weight: 700; text-transform: uppercase; }
 .tabla-ranking-stadium td { padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; font-weight: 700; }
@@ -292,6 +210,7 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
 .tabla-ranking-stadium tr:nth-child(3) td:nth-child(1) { color: #ff7733; font-size: 1.2rem; }
 .fila-usuario-actual { background: rgba(0, 204, 255, 0.1) !important; color: var(--celeste); }
 
+/* ⚽ REFACTORIZACIÓN ARCO PROFESIONAL GIGANTE (6 DIRECCIONES REALES) */
 .arco-futbol-stadium { 
     position: relative; 
     width: 100%; 
@@ -315,50 +234,171 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
 .inf-cen { bottom: 0; left: 33.33%; }
 .inf-der { bottom: 0; left: 66.66%; }
 
-#balon-animado { position: absolute; bottom: 20px; left: 50%; font-size: 1.5rem; margin-left: -12px; z-index: 10; transition: transform 0.5s ease-out; }
-#arquero-animado { position: absolute; top: 90px; left: 50%; font-size: 2rem; margin-left: -16px; z-index: 5; transition: transform 0.5s ease-out; }
+#balon-animado {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    font-size: 1.5rem; 
+    margin-left: -12px; 
+    z-index: 10;
+    transition: transform 0.5s ease-out;
+}
+
+#arquero-animado {
+    position: absolute;
+    top: 90px;
+    left: 50%;
+    font-size: 2rem; 
+    margin-left: -16px; 
+    z-index: 5;
+    transition: transform 0.5s ease-out;
+}
 
 .marcador-alerta-tv { font-family: 'Oswald', sans-serif; font-size: 1.5rem; margin: 15px 0 5px 0; }
 .badge-reloj-energia { color: var(--dorado); font-weight: 700; font-size: 1.1rem; margin: 0; }
 
-/* ========================================================================
-   🎰 DISTRIBUCIÓN EN DOS COLUMNAS - SECTOR TIMBA, QUINIELA Y CASINO
-   ======================================================================== */
-#modulo-timba .caja-modulo-estadio { display: flex; flex-direction: column; gap: 20px; max-width: 1000px !important; margin: 0 auto; }
+.arena-versus-scoreboard { display: flex; justify-content: space-between; align-items: center; background: rgba(5, 8, 14, 0.6); border: 1px solid rgba(255, 177, 0, 0.3); border-radius: 16px; padding: 20px; width: 100%; max-width: 550px; margin: 0 auto; box-sizing: border-box; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+.bando-equipo-stadium { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.bandera-flag { font-size: 3.5rem; line-height: 1; }
+.nombre-seleccion { font-family: 'Oswald', sans-serif; font-size: 1.4rem; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+.vs-circulo-match { background: var(--rojo); color: #fff; font-family: 'Oswald', sans-serif; font-size: 1.3rem; font-weight: 700; width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid #fff; box-shadow: 0 0 15px rgba(255, 51, 68, 0.4); }
 
-@media (min-width: 768px) {
-    #modulo-timba .caja-modulo-estadio { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 25px; }
-    #modulo-timba .banner-modulo-imagen { grid-column: span 2; }
+/* ========================================================================
+   🎰 DISTRIBUCIÓN PREMIUM EN DOS COLUMNAS - TIMBA Y QUINIELA
+   ======================================================================== */
+
+/* Contenedor padre de la sección de apuestas */
+#modulo-timba .caja-modulo-estadio {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 1000px !important;
+    margin: 0 auto;
 }
 
-.contenedor-partido-timba-tv { background: #0f172a !important; border: 2px solid #1e293b !important; border-radius: 14px !important; padding: 20px !important; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important; height: 100%; box-sizing: border-box; transition: border-color 0.3s ease; }
-.contenedor-partido-timba-tv:hover { border-color: var(--dorado) !important; }
+/* Forzar que las dos tarjetas de timba se pongan a la par en pantallas grandes */
+@media (min-width: 768px) {
+    #modulo-timba .caja-modulo-estadio {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+        gap: 25px;
+    }
+    
+    /* El banner ocupa todo el ancho superior de la rejilla */
+    #modulo-timba .banner-modulo-imagen {
+        grid-column: span 2;
+    }
+}
 
-.inputs-apuesta-timba-stadium { display: flex; flex-direction: column; align-items: stretch; gap: 15px; margin-top: 20px; width: 100%; }
-.monto-apuesta-row { display: flex; flex-direction: column; align-items: stretch; gap: 6px; width: 100%; }
-.get-label-tv { font-size: 1rem; font-weight: 700; color: var(--dorado); letter-spacing: 0.5px; text-align: left; }
+/* Estilización de las tarjetas contenedoras estilo TV */
+.contenedor-partido-timba-tv {
+    background: #0f172a !important;
+    border: 2px solid #1e293b !important;
+    border-radius: 14px !important;
+    padding: 20px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+    height: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
 
-.grid-opciones-goles-match { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; margin-top: 15px; }
-.btn-opcion-resultado { background: rgba(15, 19, 34, 0.6); color: #fff; border: 1px solid var(--celeste) !important; font-family: 'Oswald', sans-serif; font-size: 1.2rem !important; padding: 10px !important; border-radius: 8px; box-shadow: 0 4px 0 #0088cc !important; cursor: pointer; transition: all 0.2s ease; }
-.btn-opcion-resultado:hover { background: rgba(22, 30, 48, 0.8); box-shadow: 0 0 12px rgba(0,204,255,0.4) !important; transform: translateY(-2px); }
+.contenedor-partido-timba-tv:hover {
+    border-color: var(--dorado, #fbbf24) !important;
+}
 
-.historial-timba-banca-tv { margin-top: 25px; background: rgba(5, 8, 14, 0.6); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 15px; width: 100%; box-sizing: border-box; }
-.historial-timba-banca-tv h4 { margin: 0 0 10px 0; color: var(--dorado); font-family: 'Oswald', sans-serif; font-size: 1rem; letter-spacing: 0.5px; text-transform: uppercase; }
+/* 🟢 MODIFICADO: Cambiamos a 'stretch' para que los inputs se expandan con elegancia */
+.inputs-apuesta-timba-stadium { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: stretch; 
+    gap: 15px; 
+    margin-top: 20px; 
+    width: 100%; 
+}
 
-.item-historial-partido { list-style: none; font-size: 1.05rem; font-weight: 700; padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
-#contenedor-lista-quiniela { display: flex; flex-direction: column; gap: 12px; width: 100%; margin-bottom: 15px; }
-#contenedor-lista-quiniela > div { background: linear-gradient(90deg, rgba(14, 22, 38, 0.7) 0%, rgba(8, 12, 20, 0.9) 100%) !important; border: 1px solid rgba(255, 255, 255, 0.06) !important; box-shadow: 0 4px 15px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.02); transition: border-color 0.2s ease; }
-#contenedor-lista-quiniela > div:hover { border-color: rgba(0, 204, 255, 0.25) !important; }
+/* 🟢 MODIFICADO: Sacamos el max-width rígido para que herede el ancho de la tarjeta */
+.monto-apuesta-row { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: stretch; 
+    gap: 6px; 
+    width: 100%; 
+}
 
-/* ========================================================================
-   ⏳ SCREEN CARGAS, ESCENARIO CINEMÁTICO & ANIMACIONES PACKS
-   ======================================================================== */
+.get-label-tv { 
+    font-size: 1rem; 
+    font-weight: 700; 
+    color: var(--dorado); 
+    letter-spacing: 0.5px; 
+    text-align: left; /* Alineación al inicio para los textos */
+}
+
+/* 🎰 GRILLA DE PRONÓSTICOS (BOTONES DE GOLES) */
+.grid-opciones-goles-match { 
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 10px; 
+    width: 100%; 
+    margin-top: 15px; 
+}
+
+.btn-opcion-resultado { 
+    background: rgba(15, 19, 34, 0.6); 
+    color: #fff; 
+    border: 1px solid var(--celeste) !important; 
+    font-family: 'Oswald', sans-serif; 
+    font-size: 1.2rem !important; /* Ajustado sutilmente para que no se pise el texto en la grilla */
+    padding: 10px !important; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 0 #0088cc !important; 
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-opcion-resultado:hover { 
+    background: rgba(22, 30, 48, 0.8); 
+    box-shadow: 0 0 12px rgba(0,204,255,0.4) !important; 
+    transform: translateY(-2px);
+}
+
+/* 📋 HISTORIAL DE LA BANCA */
+.historial-timba-banca-tv { 
+    margin-top: 25px; 
+    background: rgba(5, 8, 14, 0.6); 
+    border: 1px solid rgba(255, 255, 255, 0.05); 
+    border-radius: 12px; 
+    padding: 15px; 
+    width: 100%; 
+    box-sizing: border-box; 
+}
+
+.historial-timba-banca-tv h4 { 
+    margin: 0 0 10px 0; 
+    color: var(--dorado); 
+    font-family: 'Oswald', sans-serif; 
+    font-size: 1rem; 
+    letter-spacing: 0.5px; 
+    text-transform: uppercase;
+}
+
+.item-historial-partido { 
+    list-style: none; 
+    font-size: 1.05rem; 
+    font-weight: 700; 
+    padding: 8px 12px; 
+    border-bottom: 1px solid rgba(255,255,255,0.05); 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+}
 #pantalla-carga { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(4, 6, 10, 0.95); backdrop-filter: blur(4px); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 99999; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
 #pantalla-carga.activo { opacity: 1; pointer-events: auto; }
 .spinner-arena { width: 55px; height: 55px; border: 5px solid rgba(255, 255, 255, 0.05); border-top: 5px solid var(--celeste); border-radius: 50%; animation: girarSpinner 0.7s linear infinite; }
 @keyframes girarSpinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 .texto-carga { color: #fff; font-family: 'Oswald', sans-serif; font-size: 1.2rem; margin-top: 15px; text-transform: uppercase; letter-spacing: 1px; }
 
+/* 🎬 PACK OPENING ADDITIONAL SECTIONS */
 .pack-opening-escenario { background: radial-gradient(circle at 50% 50%, #0c152b 0%, #040712 100%); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 30px; min-height: 400px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; box-shadow: inset 0 0 100px rgba(0,0,0,0.8); }
 .luces-estadio-efecto { position: absolute; width: 200%; height: 200%; background: conic-gradient(from 0deg at 50% 50%, transparent, rgba(0, 204, 255, 0.15), transparent, rgba(255, 177, 0, 0.15), transparent); animation: rotarLucesSobre 12s linear infinite; z-index: 1; pointer-events: none; }
 .pistas-pack-container { display: flex; gap: 15px; margin-bottom: 25px; z-index: 2; }
@@ -372,73 +412,472 @@ input:focus, .select-estadio-custom:focus { border-color: var(--celeste); outlin
 @keyframes entradaFIFA { 0% { opacity: 0; transform: translateX(-150px) scale(0.6) rotate(-15deg); filter: blur(5px) brightness(2); } 100% { opacity: 1; transform: translateX(0) scale(1.1) rotate(0deg); filter: blur(0) brightness(1); } }
 
 /* ========================================================================
-   🏆 COLISEO DEL TORNEO - CONTROLES DEL FIXTURE DE SIMULACIÓN
+   🏆 ESTILOS PREMIUM PARA EL COLISEO DEL MINIMUNDIAL (GRILLA REPARADA)
    ======================================================================== */
-.arena-versus-scoreboard { display: flex; justify-content: space-between; align-items: center; background: rgba(5, 8, 14, 0.6); border: 1px solid rgba(255, 177, 0, 0.3); border-radius: 16px; padding: 20px; width: 100%; max-width: 550px; margin: 0 auto; box-sizing: border-box; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-.bando-equipo-stadium { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.bandera-flag { font-size: 3.5rem; line-height: 1; }
-.nombre-seleccion { font-family: 'Oswald', sans-serif; font-size: 1.4rem; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
-.vs-circulo-match { background: var(--rojo); color: #fff; font-family: 'Oswald', sans-serif; font-size: 1.3rem; font-weight: 700; width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid #fff; box-shadow: 0 0 15px rgba(255, 51, 68, 0.4); }
+#grid-cartas-draft-mundial {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+    gap: 15px !important;
+    padding: 15px !important;
+    background: rgba(4, 6, 12, 0.4) !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    scrollbar-width: thin;
+    scrollbar-color: var(--celeste) rgba(0, 0, 0, 0.3);
+}
 
-.carta-clash.activo-draft { transform: scale(0.96) translateY(2px); filter: brightness(1.15); box-shadow: 0 0 20px var(--verde-match), inset 0 0 15px rgba(0, 255, 136, 0.3) !important; animation: pulsoDraft 1.5s infinite ease-in-out; }
-#grid-cartas-draft-mundial .carta-clash:not(.activo-draft):hover { border-color: var(--celeste) !important; box-shadow: 0 0 15px rgba(0, 204, 255, 0.3) !important; }
+#grid-cartas-draft-mundial::-webkit-scrollbar { width: 6px; }
+#grid-cartas-draft-mundial::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); border-radius: 4px; }
+#grid-cartas-draft-mundial::-webkit-scrollbar-thumb { background: var(--celeste); border-radius: 4px; }
 
-#lista-cruces-mundial-simulacion .item-historial-partido { background: linear-gradient(90deg, rgba(16, 24, 43, 0.6) 0%, rgba(9, 13, 22, 0.8) 100%); border-left: 5px solid #232d45; padding: 14px 20px; border-radius: 8px; margin-bottom: 4px; font-size: 1.1rem; transition: all 0.25s ease; animation: entradaFixture 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+.carta-clash.activo-draft {
+    transform: scale(0.96) translateY(2px);
+    filter: brightness(1.15);
+    box-shadow: 0 0 20px var(--verde-match), inset 0 0 15px rgba(0, 255, 136, 0.3) !important;
+    animation: pulsoDraft 1.5s infinite ease-in-out;
+}
+
+#grid-cartas-draft-mundial .carta-clash:not(.activo-draft):hover {
+    border-color: var(--celeste) !important;
+    box-shadow: 0 0 15px rgba(0, 204, 255, 0.3) !important;
+}
+
+#lista-cruces-mundial-simulacion .item-historial-partido {
+    background: linear-gradient(90deg, rgba(16, 24, 43, 0.6) 0%, rgba(9, 13, 22, 0.8) 100%);
+    border-left: 5px solid #232d45;
+    padding: 14px 20px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    font-size: 1.1rem;
+    transition: all 0.25s ease;
+    animation: entradaFixture 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
 #lista-cruces-mundial-simulacion .item-historial-partido:nth-child(1) { animation-delay: 0.1s; }
 #lista-cruces-mundial-simulacion .item-historial-partido:nth-child(2) { animation-delay: 0.3s; }
 #lista-cruces-mundial-simulacion .item-historial-partido:nth-child(3) { animation-delay: 0.5s; }
 #lista-cruces-mundial-simulacion .item-historial-partido:nth-child(4) { animation-delay: 0.7s; }
 
-@keyframes pulsoDraft { 0%, 100% { border-color: var(--verde-match); } 50% { border-color: #ffffff; box-shadow: 0 0 25px var(--verde-match), inset 0 0 10px rgba(0, 255, 136, 0.5) !important; } }
-@keyframes entradaFixture { from { opacity: 0; transform: translateX(-25px); filter: blur(4px); } to { opacity: 1; transform: translateX(0); filter: blur(0); } }
-@keyframes aparecerCarta { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulsoDraft {
+    0%, 100% { border-color: var(--verde-match); }
+    50% { border-color: #ffffff; box-shadow: 0 0 25px var(--verde-match), inset 0 0 10px rgba(0, 255, 136, 0.5) !important; }
+}
+
+@keyframes entradaFixture {
+    from { opacity: 0; transform: translateX(-25px); filter: blur(4px); }
+    to { opacity: 1; transform: translateX(0); filter: blur(0); }
+}
+
+@keyframes abrirSobre { from { opacity: 0; transform: translateY(20px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes brilloOro { 0%, 100% { box-shadow: 0 0 5px rgba(255,177,0,0.2); } 50% { box-shadow: 0 0 20px rgba(255,177,0,0.55); } }
 
-.btn-logout-premium { padding: 10px 22px !important; font-size: 1.1rem !important; font-family: 'Oswald', sans-serif !important; letter-spacing: 0.5px; border-width: 2px !important; border-radius: 8px !important; font-weight: 700 !important; box-shadow: 0 4px 10px rgba(255, 51, 68, 0.15); }
-.btn-ayuda-arena { background: #0f172a !important; border: 1px solid var(--celeste) !important; color: var(--celeste) !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; padding: 8px 24px !important; border-radius: 12px !important; font-family: 'Oswald', sans-serif !important; font-weight: 700 !important; font-size: 1rem !important; letter-spacing: 1px !important; text-transform: uppercase; cursor: pointer; transition: all 0.2s ease-in-out !important; box-shadow: 0 0 10px rgba(14, 165, 233, 0.15) !important; }
-.btn-ayuda-arena:hover { background: rgba(14, 165, 233, 0.1) !important; box-shadow: 0 0 20px rgba(14, 165, 233, 0.4) !important; transform: scale(1.02); }
-.btn-ayuda-arena:active { transform: scale(0.98); }
+/* 🚪 Botón Salir Premium */
+.btn-logout-premium {
+    padding: 10px 22px !important;
+    font-size: 1.1rem !important;
+    font-family: 'Oswald', sans-serif !important;
+    letter-spacing: 0.5px;
+    border-width: 2px !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 10px rgba(255, 51, 68, 0.15);
+}
 
 /* ========================================================================
-   🚨 ANUNCIOS FULLSCREEN OVERLAYS & CONTENEDORES MEDIA
+   ❓ BOTÓN DE AYUDA PREMIUM (ESTILO TRANSMISIÓN TV)
    ======================================================================== */
-.modal-anuncio-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); z-index: 99999; align-items: center; justify-content: center; padding: 20px; }
-.modal-anuncio-content { background: #0b0f19; border: 2px solid var(--celeste); box-shadow: 0 0 30px rgba(14, 165, 233, 0.3); width: 100%; max-width: 520px; padding: 25px; border-radius: 14px; position: relative; animation: popInAnuncio 0.3s ease-out forwards; color: #fff; font-family: 'Oswald', sans-serif; text-align: center; max-height: 90vh; overflow-y: auto; }
-@keyframes popInAnuncio { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.btn-ayuda-arena {
+    background: #0f172a !important; 
+    border: 1px solid var(--celeste) !important; 
+    color: var(--celeste) !important; 
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 8px 24px !important;
+    border-radius: 12px !important; 
+    font-family: 'Oswald', sans-serif !important;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+    letter-spacing: 1px !important;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out !important;
+    box-shadow: 0 0 10px rgba(14, 165, 233, 0.15) !important; 
+}
 
-.btn-cerrar-anuncio { position: absolute; top: 15px; right: 15px; background: #ef4444 !important; color: white !important; border: none; padding: 6px 12px; font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 0.85rem; border-radius: 6px; cursor: pointer; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3); transition: all 0.2s ease-in-out; z-index: 10; }
-.btn-cerrar-anuncio:hover { background: #dc2626 !important; transform: scale(1.05); }
+.btn-ayuda-arena:hover {
+    background: rgba(14, 165, 233, 0.1) !important; 
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.4) !important; 
+    transform: scale(1.02);
+}
 
-.anuncio-titulo { color: var(--celeste); font-size: 1.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 15px; text-transform: uppercase; }
-.anuncio-cuerpo p { font-size: 1.1rem; line-height: 1.5; color: #cbd5e1; margin-bottom: 15px; }
-
-.anuncio-video-container { position: relative; padding-bottom: 56.25%; height: 0; width: 100%; margin-top: 12px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(14, 165, 233, 0.5); }
-.anuncio-video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-.anuncio-media { max-width: 100%; max-height: 260px; object-fit: contain; border-radius: 8px; margin-top: 12px; border: 1px solid rgba(14, 165, 233, 0.3); }
-img.emoji { height: 1.2em; width: 1.2em; margin: 0 .05em 0 .1em; vertical-align: -0.1em; display: inline-block; }
+.btn-ayuda-arena:active {
+    transform: scale(0.98);
+}
 
 /* ========================================================================
-   🎮 ACCESIBILIDAD GAMER - SISTEMA DE FOCO AVANZADO
+   🚨 CONTENEDOR ANUNCIOS FULLSCREEN (RESPONSIVO Y CALIBRADO)
    ======================================================================== */
-button:focus, input:focus, select:focus { outline: none !important; }
-button:focus-visible, input:focus-visible, select:focus-visible, .carta-clash:focus-visible { border-color: var(--dorado) !important; box-shadow: 0 0 15px rgba(251, 191, 36, 0.8), inset 0 0 8px rgba(251, 191, 36, 0.4) !important; transform: scale(1.03) !important; animation: pulsoFocoGamer 1.5s infinite ease-in-out; transition: all 0.2s ease; }
-@keyframes pulsoFocoGamer { 0%, 100% { box-shadow: 0 0 12px rgba(251, 191, 36, 0.6); } 50% { box-shadow: 0 0 22px rgba(251, 191, 36, 0.9), 0 0 30px rgba(251, 191, 36, 0.3); } }
+.modal-anuncio-overlay {
+    display: none; 
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(10px);
+    z-index: 99999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px; 
+}
+
+.modal-anuncio-content {
+    background: #0b0f19;
+    border: 2px solid var(--celeste);
+    box-shadow: 0 0 30px rgba(14, 165, 233, 0.3);
+    width: 100%;
+    max-width: 520px; 
+    padding: 25px;
+    border-radius: 14px;
+    position: relative;
+    animation: popInAnuncio 0.3s ease-out forwards;
+    color: #fff;
+    font-family: 'Oswald', sans-serif;
+    text-align: center;
+    max-height: 90vh; 
+    overflow-y: auto;  
+}
+
+@keyframes popInAnuncio {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.btn-cerrar-anuncio {
+    position: absolute;
+    top: 15px; 
+    right: 15px;
+    background: #ef4444 !important;
+    color: white !important;
+    border: none;
+    padding: 6px 12px;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+    transition: all 0.2s ease-in-out;
+    z-index: 10;
+}
+
+.btn-cerrar-anuncio:hover {
+    background: #dc2626 !important;
+    transform: scale(1.05);
+}
+
+.anuncio-titulo {
+    color: var(--celeste);
+    font-size: 1.8rem;
+    letter-spacing: 1px;
+    margin-top: 15px; 
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+
+.anuncio-cuerpo p {
+    font-size: 1.1rem;
+    line-height: 1.5;
+    color: #cbd5e1;
+    margin-bottom: 15px;
+}
+
+.anuncio-video-container {
+    position: relative;
+    padding-bottom: 56.25%; 
+    height: 0;
+    width: 100%;
+    margin-top: 12px;
+    border-radius: 8px;
+    overflow: hidden; 
+    border: 1px solid rgba(14, 165, 233, 0.5);
+}
+
+.anuncio-video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.anuncio-media {
+    max-width: 100%;
+    max-height: 260px;
+    object-fit: contain;
+    border-radius: 8px;
+    margin-top: 12px;
+    border: 1px solid rgba(14, 165, 233, 0.3);
+}
+
+img.emoji {
+    height: 1.2em;
+    width: 1.2em;
+    margin: 0 .05em 0 .1em;
+    vertical-align: -0.1em;
+    display: inline-block;
+}
 
 /* ========================================================================
-   📱 REINGENIERÍA EXCLUSIVA RESPONSIVA PARA CELULARES (MÁXIMO 768px)
+   📊 FILTROS AVANZADOS DEL ÁLBUM (ESTILO HUD ARENA)
+   ======================================================================== */
+.contenedor-filtros-album {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: rgba(11, 15, 25, 0.6) !important;
+    border: 1px solid rgba(0, 204, 255, 0.15) !important;
+    padding: 15px 20px;
+    border-radius: 14px;
+    margin-bottom: 15px;
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+.grupo-filtro {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filtro-label {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.95rem;
+    color: #64748b;
+    font-weight: 700;
+    min-width: 75px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-filtro-tv {
+    background: #0b0f19;
+    border: 1px solid #232d45;
+    color: #94a3b8;
+    padding: 7px 14px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+}
+
+.btn-filtro-tv:hover {
+    color: #fff;
+    border-color: var(--celeste);
+    box-shadow: 0 0 8px rgba(0, 204, 255, 0.1);
+}
+
+.btn-filtro-tv.activo {
+    background: var(--celeste);
+    color: #000;
+    border-color: #fff;
+    box-shadow: 0 0 12px rgba(0, 204, 255, 0.4);
+}
+
+/* ========================================================================
+   🎆 ANIMACIONES CINEMÁTICAS: PACK OPENING CAMINANTE LEGENDARIO
+   ======================================================================== */
+
+/* Escenario oscuro de suspenso total */
+.escenario-caminante-activo {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(20,20,30,0.98) 0%, rgba(2,6,23,1) 100%) !important;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+/* Destello épico intermitente de foco gamer */
+.pulso-foco-oro {
+    animation: pulsoFocoGamer 1.8s infinite ease-in-out;
+}
+
+@keyframes pulsoFocoGamer {
+    0%, 100% { box-shadow: inset 0 0 50px rgba(255, 177, 0, 0.2); }
+    50% { box-shadow: inset 0 0 120px rgba(255, 177, 0, 0.6); }
+}
+
+/* Partículas de Fuegos Artificiales en CSS puro */
+.fuego-artificial {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--dorado);
+    box-shadow: 0 0 15px var(--dorado), 0 0 30px var(--dorado);
+    animation: explotarParticula 1.2s forwards cubic-bezier(0.1, 0.8, 0.3, 1);
+    opacity: 0;
+}
+
+@keyframes explotarParticula {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--x), var(--y)) scale(0.2);
+        opacity: 0;
+    }
+}
+
+/* Efecto flash inicial de revelado */
+.flash-revelado-total {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.animar-flash {
+    animation: flashImpacto 0.6s ease-out forwards;
+}
+
+@keyframes flashImpacto {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.btn-filtro-tv.f-comun.activo { background: var(--color-comun); color: #000; box-shadow: var(--shadow-comun); }
+.btn-filtro-tv.f-rara.activo { background: var(--color-rara); color: #fff; box-shadow: var(--shadow-rara); }
+.btn-filtro-tv.f-epica.activo { background: var(--color-epica); color: #fff; box-shadow: var(--shadow-epica); }
+.btn-filtro-tv.f-legendaria.activo { background: var(--color-legendaria); color: #000; box-shadow: var(--shadow-legendaria); }
+
+/* ========================================================================
+   🎰 NUEVO COMPONENTE: CONTENEDOR CARTELERA QUINIELA / COMBINADA
+   ======================================================================== */
+#contenedor-lista-quiniela {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+#contenedor-lista-quiniela > div {
+    background: linear-gradient(90deg, rgba(14, 22, 38, 0.7) 0%, rgba(8, 12, 20, 0.9) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.02);
+    transition: border-color 0.2s ease;
+}
+
+#contenedor-lista-quiniela > div:hover {
+    border-color: rgba(0, 204, 255, 0.25) !important;
+}
+
+/* ========================================================================
+   🎮 SISTEMA DE FOCO AVANZADO (KEYBOARD ACCESSIBILITY)
+   ======================================================================== */
+
+/* 1. Quitamos el outline feo por defecto del navegador */
+button:focus, 
+input:focus, 
+select:focus {
+    outline: none !important;
+}
+
+/* 2. Efecto Gamer de Foco Dorado Brillante */
+button:focus-visible, 
+input:focus-visible, 
+select:focus-visible,
+.carta-clash:focus-visible {
+    border-color: var(--dorado, #fbbf24) !important;
+    box-shadow: 0 0 15px rgba(251, 191, 36, 0.8), 
+                inset 0 0 8px rgba(251, 191, 36, 0.4) !important;
+    transform: scale(1.03) !important;
+    animation: pulsoFocoGamer 1.5s infinite ease-in-out;
+    transition: all 0.2s ease;
+}
+
+/* 3. Animación de respiración para el botón seleccionado */
+@keyframes pulsoFocoGamer {
+    0% {
+        box-shadow: 0 0 12px rgba(251, 191, 36, 0.6);
+    }
+    50% {
+        box-shadow: 0 0 22px rgba(251, 191, 36, 0.9), 0 0 30px rgba(251, 191, 36, 0.3);
+    }
+    100% {
+        box-shadow: 0 0 12px rgba(251, 191, 36, 0.6);
+    }
+}
+
+/* ========================================================================
+   📱 REINGENIERÍA EXCLUSIVA RESPONSIVA PARA CELULARES (MÁXIMO 768px) - FIXED
    ======================================================================== */
 @media (max-width: 768px) {
     body { padding: 8px; }
     .titulo-copa-pe { font-size: 2rem; }
     
-    .header-status-scoreboard { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; padding: 12px !important; width: 100% !important; box-sizing: border-box !important; }
-    .stat-box-tv { width: 100% !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; border-bottom: none !important; background: rgba(15, 23, 42, 0.5); padding: 6px !important; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); box-sizing: border-box !important; }
+    .header-status-scoreboard { 
+        display: grid !important; 
+        grid-template-columns: repeat(2, 1fr) !important; 
+        gap: 12px !important; 
+        padding: 12px !important; 
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    .stat-box-tv { 
+        width: 100% !important; 
+        flex-direction: column !important; 
+        align-items: center !important;
+        justify-content: center !important; 
+        border-bottom: none !important;
+        background: rgba(15, 23, 42, 0.5);
+        padding: 6px !important;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-sizing: border-box !important;
+    }
     .stat-label { font-size: 0.75rem; margin-bottom: 2px; }
     .stat-valor { font-size: 1.25rem !important; }
     
-    .nav-modulos-estadio { display: flex !important; flex-direction: row !important; overflow-x: auto !important; white-space: nowrap !important; gap: 8px !important; width: 100% !important; padding: 5px 0 10px 0 !important; -webkit-overflow-scrolling: touch; }
+    .nav-modulos-estadio { 
+        display: flex !important; 
+        flex-direction: row !important; 
+        overflow-x: auto !important; 
+        white-space: nowrap !important;
+        gap: 8px !important; 
+        width: 100% !important;
+        padding: 5px 0 10px 0 !important;
+        -webkit-overflow-scrolling: touch;
+    }
     .nav-modulos-estadio::-webkit-scrollbar { display: none; }
-    .btn-modulo-match { flex: 0 0 auto !important; padding: 10px 16px !important; font-size: 0.95rem !important; }
+    
+    .btn-modulo-match { 
+        flex: 0 0 auto !important; 
+        padding: 10px 16px !important; 
+        font-size: 0.95rem !important; 
+    }
     
     .contenedor-tienda-cofres { flex-direction: column; align-items: center; width: 100%; }
     .tarjeta-cofre-match { width: 100%; max-width: 100%; box-sizing: border-box; }
@@ -454,13 +893,13 @@ button:focus-visible, input:focus-visible, select:focus-visible, .carta-clash:fo
     .carta-presentada-wrapper { min-height: 180px; margin-bottom: 15px; }
     .carta-clash.caminante-entrada { animation: entradaFIFAMovil 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards !important; }
 
-    /* 🟢 SECTOR RESPONSIVO DE GRID: Forzado balanceado a 3 columnas en celulares */
-    .grid-album-match, .grid-album, .grid-sobre, #grid-sobre-abierto, #grid-cartas-draft-mundial, #contenedor-grid-album { 
+    /* 🃏 GRILLAS DE CROMOS (Álbum, Inventario y Draft unificados en Grid) */
+    .grid-album-match, .grid-album, .grid-sobre, #grid-sobre-abierto, #grid-cartas-draft-mundial { 
         grid-template-columns: repeat(3, 1fr) !important; 
         gap: 8px !important; 
         display: grid !important; 
         width: 100% !important;
-        padding: 6px !important;
+        padding: 8px !important;
         box-sizing: border-box !important;
     }
     .carta-clash { width: 100% !important; height: auto !important; aspect-ratio: 2 / 3 !important; transform: none !important; }
@@ -484,4 +923,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, .carta-clash:fo
     .filtro-label { width: 100%; margin-bottom: 2px; }
 }
 
-@keyframes entradaFIFAMovil { 0% { opacity: 0; transform: translateX(-80px) scale(0.6) rotate(-10deg); filter: blur(3px) brightness(2); } 100% { opacity: 1; transform: translateX(0) scale(1) rotate(0deg); filter: blur(0) brightness(1); } }
+@keyframes entradaFIFAMovil { 
+    0% { opacity: 0; transform: translateX(-80px) scale(0.6) rotate(-10deg); filter: blur(3px) brightness(2); } 
+    100% { opacity: 1; transform: translateX(0) scale(1) rotate(0deg); filter: blur(0) brightness(1); } 
+}
