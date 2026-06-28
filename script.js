@@ -131,10 +131,6 @@ function cerrarModalAyuda() {
    👤 3. AUTENTICACIÓN, REGISTRO Y GESTIÓN DEL HUD DEL USUARIO
    ======================================================================== */
 
-/* ========================================================================
-   👤 3. AUTENTICACIÓN, REGISTRO Y GESTIÓN DEL HUD DEL USUARIO
-   ======================================================================== */
-
 async function autenticarUsuario(accion) {
      const username = document.getElementById("input-usuario").value.trim();
      const password = document.getElementById("input-pass").value;
@@ -174,6 +170,11 @@ async function autenticarUsuario(accion) {
                // 🟢 SECTOR MISIONES API: Pedimos las misiones reales guardadas en la Base de Datos
                if (typeof cargarMisionesDelServidor === 'function') {
                     cargarMisionesDelServidor();
+               }
+               
+               // ⏱️ SECTOR CRONÓMETRO: Activamos el motor del reloj dinámico de reinicio diario
+               if (typeof iniciarCronometroResetMisiones === 'function') {
+                    iniciarCronometroResetMisiones();
                }
                
                // Reseteamos filtros a nivel lógico al iniciar sesión
@@ -2726,11 +2727,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Variable global en memoria que se refrescará con lo que devuelva el servidor
 window.misionesDiariasUsuario = [];
+let intervaloResetMisiones = null; // Control atómico del bucle del reloj
 
 // Esta función se ejecuta al iniciar sesión (adentro de autenticarUsuario)
 async function cargarMisionesDelServidor() {
     try {
-        // 🟢 FIX DEFINITIVO: Eliminado el '/api' duplicado. URL_BASE ya lo incluye.
         const res = await fetch(`${URL_BASE}/misiones/obtener`, {
             method: 'GET',
             headers: obtenerHeadersSeguros()
@@ -2740,6 +2741,8 @@ async function cargarMisionesDelServidor() {
         if (data.ok) {
             window.misionesDiariasUsuario = data.misiones;
             renderizarMisionesDiarias();
+            // ⏱️ Encendemos el reloj dinámico apuntando al ID correcto del HTML
+            iniciarCronometroResetMisiones();
         }
     } catch (err) {
         console.error("Error al traer misiones del server:", err);
@@ -2790,7 +2793,6 @@ function renderizarMisionesDiarias() {
 // Envía la acción al servidor en segundo plano cada vez que haces un sobre/trade/mundial
 async function trackearProgresoMision(tipo, cantidad = 1) {
     try {
-        // 🟢 FIX DEFINITIVO: Eliminado el '/api' duplicado. URL_BASE ya lo incluye.
         const res = await fetch(`${URL_BASE}/misiones/trackear`, {
             method: 'POST',
             headers: obtenerHeadersSeguros(),
@@ -2809,7 +2811,6 @@ async function trackearProgresoMision(tipo, cantidad = 1) {
 // Reclama cobrando directo desde el saldo calculado por el backend
 async function reclamarPremioMisionServer(idMision) {
     try {
-        // 🟢 FIX DEFINITIVO: Eliminado el '/api' duplicado. URL_BASE ya lo incluye.
         const res = await fetch(`${URL_BASE}/misiones/reclamar`, {
             method: 'POST',
             headers: obtenerHeadersSeguros(),
@@ -2820,7 +2821,7 @@ async function reclamarPremioMisionServer(idMision) {
         if (data.ok) {
             window.misionesDiariasUsuario = data.misiones;
             if (typeof usuarioActual !== 'undefined' && usuarioActual) {
-                usuarioActual.monedas = data.monedas; // Actualización atómica de Oro real
+                usuarioActual.monedas = data.monedas; 
                 const elMonedas = document.getElementById("lbl-monedas");
                 if (elMonedas) elMonedas.innerText = usuarioActual.monedas;
             }
@@ -2832,4 +2833,40 @@ async function reclamarPremioMisionServer(idMision) {
     } catch (err) {
         console.error("Error al reclamar recompensa:", err);
     }
+}
+
+// ⏱️ MOTOR ASÍNCRONO DEL CRONÓMETRO DE REINICIO DIARIO (FIXED ID)
+function iniciarCronometroResetMisiones() {
+    if (intervaloResetMisiones) clearInterval(intervaloResetMisiones);
+
+    // 🟢 CORREGIDO: Buscamos exactamente el ID de tu HTML nativo ("timer-misiones")
+    const elTimer = document.getElementById("timer-misiones"); 
+
+    if (!elTimer) return;
+
+    intervaloResetMisiones = setInterval(() => {
+        const ahora = new Date();
+        const medianoche = new Date();
+        medianoche.setHours(24, 0, 0, 0); // Define el corte automático de fin de día
+
+        const tiempoRestanteMs = medianoche - ahora;
+
+        if (tiempoRestanteMs <= 0) {
+            clearInterval(intervaloResetMisiones);
+            elTimer.innerHTML = `🔄 REINICIANDO CARTELERA...`;
+            setTimeout(() => {
+                cargarMisionesDelServidor();
+            }, 2500);
+            return;
+        }
+
+        const totalSegundos = Math.floor(tiempoRestanteMs / 1000);
+        const horas = Math.floor(totalSegundos / 3600);
+        const minutes = Math.floor((totalSegundos % 3600) / 60);
+        const segundos = totalSegundos % 60;
+
+        // Armamos el String dinámico manteniendo el layout original
+        const stringReloj = `${horas}h ${minutes.toString().padStart(2, '0')}m ${segundos.toString().padStart(2, '0')}s`;
+        elTimer.innerText = `🔄 REINICIO EN: ${stringReloj}`;
+    }, 1000);
 }
