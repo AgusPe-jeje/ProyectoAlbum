@@ -96,7 +96,10 @@ app.use((req, res, next) => {
         req.path.startsWith('/api/timbas-restantes') || 
         req.path.startsWith('/api/tiros-restantes') || 
         req.path.startsWith('/api/logout') ||
-        req.path.startsWith('/api/misiones')
+        req.path.startsWith('/api/misiones') ||
+        req.path.startsWith('/api/ranking') ||       // 🌟 Para el Top 10 de la Arena / Penales
+        req.path.startsWith('/api/mundial') ||       // 🌟 Para los Reyes del Mundo y el contador de tiempo
+        req.path.startsWith('/api/mercado')
     ) {
         return next();
     }
