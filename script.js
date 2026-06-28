@@ -177,6 +177,11 @@ async function autenticarUsuario(accion) {
                     iniciarCronometroResetMisiones();
                }
                
+               // 🎁 SECTOR PREMIOS DIARIOS: Ejecutamos el reclamo automático de racha al conectar
+               if (typeof verificarRecompensaDiaria === 'function') {
+                    setTimeout(verificarRecompensaDiaria, 1500); // 1.5s de delay para evitar solapamientos visuales
+               }
+               
                // Reseteamos filtros a nivel lógico al iniciar sesión
                filtroEstadoActual = 'todas';
                filtroRarezaActual = 'todas';
@@ -2869,4 +2874,36 @@ function iniciarCronometroResetMisiones() {
         const stringReloj = `${horas}h ${minutes.toString().padStart(2, '0')}m ${segundos.toString().padStart(2, '0')}s`;
         elTimer.innerText = `🔄 REINICIO EN: ${stringReloj}`;
     }, 1000);
+}
+
+/* ========================================================================
+   🎁 SISTEMA PREMIUM: RECOMPENSA POR CONEXIÓN DIARIA CONTINUA (DAILY CLAIM)
+   ======================================================================== */
+async function verificarRecompensaDiaria() {
+    try {
+        const res = await fetch(`${URL_BASE}/usuarios/reclamar-diario`, {
+            method: 'POST',
+            headers: obtenerHeadersSeguros()
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+            // Sincronizamos las monedas calculadas en la nube
+            if (usuarioActual) usuarioActual.monedas = data.monedas;
+            actualizarInterfazUI();
+
+            // Alerta inmersiva de Racha
+            alert(`🔥 ARENA DAILY REWARDS 🔥\n\n${data.mensaje}\n\n⭐ Tu racha actual: [ ${data.racha} / 7 Días consecuticos ]`);
+            
+            // 🏎️ Si completó el Día 7, le abrimos un sobre legendario de regalo automáticamente
+            if (data.regaloSobre && typeof comprarSobreEspecifico === 'function') {
+                alert("🏆 ¡LOGRO MÁXIMO ALCANZADO! La FIFA te regala un pack LEGENDARIO por tu constancia. ¡Preparate para el Opening!");
+                comprarSobreEspecifico("legendaria"); // Llama a tu cinemática premium
+            }
+        } else {
+            console.log(`ℹ️ Control diario: ${data.mensaje}`);
+        }
+    } catch (err) {
+        console.error("Error al gestionar el bono de racha diario:", err);
+    }
 }
