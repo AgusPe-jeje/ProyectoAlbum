@@ -2572,7 +2572,7 @@ const CONFIG_ANUNCIO_SERVIDOR = {
     titulo: "¡ACTUALIZACIÓN DE TEMPORADA!",
     texto: "Prendete a los nuevos torneos en vivo. Calibramos el MiniMundial para que sea más justo y lanzamos el Mercado P2P.",
     urlImagen: "https://albumpe.onrender.com/assets/novedad.png", 
-    urlVideo: "https://www.youtube.com/embed/6DTWH9kYAiY",
+    urlVideo: "https://www.youtube.com/embed/whwb0xAu",
     
     informe: {
         version: "v2.4.1-Arena",
