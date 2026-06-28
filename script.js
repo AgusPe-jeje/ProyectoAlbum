@@ -512,15 +512,12 @@ async function ejecutarSecuenciaReveladoCarta() {
     const carta = colaCartasPack[indiceCartaActualPack];
     const rarezaClase = (carta.rareza || '').toLowerCase();
 
-    // 🏎️ INTERCEPCIÓN PREMIUM CON CONTENCION DE BUCLE INFINITO
-    // Agregamos la verificación de (!carta.caminanteVisto) para que no se repita a sí misma
+    // 🏎️ INTERCEPCIÓN PREMIUM CON TRANSICIÓN NATURAL
     if ((rarezaClase === "legendaria" || rarezaClase === "legendario") && !carta.caminanteVisto) {
         const escenario = document.querySelector(".pack-opening-escenario");
         if (escenario) {
-            // Marcar que ya vimos la animación para esta carta específica
             carta.caminanteVisto = true;
 
-            // Apagamos las luces del coliseo y ponemos foco dorado antes de tirar pistas
             const flashOverlay = document.createElement("div");
             flashOverlay.id = "caminante-flash-cinematic";
             flashOverlay.className = "escenario-caminante-activo pulso-foco-oro";
@@ -534,7 +531,6 @@ async function ejecutarSecuenciaReveladoCarta() {
             `;
             escenario.appendChild(flashOverlay);
 
-            // Detonador de fuegos artificiales cruzados
             const lanzarFuegosArtificiales = () => {
                 for (let i = 0; i < 45; i++) {
                     const particula = document.createElement("div");
@@ -555,24 +551,38 @@ async function ejecutarSecuenciaReveladoCarta() {
             setTimeout(lanzarFuegosArtificiales, 500);
             setTimeout(lanzarFuegosArtificiales, 1300);
 
-            // Flash blanco final de revelado
+            // ✨ EL SECRETO DE LA TRANSICIÓN NATURAL:
             setTimeout(() => {
                 const flashBlanco = document.createElement("div");
                 flashBlanco.className = "flash-revelado-total animar-flash";
                 escenario.appendChild(flashBlanco);
 
-                flashOverlay.style.opacity = "0";
-                flashOverlay.style.transition = "opacity 0.3s ease";
-                
+                // Esperamos un instante corto (150ms) a que el flash blanco cubra TODO el elemento antes de limpiar la carta vieja
                 setTimeout(() => {
-                    flashOverlay.remove();
+                    const wrapper = document.getElementById("pantalla-carta-presentada");
+                    const pBandera = document.getElementById("pista-bandera");
+                    const pPosicion = document.getElementById("pista-posicion");
+                    const pRareza = document.getElementById("pista-rareza");
+                    
+                    // Limpiamos la carta anterior en secreto mientras la pantalla está 100% blanca
+                    if (wrapper) wrapper.innerHTML = ""; 
+                    if (pBandera) { pBandera.className = "pista-bloque"; pBandera.innerText = "⏳ ?"; }
+                    if (pPosicion) { pPosicion.className = "pista-bloque"; pPosicion.innerText = "⚽ ?"; }
+                    if (pRareza) { pRareza.className = "pista-bloque"; pRareza.innerText = "🃏 ?"; }
+                    
+                    flashOverlay.remove(); // Sacamos el overlay oscuro
+                }, 150);
+
+                // Dejamos que el flash blanco termine de hacer su Fade Out suave
+                setTimeout(() => {
                     flashBlanco.remove();
-                    // 🔁 Re-gatillamos. Al estar carta.caminanteVisto en true, va directo abajo al renderizado
+                    // Volvemos a llamar la secuencia, que ahora irá directo a las pistas sin parpadeos
                     ejecutarSecuenciaReveladoCarta();
-                }, 300);
+                }, 500);
+
             }, 3000);
 
-            return; // 🛑 Frenamos la ejecución del hilo principal de forma controlada
+            return; 
         }
     }
 
@@ -584,11 +594,14 @@ async function ejecutarSecuenciaReveladoCarta() {
     const pPosicion = document.getElementById("pista-posicion");
     const pRareza = document.getElementById("pista-rareza");
     
-    // Reseteamos estados visuales de las pistas
-    pBandera.className = "pista-bloque"; pBandera.innerText = "⏳ ?";
-    pPosicion.className = "pista-bloque"; pPosicion.innerText = "⚽ ?";
-    pRareza.className = "pista-bloque"; pRareza.innerText = "🃏 ?";
-    wrapper.innerHTML = ""; 
+    // NOTA: Quitamos la limpieza brusca de acá arriba porque ya la manejamos de forma segura 
+    // en el desvanecimiento o al cambiar de carta normal.
+    if (!carta.caminanteVisto) { 
+        pBandera.className = "pista-bloque"; pBandera.innerText = "⏳ ?";
+        pPosicion.className = "pista-bloque"; pPosicion.innerText = "⚽ ?";
+        pRareza.className = "pista-bloque"; pRareza.innerText = "🃏 ?";
+        wrapper.innerHTML = ""; 
+    }
 
     // Pista 1: Bandera
     await new Promise(r => setTimeout(r, 200));
@@ -616,7 +629,6 @@ async function ejecutarSecuenciaReveladoCarta() {
     let rarezaClaseLimpia = rarezaClase;
     if (rarezaClaseLimpia === "especial") rarezaClaseLimpia = "rara";
     
-    // Dibujamos la carta física
     const divCarta = document.createElement("div");
     divCarta.className = `carta-clash ${rarezaClaseLimpia} caminante-entrada`;
     
@@ -632,6 +644,7 @@ async function ejecutarSecuenciaReveladoCarta() {
         <div class="rareza-vertical">${rarezaTexto}</div>
     `;
     
+    wrapper.innerHTML = ""; // Limpieza final controlada antes de meter la nueva carta física
     wrapper.appendChild(divCarta);
     await new Promise(r => setTimeout(r, 400));
 
