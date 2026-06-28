@@ -489,28 +489,67 @@ async function comprarSobreEspecifico(tipoCofre) {
                // Buscamos el contenedor del escenario cinemático
                const escenario = document.querySelector(".pack-opening-escenario");
                if (escenario) {
-                    // Creamos un overlay flash de suspenso total
+                    // 🎆 Inyectamos la clase de escenario oscuro premium y el pulso dorado
                     const flashOverlay = document.createElement("div");
                     flashOverlay.id = "caminante-flash-cinematic";
-                    flashOverlay.style.cssText = "position:absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.92); z-index:100; display:flex; flex-direction:column; justify-content:center; align-items:center; animation: pulsoFocoGamer 1.5s infinite ease-in-out;";
+                    flashOverlay.className = "escenario-caminante-activo pulso-foco-oro";
+                    
                     flashOverlay.innerHTML = `
-                        <div class="spinner-arena" style="border-top-color: var(--dorado); width: 70px; height: 70px;"></div>
-                        <h2 style="color: var(--dorado); font-family: 'Oswald'; font-size: 2rem; margin-top: 20px; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 15px rgba(255,177,0,0.6);">
-                             ✨ ¡ATENCIÓN, CAMINANTE DETECTADO! ✨
+                        <div class="spinner-arena" style="border-top-color: var(--dorado); width: 80px; height: 80px; box-shadow: 0 0 20px rgba(255,177,0,0.3); border-radius:50%;"></div>
+                        <h2 style="color: var(--dorado); font-family: 'Oswald'; font-size: 2.2rem; margin-top: 25px; letter-spacing: 3px; text-transform: uppercase; text-shadow: 0 0 20px rgba(255,177,0,0.7); animation: pulse 1s infinite alternate;">
+                            ✨ ¡ATENCIÓN, CAMINANTE DETECTADO! ✨
                         </h2>
-                        <p style="color: #94a3b8; font-family: sans-serif; font-size: 0.95rem; margin: 5px 0 0 0;">Las luces del estadio se encienden para una superestrella...</p>
+                        <p style="color: #94a3b8; font-family: sans-serif; font-size: 1rem; margin: 8px 0 0 0; letter-spacing: 1px;">Las luces del estadio se apagan para una superestrella...</p>
                     `;
                     escenario.appendChild(flashOverlay);
 
-                    // Retraso de revelado dramático de 2.5 segundos
+                    // 🎉 FUNCIÓN INTERNA: Detonador dinámico de partículas de fuegos artificiales
+                    const lanzarFuegosArtificiales = () => {
+                        for (let i = 0; i < 50; i++) {
+                            const particula = document.createElement("div");
+                            particula.className = "fuego-artificial";
+                            
+                            const angulo = Math.random() * Math.PI * 2;
+                            const distancia = 70 + Math.random() * 160;
+                            const x = Math.cos(angulo) * distancia;
+                            const y = Math.sin(angulo) * distancia;
+                            
+                            particula.style.setProperty('--x', `${x}px`);
+                            particula.style.setProperty('--y', `${y}px`);
+                            
+                            // Variedad cromática gamer para los destellos
+                            const colores = ['#ffb100', '#38bdf8', '#00ff88', '#ffffff'];
+                            particula.style.background = colores[Math.floor(Math.random() * colores.length)];
+                            
+                            particula.style.left = "50%";
+                            particula.style.top = "45%";
+                            
+                            flashOverlay.appendChild(particula);
+                        }
+                    };
+
+                    // Detonamos tandas consecutivas para inflar el suspenso visual
+                    setTimeout(lanzarFuegosArtificiales, 600);
+                    setTimeout(lanzarFuegosArtificiales, 1400);
+
+                    // ✨ EL IMPACTO DE LUZ BLANCA FINAL (A los 3.2 segundos)
                     setTimeout(() => {
-                         flashOverlay.style.opacity = "0";
-                         flashOverlay.style.transition = "opacity 0.5s ease";
-                         setTimeout(() => {
-                              flashOverlay.remove();
-                              ejecutarSecuenciaReveladoCarta();
-                         }, 500);
-                    }, 2500);
+                        const flashBlanco = document.createElement("div");
+                        flashBlanco.className = "flash-revelado-total animar-flash";
+                        escenario.appendChild(flashBlanco);
+
+                        // Esfumamos el overlay negro mientras el flash blanco encandila
+                        flashOverlay.style.opacity = "0";
+                        flashOverlay.style.transition = "opacity 0.3s ease";
+                        
+                        setTimeout(() => {
+                            flashOverlay.remove();
+                            flashBlanco.remove();
+                            if (typeof ejecutarSecuenciaReveladoCarta === 'function') {
+                                ejecutarSecuenciaReveladoCarta();
+                            }
+                        }, 300);
+                    }, 3200);
                } else {
                     ejecutarSecuenciaReveladoCarta();
                }
