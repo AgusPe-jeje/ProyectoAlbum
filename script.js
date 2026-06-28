@@ -2112,131 +2112,189 @@ function abrirMercadoBot(listaTusRepetidas) {
     const contenedorBot = document.getElementById("modulo-comerciante-bot");
     contenedorBot.style.display = "block";
 
+    // Estructura principal con HUD dinámico de selección
     contenedorBot.innerHTML = `
-        <div style="background: #0f172a; border: 2px solid var(--dorado); padding: 20px; border-radius: 12px; text-align: center; max-width: 500px; margin: 20px auto;">
-            <h3 style="color: var(--dorado); font-family: 'Oswald'; font-size: 1.5rem; margin-top: 0;">🤖 BOT COMERCIANTE</h3>
-            <p style="color: #94a3b8; font-size: 0.9rem; font-style: italic;">
+        <div class="caja-modulo-estadio" style="max-width: 650px; margin: 20px auto; padding: 25px; border: 2px solid var(--dorado); background: #0f172a; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
+            <h3 style="color: var(--dorado); font-family: 'Oswald'; font-size: 1.8rem; margin-top: 0; text-transform: uppercase; letter-spacing: 1px;">🤖 CONTRATO DEL BOT COMERCIANTE</h3>
+            <p style="color: #94a3b8; font-size: 0.95rem; font-style: italic; line-height: 1.5; margin-bottom: 20px; padding: 0 10px;">
                 "Traeme 3 cartas repetidas de la misma rareza y te daré una carta de un escalón superior. ¡Si sacrificás cartas de Élite podrías activar recompensas especiales ocultas!"
             </p>
             
-            <div id="zona-seleccion-bot" style="margin: 15px 0; text-align: left;">
-                 <label style="color: #fff; font-size: 0.85rem; font-weight: bold;">Elegí tus 3 cartas a sacrificar (Deben ser de igual rareza):</label>
-                 <div id="lista-checks-repetidas" style="max-height: 200px; min-height: 60px; overflow-y: auto; background: #020617; padding: 10px; border-radius: 6px; margin-top: 5px;">
-                 </div>
+            <div id="zona-seleccion-bot" style="margin: 20px 0; text-align: left;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #1e293b; padding-bottom: 8px;">
+                    <label style="color: #fff; font-size: 0.9rem; font-weight: bold; font-family: 'Oswald'; text-transform: uppercase; letter-spacing: 0.5px;">📋 TUS CROMOS REPETIDOS DISPONIBLES</label>
+                    <span id="contador-seleccion-bot" style="background: #1e293b; color: var(--celeste); padding: 2px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; font-family: monospace; border: 1px solid var(--celeste);">0 / 3 ELEGIDOS</span>
+                </div>
+                
+                <div id="lista-checks-repetidas" class="custom-scrollbar-paises" style="max-height: 320px; overflow-y: auto; background: #020617; padding: 15px; border-radius: 10px; border: 1px solid #1e293b; display: flex; flex-direction: column; gap: 15px;">
+                </div>
             </div>
 
-            <button type="button" id="btn-ejecutar-trato" class="btn-estadio" style="background: var(--verde-match); color: #000; width: 100%; font-weight: bold; transition: all 0.3s ease;">
+            <button type="button" id="btn-ejecutar-trato" class="btn-estadio" style="background: var(--verde-match); color: #000; width: 100%; font-weight: bold; font-size: 1.1rem; padding: 12px 0; border-radius: 8px; transition: all 0.3s ease; font-family: 'Oswald'; text-transform: uppercase; letter-spacing: 0.5px;">
                  🤝 FIRMAR CONTRATO DE TRADEO
             </button>
-            <div id="resultado-trato-bot" style="margin-top: 12px; font-weight: bold; font-size: 0.95rem;"></div>
+            <div id="resultado-trato-bot" style="margin-top: 15px; font-weight: bold; font-size: 1rem; min-height: 25px; text-align: center; font-family: 'Oswald';"></div>
         </div>
     `;
 
     const listaCheckboxes = document.getElementById("lista-checks-repetidas");
-    listaCheckboxes.innerHTML = ""; 
-
-    let contadorRepetidas = 0;
     
-    listaTusRepetidas.forEach(jugador => {
-         const copias = jugador.obtenido !== undefined ? jugador.obtenido : (jugador.cantidad || 0);
-
-         if (copias > 1) {
-              contadorRepetidas++;
-              listaCheckboxes.innerHTML += `
-                   <label style="display: flex; align-items: center; gap: 10px; color: #cbd5e1; font-size: 0.85rem; margin-bottom: 8px; cursor: pointer; text-align: left; width: 100%;">
-                        <input type="checkbox" class="check-cromo-bot" value="${jugador.id}" style="width: 16px; height: 16px; cursor: pointer; flex-shrink: 0;">
-                        <span style="flex-grow: 1;">${jugador.nombre || 'Jugador'} (${(jugador.rareza || 'comun').toUpperCase()}) - Repetidas: [${copias - 1}]</span>
-                   </label>
-              `;
-         }
-    });
-
-    if (contadorRepetidas === 0) {
-         listaCheckboxes.style.display = "flex";
-         listaCheckboxes.style.flexDirection = "column";
-         listaCheckboxes.style.justifyContent = "center";
-         
-         listaCheckboxes.innerHTML = `
-              <div style="color: var(--rojo); font-weight: bold; font-size: 0.9rem; text-align: center; width: 100%;">
-                   ❌ No tenés cromos repetidos en tu álbum para negociar.
-              </div>
-         `;
-         const btnTrato = document.getElementById("btn-ejecutar-trato");
-         btnTrato.disabled = true;
-         btnTrato.style.background = "#334155";
-         btnTrato.style.color = "#94a3b8";
-         btnTrato.style.cursor = "not-allowed";
-         btnTrato.innerText = "⛔ SIN ELEMENTOS PARA INTERCAMBIAR";
-    } else {
-         listaCheckboxes.style.display = "block";
-    }
-
-    document.getElementById("btn-ejecutar-trato").onclick = async () => {
-         const seleccionados = Array.from(document.querySelectorAll('.check-cromo-bot:checked')).map(cb => parseInt(cb.value));
-
-         if (seleccionados.length !== 3) {
-              alert("⚠️ Tenés que seleccionar exactamente 3 cromos repetidos para hacer el trato.");
-              return;
-         }
-
-         document.getElementById("btn-ejecutar-trato").disabled = true;
-         document.getElementById("resultado-trato-bot").style.color = "#fff";
-         document.getElementById("resultado-trato-bot").innerText = "⏳ El bot está tasando tus cartas...";
-
-          try {
-               // 🔥 CORREGIDO: URL absoluta con URL_BASE
-               const res = await fetch(`${URL_BASE}/album/comerciar-bot`, {
-                    method: 'POST',
-                    headers: obtenerHeadersSeguros(), 
-                    body: JSON.stringify({ jugadorIdsASacar: seleccionados }) 
-               });
-               const data = await res.json();
-
-              if (data.ok) {
-                   document.getElementById("resultado-trato-bot").style.color = "var(--verde-match)";
-                   
-                   let plantillaMensaje = `
-                        🎉 ¡Trato hecho!<br>
-                        🌟 CROMO RECIBIDO: <span style="color: var(--dorado);">${data.cartaGanada.nombre} [${data.cartaGanada.rareza}]</span>
-                   `;
-
-                   if (data.eventoEspecial) {
-                        plantillaMensaje += `<br><br><span style="color: #38bdf8; font-weight: bold; font-size: 0.95rem; display: block; padding: 8px; background: #0c4a6e; border-radius: 6px; border: 1px dashed #0284c7;">${data.eventoEspecial}</span>`;
-                        alert(`🎁 ¡EVENTO ULTRA RARO ACTIVADO!\n\n${data.eventoEspecial}`);
-                   }
-
-                   document.getElementById("resultado-trato-bot").innerHTML = plantillaMensaje;
-                   
-                   setTimeout(() => { 
-                       cargarAlbumLocal(); 
-                       cambiarModulo('modulo-album', null);
-                   }, 3500);
-              } else {
-                   document.getElementById("resultado-trato-bot").style.color = "var(--rojo)";
-                   document.getElementById("resultado-trato-bot").innerText = data.mensaje || data.error || "❌ La Arena rechazó el intercambio.";
-                   document.getElementById("btn-ejecutar-trato").disabled = false;
-              }
-         } catch (err) {
-              console.error(err);
-              document.getElementById("resultado-trato-bot").style.color = "var(--rojo)";
-              document.getElementById("resultado-trato-bot").innerText = "❌ Error de conexión con la Arena.";
-              document.getElementById("btn-ejecutar-trato").disabled = false;
-         }
+    // Mapeo estricto para agrupar y ordenar las rarezas con sus respectivos estilos visuales
+    const mapeoRarezas = {
+        'legendaria': { titulo: "👑 REPETIDAS LEGENDARIAS", color: "#ffb100", lista: [] },
+        'epica': { titulo: "🔮 REPETIDAS ÉPICAS", color: "#a335ee", lista: [] },
+        'rara': { titulo: "⚡ REPETIDAS RARAS", color: "#0074e8", lista: [] },
+        'comun': { titulo: "⚪ REPETIDAS COMUNES", color: "#8e9bb0", lista: [] }
     };
-}
 
-function cargarMisRepetidasParaVenta() {
-    const select = document.getElementById("select-mercado-vender");
-    if (!select) return;
-    select.innerHTML = '<option value="">-- Elegí tu cromo --</option>';
-    
-    const cartas = window.albumCompleto || [];
-    cartas.forEach(jugador => {
+    let totalRepetidasValidas = 0;
+
+    // Clasificamos las cartas en sus respectivas bandejas de rarezas
+    listaTusRepetidas.forEach(jugador => {
         const copias = jugador.obtenido !== undefined ? jugador.obtenido : (jugador.cantidad || 0);
         if (copias > 1) {
-            select.innerHTML += `<option value="${jugador.id}">${jugador.nombre} (${(jugador.rareza || 'comun').toUpperCase()}) [x${copias - 1}]</option>`;
+            let rarezaLimpia = (jugador.rareza || 'comun').toLowerCase();
+            if (rarezaLimpia === 'especial') rarezaLimpia = 'rara';
+            
+            if (mapeoRarezas[rarezaLimpia]) {
+                mapeoRarezas[rarezaLimpia].listado.push({ ...jugador, disponibles: copias - 1 });
+                totalRepetidasValidas++;
+            }
         }
     });
+
+    if (totalRepetidasValidas === 0) {
+        listaCheckboxes.innerHTML = `
+            <div style="color: var(--rojo); font-weight: bold; font-size: 1rem; text-align: center; padding: 30px 0; font-family: 'Oswald'; text-transform: uppercase;">
+                 ❌ No tenés cromos repetidos en tu álbum para negociar.
+            </div>
+        `;
+        const btnTrato = document.getElementById("btn-ejecutar-trato");
+        btnTrato.disabled = true;
+        btnTrato.style.background = "#334155";
+        btnTrato.style.color = "#94a3b8";
+        btnTrato.style.cursor = "not-allowed";
+        btnTrato.innerText = "⛔ SIN ELEMENTOS PARA INTERCAMBIAR";
+        return;
+    }
+
+    // Renderizamos los bloques ordenados de mayor a menor rareza
+    let htmlBolsas = "";
+    Object.keys(mapeoRarezas).forEach(key => {
+        const bloque = mapeoRarezas[key];
+        if (bloque.listado.length > 0) {
+            htmlBolsas += `
+                <div class="grupo-rareza-bot" style="border-left: 3px solid ${bloque.color}; padding-left: 10px; margin-bottom: 5px;">
+                    <div style="color: ${bloque.color}; font-size: 0.8rem; font-weight: bold; font-family: 'Oswald'; margin-bottom: 8px; letter-spacing: 0.5px;">${bloque.titulo}</div>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
+            `;
+            
+            bloque.listado.forEach(j => {
+                htmlBolsas += `
+                    <label class="item-checkbox-premium" style="display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.02); padding: 8px 12px; border-radius: 6px; border: 1px solid #1e293b; cursor: pointer; transition: background 0.2s ease;">
+                        <input type="checkbox" class="check-cromo-bot" value="${j.id}" data-rareza="${key}" style="width: 18px; height: 18px; accent-color: var(--verde-match); cursor: pointer; flex-shrink: 0;">
+                        <span style="font-size: 1.1rem; flex-shrink: 0;">${j.bandera || '🃏'}</span>
+                        <span style="flex-grow: 1; color: #cbd5e1; font-size: 0.85rem; font-weight: 500;">${j.nombre.toUpperCase()}</span>
+                        <span style="background: rgba(255,255,255,0.05); color: #94a3b8; font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-family: monospace;">x${j.disponibles} DISP</span>
+                    </label>
+                `;
+            });
+
+            htmlBolsas += `</div></div>`;
+        }
+    });
+
+    listaCheckboxes.innerHTML = htmlBolsas;
+
+    // CONTROLADOR EN TIEMPO REAL: Manejo dinámico de la UI de selección
+    const checkboxes = document.querySelectorAll('.check-cromo-bot');
+    const lblContador = document.getElementById('contador-seleccion-bot');
+
+    checkboxes.forEach(chk => {
+        chk.onchange = () => {
+            const seleccionados = document.querySelectorAll('.check-cromo-bot:checked');
+            lblContador.innerText = `${seleccionados.length} / 3 ELEGIDOS`;
+
+            // Efecto visual de fila seleccionada
+            if (chk.checked) {
+                chk.parentElement.style.background = "rgba(0, 255, 136, 0.05)";
+                chk.parentElement.style.borderColor = "var(--verde-match)";
+            } else {
+                chk.parentElement.style.background = "rgba(255,255,255,0.02)";
+                chk.parentElement.style.borderColor = "#1e293b";
+            }
+
+            // Validación avanzada: Bloquear checkboxes si ya hay 3 seleccionados
+            if (seleccionados.length >= 3) {
+                checkboxes.forEach(c => { if (!c.checked) c.disabled = true; });
+            } else {
+                checkboxes.forEach(c => c.disabled = false);
+            }
+        };
+    });
+
+    // PROCESAMIENTO DEL TRATO
+    document.getElementById("btn-ejecutar-trato").onclick = async () => {
+        const checksActivos = Array.from(document.querySelectorAll('.check-cromo-bot:checked'));
+        const seleccionados = checksActivos.map(cb => parseInt(cb.value));
+
+        if (seleccionados.length !== 3) {
+            alert("⚠️ Tenés que seleccionar exactamente 3 cromos repetidos para hacer el trato.");
+            return;
+        }
+
+        // Validación de consistencia: Deben pertenecer a la misma rareza
+        const rarezaPrimero = checksActivos[0].getAttribute('data-rareza');
+        const mismaRareza = checksActivos.every(cb => cb.getAttribute('data-rareza') === rarezaPrimero);
+
+        if (!mismaRareza) {
+            alert("❌ ¡Trato denegado! Los 3 cromos sacrificados deben ser de la misma rareza.");
+            return;
+        }
+
+        document.getElementById("btn-ejecutar-trato").disabled = true;
+        document.getElementById("resultado-trato-bot").style.color = "var(--dorado)";
+        document.getElementById("resultado-trato-bot").innerText = "⏳ EL BOT ESTÁ TASANDO TU TRATO EN LOS VESTUARIOS...";
+
+        try {
+            const res = await fetch(`${URL_BASE}/album/comerciar-bot`, {
+                method: 'POST',
+                headers: obtenerHeadersSeguros(), 
+                body: JSON.stringify({ jugadorIdsASacar: seleccionados }) 
+            });
+            const data = await res.json();
+
+            if (data.ok) {
+                document.getElementById("resultado-trato-bot").style.color = "var(--verde-match)";
+                
+                let plantillaMensaje = `
+                    🎉 ¡CONTRATO CERRADO EXITOSAMENTE!<br>
+                    🌟 RECIBISTE A: <span style="color: var(--dorado); font-size: 1.1rem;">${data.cartaGanada.nombre.toUpperCase()} [${data.cartaGanada.rareza.toUpperCase()}]</span>
+                `;
+
+                if (data.eventoEspecial) {
+                    plantillaMensaje += `<br><br><span style="color: #38bdf8; font-weight: bold; font-size: 0.95rem; display: block; padding: 10px; background: #0c4a6e; border-radius: 8px; border: 1px dashed #0284c7; font-family: system-ui;">🎁 ${data.eventoEspecial}</span>`;
+                    alert(`🎁 ¡EVENTO ULTRA RARO ACTIVADO!\n\n${data.eventoEspecial}`);
+                }
+
+                document.getElementById("resultado-trato-bot").innerHTML = plantillaMensaje;
+                
+                setTimeout(() => { 
+                    cargarAlbumLocal(); 
+                    cambiarModulo('modulo-album', null);
+                }, 4000);
+            } else {
+                document.getElementById("resultado-trato-bot").style.color = "var(--rojo)";
+                document.getElementById("resultado-trato-bot").innerText = data.mensaje || data.error || "❌ La Arena rechazó el intercambio.";
+                document.getElementById("btn-ejecutar-trato").disabled = false;
+            }
+        } catch (err) {
+            console.error(err);
+            document.getElementById("resultado-trato-bot").style.color = "var(--rojo)";
+            document.getElementById("resultado-trato-bot").innerText = "❌ Error de conexión con la Arena.";
+            document.getElementById("btn-ejecutar-trato").disabled = false;
+        }
+    };
 }
 
 async function publicarCartaMercado() {
