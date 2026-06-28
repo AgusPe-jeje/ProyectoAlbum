@@ -2147,6 +2147,7 @@ function cerrarAnuncioGlobal() {
         document.getElementById('anuncioCuerpo').innerHTML = ""; 
     }
 
+    // 🏎️ Si el caché del anuncio guardó los datos del informe del parche de Neon, abre el HUD de cambios
     if (datosInformeParcheCache) {
         abrirInformeActualizacionUI(datosInformeParcheCache);
     }
@@ -2892,13 +2893,39 @@ async function verificarRecompensaDiaria() {
             if (usuarioActual) usuarioActual.monedas = data.monedas;
             actualizarInterfazUI();
 
-            // Alerta inmersiva de Racha
-            alert(`🔥 ARENA DAILY REWARDS 🔥\n\n${data.mensaje}\n\n⭐ Tu racha actual: [ ${data.racha} / 7 Días consecuticos ]`);
-            
-            // 🏎️ Si completó el Día 7, le abrimos un sobre legendario de regalo automáticamente
+            // 👑 INTERFAZ INMERSIVA: En lugar de alert(), usamos el modal de Anuncio Global
+            const modal = document.getElementById('modalAnuncioGlobal');
+            const tituloHtml = document.getElementById('anuncioTitulo');
+            const cuerpoHtml = document.getElementById('anuncioCuerpo');
+
+            if (modal && tituloHtml && cuerpoHtml) {
+                tituloHtml.textContent = "🔥 ARENA DAILY REWARDS 🔥";
+                cuerpoHtml.innerHTML = `
+                    <div style="text-align: center; padding: 10px;">
+                        <p style="font-size: 1.1rem; color: #fff; margin-bottom: 15px;">${data.mensaje}</p>
+                        <div style="background: rgba(2, 6, 23, 0.8); border: 1px solid var(--dorado); padding: 12px; border-radius: 10px; font-family: 'Oswald'; font-size: 1.3rem; color: var(--dorado); letter-spacing: 1px; display: inline-block; margin-bottom: 10px;">
+                            ⭐ RACHA ACTUAL: ${data.racha} / 7 DÍAS
+                        </div>
+                        <p style="color: #94a3b8; font-size: 0.85rem; margin-top: 10px;">¡Seguí entrando todos los días para reclamar el gran premio final!</p>
+                    </div>
+                `;
+                modal.style.display = "flex";
+            }
+
+            // 🏎️ Si completó el Día 7, preparamos el reclamo del pack Legendario sin alertas
             if (data.regaloSobre && typeof comprarSobreEspecifico === 'function') {
-                alert("🏆 ¡LOGRO MÁXIMO ALCANZADO! La FIFA te regala un pack LEGENDARIO por tu constancia. ¡Preparate para el Opening!");
-                comprarSobreEspecifico("legendaria"); // Llama a tu cinemática premium
+                // Modificamos el comportamiento del botón del anuncio temporalmente para que al cerrar abra el sobre
+                const btnEntendido = document.getElementById('modalAnuncioGlobal')?.querySelector('button, .btn-estadio');
+                if (btnEntendido) {
+                    const funcionOriginalCierre = btnEntendido.onclick;
+                    btnEntendido.onclick = () => {
+                        if (typeof cerrarAnuncioGlobal === 'function') cerrarAnuncioGlobal();
+                        // Devolvemos el click original
+                        btnEntendido.onclick = funcionOriginalCierre;
+                        // Ejecutamos la cinemática dramática del sobre
+                        comprarSobreEspecifico("legendaria");
+                    };
+                }
             }
         } else {
             console.log(`ℹ️ Control diario: ${data.mensaje}`);
