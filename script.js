@@ -127,10 +127,6 @@ function cerrarModalAyuda() {
      if (modal) modal.style.display = "none";
 }
 
-/* ========================================================================
-   👤 3. AUTENTICACIÓN, REGISTRO Y GESTIÓN DEL HUD DEL USUARIO
-   ======================================================================== */
-
 async function autenticarUsuario(accion) {
      const username = document.getElementById("input-usuario").value.trim();
      const password = document.getElementById("input-pass").value;
@@ -177,9 +173,9 @@ async function autenticarUsuario(accion) {
                     iniciarCronometroResetMisiones();
                }
                
-               // 🎁 SECTOR PREMIOS DIARIOS: Ejecutamos el reclamo automático de racha al conectar
+               // 🎁 SECTOR PREMIOS DIARIOS: Ejecutamos la racha. Ella sola se encarga de acoplar el anuncio al cerrar.
                if (typeof verificarRecompensaDiaria === 'function') {
-                    setTimeout(verificarRecompensaDiaria, 1500); // 1.5s de delay para evitar solapamientos visuales
+                    setTimeout(verificarRecompensaDiaria, 1000); 
                }
                
                // Reseteamos filtros a nivel lógico al iniciar sesión
@@ -189,7 +185,8 @@ async function autenticarUsuario(accion) {
                actualizarInterfazUI();
                cargarAlbumLocal();
                actualizarTimbasRestantesUI();
-               iniciarControladorAnunciosSeguro(); 
+               
+               // 🛑 FIX: Se eliminó iniciarControladorAnunciosSeguro() de acá para matar la duplicación.
                
                if (accion === 'login') {
                     alert(`⚔️ ¡Bienvenido de vuelta, ${usuarioActual.username}!`);
