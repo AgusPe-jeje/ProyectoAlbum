@@ -167,6 +167,11 @@ async function autenticarUsuario(accion) {
                interfazJuego.style.removeProperty("display");
                interfazJuego.classList.add("mostrar");
                
+               // 🔥 SECTOR MISIONES: El DOM ya es visible, forzamos el renderizado seguro de objetivos
+               if (typeof renderizarMisionesDiarias === 'function') {
+                    renderizarMisionesDiarias();
+               }
+               
                // Reseteamos filtros a nivel lógico al iniciar sesión
                filtroEstadoActual = 'todas';
                filtroRarezaActual = 'todas';
@@ -2725,7 +2730,11 @@ window.misionesDiariasUsuario = [
 
 function renderizarMisionesDiarias() {
     const contenedor = document.getElementById("contenedor-lista-misiones");
-    if (!contenedor) return;
+    // 🛡️ CONTROL CRÍTICO: Si la interfaz del juego todavía está oculta, evitamos romper el render
+    if (!contenedor) {
+        console.warn("⚠️ Contenedor de misiones no encontrado en el DOM actual.");
+        return;
+    }
     contenedor.innerHTML = "";
 
     window.misionesDiariasUsuario.forEach(mision => {
@@ -2748,10 +2757,10 @@ function renderizarMisionesDiarias() {
                 <span style="font-size: 0.75rem; font-family: monospace; color: #64748b; font-weight: bold; min-width: 45px; text-align: right;">${mision.progreso}/${mision.meta}</span>
                 ${
                     mision.reclamada 
-                    ? `<button class="btn-estadio" disabled style="padding: 4px 10px; font-size: 0.75rem; background: #1e293b !important; color: #64748b !important; box-shadow: none !important;">CLAIMED</button>`
+                    ? `<button type="button" class="btn-estadio" disabled style="padding: 4px 10px; font-size: 0.75rem; background: #1e293b !important; color: #64748b !important; box-shadow: none !important;">CLAIMED</button>`
                     : estaCompleta 
-                        ? `<button class="btn-estadio" onclick="reclamarPremioMision(${mision.id})" style="padding: 4px 10px; font-size: 0.75rem; background: var(--verde-match); color: #000; box-shadow: 0 2px 0 #00b35f;">RECLAMAR</button>`
-                        : `<button class="btn-estadio" disabled style="padding: 4px 10px; font-size: 0.75rem; background: #1e293b !important; color: #475569 !important; box-shadow: none !important;">EN CURSO</button>`
+                        ? `<button type="button" class="btn-estadio" onclick="reclamarPremioMision(${mision.id})" style="padding: 4px 10px; font-size: 0.75rem; background: var(--verde-match); color: #000; box-shadow: 0 2px 0 #00b35f;">RECLAMAR</button>`
+                        : `<button type="button" class="btn-estadio" disabled style="padding: 4px 10px; font-size: 0.75rem; background: #1e293b !important; color: #475569 !important; box-shadow: none !important;">EN CURSO</button>`
                 }
             </div>
         `;
@@ -2759,8 +2768,8 @@ function renderizarMisionesDiarias() {
     });
 }
 
-// Función disparadora para actualizar el progreso desde otros módulos
 function trackearProgresoMision(tipo, cantidad = 1) {
+    if (!window.misionesDiariasUsuario) return;
     window.misionesDiariasUsuario.forEach(mision => {
         if (mision.tipo === tipo && !mision.reclamada) {
             mision.progreso = Math.min(mision.progreso + cantidad, mision.meta);
@@ -2775,14 +2784,12 @@ async function reclamarPremioMision(idMision) {
 
     mision.reclamada = true;
     
-    // Sumamos la recompensa a las monedas del usuario actual
     if (typeof usuarioActual !== 'undefined' && usuarioActual) {
         usuarioActual.monedas += mision.recompensa;
         const elMonedas = document.getElementById("lbl-monedas");
         if (elMonedas) elMonedas.innerText = usuarioActual.monedas;
     }
 
-    // Efecto de sonido visual temporario en la consola de la misión
     renderizarMisionesDiarias();
     alert(`🪙 ¡Objetivo cumplido! Se acreditaron 🪙${mision.recompensa} monedas de oro a tu cuenta.`);
 }
