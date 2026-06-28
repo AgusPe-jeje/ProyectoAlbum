@@ -2309,17 +2309,21 @@ function abrirMercadoBot(listaTusRepetidas) {
                 document.getElementById("resultado-trato-bot").innerHTML = plantillaMensaje;
                 
                 // Acción para quedarse y seguir operando con el bot
-                document.getElementById("btn-bot-reintentar").onclick = () => {
-                    // Volvemos a invocar abriendo el mercado con la lista global actualizada en tu app
-                    if (window.todosLosJugadoresGlobal) {
-                        abrirMercadoBot(window.todosLosJugadoresGlobal);
-                    } else if (typeof usuarioActual !== 'undefined' && usuarioActual) {
-                        // Resguardo en caso de usar otra variable estructural
-                        abrirMercadoBot(listaTusRepetidas);
+               // 🔄 Acción para quedarse y seguir operando con el bot (Línea ~123)
+               document.getElementById("btn-bot-reintentar").onclick = () => {
+               // 🟢 SOLUCIÓN: Usamos estrictamente la data fresca que acaba de re-calcular cargarAlbumLocal()
+                    const albumActualizado = window.albumCompleto || albumCompleto;
+
+                    if (albumActualizado && albumActualizado.length > 0) {
+                         // Le inyectamos la lista con las cantidades ya descontadas por el backend
+                         abrirMercadoBot(albumActualizado);
+                    } else if (window.todosLosJugadoresGlobal) {
+                         abrirMercadoBot(window.todosLosJugadoresGlobal);
                     } else {
-                        location.reload(); // Fallback seguro
+                         // Fallback extremo por si las moscas, recarga limpio
+                         location.reload(); 
                     }
-                };
+               };
 
                 // Acción para salir definitivamente a la sección principal
                 document.getElementById("btn-bot-salir").onclick = () => {
