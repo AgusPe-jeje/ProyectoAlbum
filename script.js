@@ -1758,8 +1758,8 @@ window.renderizarFixturePasoAPaso = function(bitacora, premio, apuestasTexto) {
 
     if (apuestasTexto && Array.isArray(apuestasTexto) && apuestasTexto.length > 0) {
         const bloqueTextoApuestas = document.createElement("div");
-        bloqueTextoApuestas.style.cssText = "background: rgba(255, 0, 0, 0.05); border: 1px solid var(--rojo); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; text-align: center;";
-        bloqueTextoApuestas.innerHTML = `⚠️ <span style="color: var(--rojo); font-family: 'Oswald';">CROMOS ARRIESGADOS:</span><br>${apuestasTexto.join('<br>')}`;
+        bloqueTextoApuestas.style.cssText = "background: rgba(239, 68, 68, 0.08); border: 1px dashed var(--rojo); padding: 14px; border-radius: 10px; margin-bottom: 20px; font-weight: bold; text-align: center; box-shadow: 0 0 10px rgba(239,68,68,0.15);";
+        bloqueTextoApuestas.innerHTML = `⚠️ <span style="color: var(--rojo); font-family: 'Oswald'; font-size: 1.1rem; letter-spacing: 0.5px;">CROMOS ARRIESGADOS EN LA ARENA:</span><br><span style="color: #cbd5e1; font-size: 0.9rem;">${apuestasTexto.join('<br>')}</span>`;
         tablero.appendChild(bloqueTextoApuestas);
     }
 
@@ -1777,23 +1777,24 @@ window.renderizarFixturePasoAPaso = function(bitacora, premio, apuestasTexto) {
         secuenciaPromesas = secuenciaPromesas.then(() => {
             return new Promise((resolveCruce) => {
                  const bloquePartido = document.createElement("div"); 
-                 bloquePartido.className = "item-historial-partido";
-                 bloquePartido.style.cssText = "flex-direction: column; align-items: stretch; background: #0b111e; margin-bottom:20px; border-left:4px solid var(--dorado); padding:15px;";
+                 bloquePartido.className = "partido-simulado-card"; // 🟢 HEREDA EL ESTILO PREMIUM
+                 bloquePartido.style.marginBottom = "20px";
+                 bloquePartido.style.borderLeft = "4px solid var(--dorado)";
                  
                  bloquePartido.innerHTML = `
-                     <div style="display:flex; justify-content:space-between; color:var(--dorado); border-bottom:1px solid #1a2436; padding-bottom:5px;">
-                          <span style="font-family:'Oswald'; font-weight:bold; text-transform: uppercase;">📋 ${rondaNombre}</span>
-                          <span id="multi-reloj-${index}" style="color:var(--celeste); font-weight:bold;">⏱️ MINUTO 00:00</span>
+                     <div style="display:flex; justify-content:space-between; align-items:center; color:var(--dorado); border-bottom:1px solid #1e293b; padding-bottom:8px; margin-bottom:12px;">
+                          <span style="font-family:'Oswald'; font-weight:bold; text-transform: uppercase; font-size: 1rem; letter-spacing: 0.5px;">📋 ${rondaNombre}</span>
+                          <span id="multi-reloj-${index}" style="color:var(--celeste); font-weight:bold; font-family: monospace; font-size: 0.9rem;">⏱️ MINUTO 00:00</span>
                      </div>
-                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
-                          <span style="width:40%; text-align:left; font-weight:bold;">⚽ ${loc.toUpperCase()}</span>
-                          <span id="multi-score-${index}" style="font-family:'Oswald'; font-size:1.6rem; background:#000; padding:4px 14px; border-radius:6px; color:var(--verde-match); min-width:60px; text-align:center;">0 - 0</span>
-                          <span style="width:40%; text-align:right; font-weight:bold;">${vis.toUpperCase()} ⚽</span>
+                     <div style="display:flex; justify-content:space-between; align-items:center; padding: 5px 0;">
+                          <span style="width:42%; text-align:left; font-weight:bold; font-size:1.1rem; color: #fff;">⚽ ${loc.toUpperCase()}</span>
+                          <span id="multi-score-${index}" style="font-family:'Oswald'; font-size:1.9rem; background:#020617; padding:4px 18px; border-radius:8px; color:var(--verde-match); min-width:80px; text-align:center; box-shadow: inset 0 0 12px rgba(0,255,136,0.15); border: 1px solid #1e293b; letter-spacing: 1px;">0 - 0</span>
+                          <span style="width:42%; text-align:right; font-weight:bold; font-size:1.1rem; color: #fff;">${vis.toUpperCase()} 🤖</span>
                      </div>
-                     <div id="multi-log-vivo-${index}" style="margin-top:12px; font-size:0.85rem; color:#64748b; text-align:center; font-style:italic; min-height:25px;">
+                     <div id="multi-log-vivo-${index}" class="consola-incidencias-tv">
                           🏁 Los capitanes sortean los lados... ¡Mucha tensión en la Arena!
                      </div>
-                     <div id="multi-penales-box-${index}" style="display:none; text-align:center; color:var(--rojo); font-weight:bold; margin-top:8px; font-size:0.9rem; background:rgba(239,68,68,0.1); padding:6px; border-radius:4px;"></div>
+                     <div id="multi-penales-box-${index}" style="display:none; text-align:center; color:#ff3333; font-weight:bold; margin-top:12px; font-size:0.9rem; background:rgba(239,68,68,0.08); padding:8px; border-radius:6px; border: 1px solid rgba(239,68,68,0.2); font-family: 'Oswald'; letter-spacing: 0.5px;"></div>
                  `;
                  tablero.appendChild(bloquePartido); 
                  bloquePartido.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1803,104 +1804,106 @@ window.renderizarFixturePasoAPaso = function(bitacora, premio, apuestasTexto) {
                  let gV_act = 0;
 
                  const timerMulti = setInterval(() => {
-                     minVirtual += 5; 
-                     if (minVirtual > 90) minVirtual = 90;
+                      minVirtual += 5; 
+                      if (minVirtual > 90) minVirtual = 90;
 
-                     if (minVirtual >= 15) {
-                          if (gL_act < golesLocalDefinitivos && Math.random() < 0.2) {
-                               gL_act++;
-                               inyectarGritoGolMulti(index, `⚽ ¡GOOOL DE ${loc.toUpperCase()}! Se cae el estadio... 🔥`);
-                          }
-                          if (gV_act < golesVisitanteDefinitivos && Math.random() < 0.2) {
-                               gV_act++;
-                               inyectarGritoGolMulti(index, `💥 ¡GOL DE ${vis.toUpperCase()}! Silencio sepulcral en la Arena...`);
-                          }
-                     }
+                      if (minVirtual >= 15) {
+                           if (gL_act < golesLocalDefinitivos && Math.random() < 0.2) {
+                                gL_act++;
+                                inyectarGritoGolMulti(index, `⚽ ¡GOOOL DE ${loc.toUpperCase()}! Se cae el estadio... 🔥`);
+                           }
+                           if (gV_act < golesVisitanteDefinitivos && Math.random() < 0.2) {
+                                gV_act++;
+                                inyectarGritoGolMulti(index, `💥 ¡GOL DE ${vis.toUpperCase()}! Silencio sepulcral en la Arena...`);
+                           }
+                      }
 
-                     if (minVirtual === 90) { 
-                          gL_act = golesLocalDefinitivos; 
-                          gV_act = golesVisitanteDefinitivos; 
-                     }
+                      if (minVirtual === 90) { 
+                           gL_act = golesLocalDefinitivos; 
+                           gV_act = golesVisitanteDefinitivos; 
+                      }
 
-                     if (document.getElementById(`multi-reloj-${index}`)) {
-                          document.getElementById(`multi-reloj-${index}`).innerText = `⏱️ MINUTO ${minVirtual.toString().padStart(2,'0')}:00`;
-                     }
-                     if (document.getElementById(`multi-score-${index}`)) {
-                          document.getElementById(`multi-score-${index}`).innerText = `${gL_act} - ${gV_act}`;
-                     }
+                      const elReloj = document.getElementById(`multi-reloj-${index}`);
+                      if (elReloj) elReloj.innerText = `⏱️ MINUTO ${minVirtual.toString().padStart(2,'0')}:00`;
+                      
+                      const elScore = document.getElementById(`multi-score-${index}`);
+                      if (elScore) elScore.innerText = `${gL_act} - ${gV_act}`;
 
-                     if (incidenciasDelPartido[minVirtual]) {
-                          document.getElementById(`multi-log-vivo-${index}`).innerText = incidenciasDelPartido[minVirtual];
-                     }
+                      if (incidenciasDelPartido[minVirtual]) {
+                           document.getElementById(`multi-log-vivo-${index}`).innerText = incidenciasDelPartido[minVirtual];
+                      }
 
-                     if (minVirtual >= 90) {
-                          clearInterval(timerMulti);
-                          
-                          if (partido.definicionPenales && document.getElementById(`multi-penales-box-${index}`)) {
-                               document.getElementById(`multi-penales-box-${index}`).style.display = "block";
-                               document.getElementById(`multi-penales-box-${index}`).innerText = `💥 TANDA DE PENALES POR LA INMORTALIDAD: (${partido.penalesLocal} - ${partido.penalesVisitante})`;
-                          }
-                          
-                          bloquePartido.style.borderColor = "var(--verde-match)";
-                          const finTexto = document.createElement("div"); 
-                          finTexto.style.cssText = "text-align:right; font-size:0.85rem; font-weight:bold; color:var(--verde-match); margin-top:5px;";
-                          finTexto.innerText = `🏆 GANADOR: ${partido.ganadorUsername.toUpperCase()} ✅`;
-                          bloquePartido.appendChild(finTexto);
-                          
-                          document.getElementById(`multi-log-vivo-${index}`).innerText = "🏁 El árbitro pita el final del encuentro. Planillas guardadas con éxito.";
-                          resolveCruce(); 
-                     }
+                      if (minVirtual >= 90) {
+                           clearInterval(timerMulti);
+                           
+                           if (partido.definicionPenales) {
+                                const pBox = document.getElementById(`multi-penales-box-${index}`);
+                                if (pBox) {
+                                     pBox.style.display = "block";
+                                     pBox.innerText = `💥 TANDA DE PENALES DE INFARTO: (${partido.penalesLocal} - ${partido.penalesVisitante})`;
+                                }
+                           }
+                           
+                           bloquePartido.style.borderColor = "var(--verde-match)";
+                           const finTexto = document.createElement("div"); 
+                           finTexto.style.cssText = "text-align:right; font-size:0.85rem; font-weight:bold; color:var(--verde-match); margin-top:8px; font-family:'Oswald'; letter-spacing: 0.5px;";
+                           finTexto.innerText = `🏆 GANADOR: ${partido.ganadorUsername.toUpperCase()} ✅`;
+                           bloquePartido.appendChild(finTexto);
+                           
+                           document.getElementById(`multi-log-vivo-${index}`).innerText = "🏁 El árbitro pita el final del encuentro. Planillas guardadas con éxito.";
+                           resolveCruce(); 
+                      }
                  }, 400);
             });
         });
     });
 
-     secuenciaPromesas.then(() => {
-          const bloquePremio = document.createElement("div");
-          bloquePremio.style.cssText = "text-align:center; margin-top:25px; padding:15px; background:rgba(0,255,136,0.05); border:2px dashed var(--dorado); border-radius:10px;";
-          let textoPremio = `👑 ¡Fin de la transmisión!\n🎁 El torneo ha concluido exitosamente.`;
-          
-          if (premio && !premio.ganoBot) {
-               if (premio.tipo_apuesta === 'oro') {
-                    textoPremio = `🏆 ¡FIN DEL TORNEO! 🏆\n👑 Campeón: ${premio.ganador_username.toUpperCase()}\n🎁 ¡Se lleva 🪙 ${premio.pozo} de Oro!`;
-                    
-                    if (usuarioActual) {
-                        if (premio.ganador_username.toLowerCase() === usuarioActual.username.toLowerCase()) {
-                             usuarioActual.monedas += (premio.pozo / 2); 
-                        } else {
-                             usuarioActual.monedas -= (premio.pozo / 2); 
-                        }
-                        const elMonedas = document.getElementById("lbl-monedas");
-                        if (elMonedas) elMonedas.innerText = usuarioActual.monedas;
-                    }
+    secuenciaPromesas.then(() => {
+         const bloquePremio = document.createElement("div");
+         bloquePremio.style.cssText = "text-align:center; margin-top:25px; padding:20px; background:rgba(0,255,136,0.03); border:2px dashed var(--dorado); border-radius:12px; box-shadow: 0 4px 20px rgba(0,0,0,0.4);";
+         let textoPremio = `👑 ¡Fin de la transmisión!\n🎁 El torneo ha concluido exitosamente.`;
+         
+         if (premio && !premio.ganoBot) {
+              if (premio.tipo_apuesta === 'oro') {
+                   textoPremio = `🏆 ¡FIN DEL TORNEO ONLINE! 🏆\n👑 Campeón de la Arena: ${premio.ganador_username.toUpperCase()}\n🎁 ¡Se lleva el pozo de 🪙 ${premio.pozo} de Oro!`;
+                   
+                   if (usuarioActual) {
+                       if (premio.ganador_username.toLowerCase() === usuarioActual.username.toLowerCase()) {
+                            usuarioActual.monedas += (premio.pozo / 2); 
+                       } else {
+                            usuarioActual.monedas -= (premio.pozo / 2); 
+                       }
+                       const elMonedas = document.getElementById("lbl-monedas");
+                       if (elMonedas) elMonedas.innerText = usuarioActual.monedas;
+                   }
 
-               } else if (premio.tipo_apuesta === 'carta') {
-                    textoPremio = `🏆 ¡FIN DEL TORNEO! 🏆\n👑 Campeón: ${premio.ganador_username.toUpperCase()}\n\n🎉 ¡Conservás tu cromo y ganaste a:\n🌟 [ ${premio.nombreCartaPremio || 'Jugador Épico'} ]!\n\n💀 Los perdedores perdieron su cromo permanentemente.`;
-               }
-          } else if (premio && premio.ganoBot) {
-               textoPremio = premio.tipo_apuesta === 'carta' ? `🤖 ¡El torneo fue conquistado por un Bot (${premio.ganador_username.toUpperCase()})!\n\n💀 Ambos jugadores perdieron sus cartas permanentemente.` : `🤖 ¡Torneo conquistado por un Bot (${premio.ganador_username.toUpperCase()})!\n💸 El pozo se disolvió.`;
-               
-               if (premio.tipo_apuesta === 'oro' && usuarioActual) {
-                    usuarioActual.monedas -= (premio.pozo / 2);
-                    const elMonedas = document.getElementById("lbl-monedas");
-                    if (elMonedas) elMonedas.innerText = usuarioActual.monedas;
-               }
-          }
-          
-          if (premio && (premio.tipo_apuesta === 'carta' || premio.tipo_apuesta === 'oro') && typeof actualizarInterfazUI === 'function') {
-               actualizarInterfazUI();
-          }
-          
-          bloquePremio.innerHTML = `<h3 style="color:var(--dorado); font-family:'Oswald';">🏁 CRÓNICA DEFINITIVA</h3><p style="color:#fff; font-weight:bold; white-space:pre-line;">${textoPremio}</p><button type="button" id="btn-regresar-limpio-multi" class="btn-estadio" style="width:80%; margin-top:15px; background:var(--celeste);">🔄 REGRESAR A LA HOME</button>`;
-          tablero.appendChild(bloquePremio); bloquePremio.scrollIntoView({ behavior: 'smooth' });
+              } else if (premio.tipo_apuesta === 'carta') {
+                   textoPremio = `🏆 ¡FIN DEL TORNEO ONLINE! 🏆\n👑 Campeón de la Arena: ${premio.ganador_username.toUpperCase()}\n\n🎉 ¡Conservás tu cromo invicto y le arrebataste a:\n🌟 [ ${premio.nombreCartaPremio || 'Jugador Épico'} ]!\n\n💀 El plantel derrotado perdió su cromo de forma permanente.`;
+              }
+         } else if (premio && premio.ganoBot) {
+              textoPremio = premio.tipo_apuesta === 'carta' ? `🤖 ¡El torneo fue conquistado por un Bot (${premio.ganador_username.toUpperCase()})!\n\n💀 Ambos jugadores perdieron sus cartas en el vestuario.` : `🤖 ¡Torneo conquistado por un Bot (${premio.ganador_username.toUpperCase()})!\n💸 El pozo de oro se disolvió.`;
+              
+              if (premio.tipo_apuesta === 'oro' && usuarioActual) {
+                   usuarioActual.monedas -= (premio.pozo / 2);
+                   const elMonedas = document.getElementById("lbl-monedas");
+                   if (elMonedas) elMonedas.innerText = usuarioActual.monedas;
+              }
+         }
+         
+         if (premio && (premio.tipo_apuesta === 'carta' || premio.tipo_apuesta === 'oro') && typeof actualizarInterfazUI === 'function') {
+              actualizarInterfazUI();
+         }
+         
+         bloquePremio.innerHTML = `<h3 style="color:var(--dorado); font-family:'Oswald'; font-size:1.4rem; text-transform:uppercase; margin-top:0; letter-spacing:1px;">🏁 CRÓNICA DEFINITIVA</h3><p style="color:#fff; font-weight:bold; white-space:pre-line; line-height:1.5; font-size:0.95rem;">${textoPremio}</p><button type="button" id="btn-regresar-limpio-multi" class="btn-estadio" style="width:100%; max-width:350px; margin:15px auto 0 auto; background:var(--celeste); color:#000; font-weight:bold; font-family:'Oswald'; font-size:1rem;">🔄 REGRESAR A LA HOME</button>`;
+         tablero.appendChild(bloquePremio); bloquePremio.scrollIntoView({ behavior: 'smooth' });
 
-          document.getElementById("btn-regresar-limpio-multi").onclick = () => {
-              document.getElementById("multi-pantalla-fixture").style.display = "none";
-              document.getElementById("multi-menu-inicial").style.display = "block";
-              if (document.getElementById("modulo-mundial-multi")) document.getElementById("modulo-mundial-multi").style.display = "block";
-              liberarNavegacionArenaUI(); multiSalaId = null; multiCodigoSala = null; multiEsCreador = false; jugadoresSeleccionadosDraft = [];
-              const btnTienda = document.querySelector("button[onclick*='modulo-sobres']"); cambiarModulo('modulo-sobres', btnTienda);
-          };
+         document.getElementById("btn-regresar-limpio-multi").onclick = () => {
+             document.getElementById("multi-pantalla-fixture").style.display = "none";
+             document.getElementById("multi-menu-inicial").style.display = "block";
+             if (document.getElementById("modulo-mundial-multi")) document.getElementById("modulo-mundial-multi").style.display = "block";
+             liberarNavegacionArenaUI(); multiSalaId = null; multiCodigoSala = null; multiEsCreador = false; jugadoresSeleccionadosDraft = [];
+             const btnTienda = document.querySelector("button[onclick*='modulo-sobres']"); cambiarModulo('modulo-sobres', btnTienda);
+         };
     });
 };
 
