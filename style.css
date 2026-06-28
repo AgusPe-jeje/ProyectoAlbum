@@ -35,6 +35,29 @@ body.ambiente-mundial {
     letter-spacing: 0.5px;
 }
 
+/* ⚡ BADGE DE CHARLA TÉCNICA ACTIVA IN-GAME */
+.boost-badge-gaming {
+    background: rgba(0, 255, 136, 0.15) !important;
+    color: #00ff88 !important;
+    border: 1px solid #00ff88 !important;
+    padding: 2px 8px !important;
+    border-radius: 4px !important;
+    font-size: 0.75rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 1px !important;
+    display: inline-block !important;
+    font-family: 'Oswald', sans-serif !important;
+    text-transform: uppercase;
+    box-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
+    vertical-align: middle;
+    animation: brilloBoost 1.5s infinite alternate;
+}
+
+@keyframes brilloBoost {
+    from { box-shadow: 0 0 4px rgba(0, 255, 136, 0.2); }
+    to { box-shadow: 0 0 10px rgba(0, 255, 136, 0.5); }
+}
+
 .banner-tienda { background: url('./static/sobres.jpg') no-repeat center center; background-size: cover; }
 .banner-penales { background: url('./static/penales.jpg') no-repeat center center; background-size: cover; }
 .banner-casino { background: url('./static/casino.jpg') no-repeat center center; background-size: cover; }
