@@ -205,6 +205,7 @@
 
             <div id="modulo-timba" class="modulo-contenido">
                 <div class="caja-modulo-estadio">
+                    
                     <div class="banner-modulo-imagen banner-casino">
                         <div class="overlay-banner-texto">
                             <h2>🎰 LA TIMBA DE LA ARENA</h2>
@@ -212,7 +213,7 @@
                     </div>
                     
                     <div class="contenedor-partido-timba-tv">
-                        <div class="arena-versus-scoreboard">
+                        <div class="arena-versus-scoreboard" style="margin-bottom: 20px;">
                             <div class="bando-equipo-stadium local">
                                 <span id="timba-bandera-local" class="bandera-flag">🇦🇷</span>
                                 <span id="timba-local" class="nombre-seleccion">ARGENTINA</span>
@@ -225,43 +226,50 @@
                         </div>
                         
                         <div class="inputs-apuesta-timba-stadium">
-                            <div id="cronometro-timba" class="banca-reloj-status">🔋 Cargando energía...</div>
+                            <div id="cronometro-timba" class="banca-reloj-status" style="font-weight: bold; font-family: monospace;">🔋 Cargando energía...</div>
+                            
                             <div class="monto-apuesta-row">
-                                <label class="label-tv">🎰 ¿QUÉ VAS A JUGAR?</label>
+                                <label class="get-label-tv">🎰 ¿QUÉ VAS A JUGAR?</label>
                                 <select id="select-tipo-apuesta" onchange="conmutarControlesTimbaUI()" class="select-estadio-custom">
                                     <option value="monedas">🪙 MONEDAS DE ORO</option>
                                     <option value="cromo">🃏 FIGURITA REPETIDA</option>
                                 </select>
                             </div>
+                            
                             <div id="wrapper-apuesta-monedas" class="monto-apuesta-row">
-                                <label class="label-tv">🪙 MONEDAS:</label>
+                                <label class="get-label-tv">🪙 MONEDAS:</label>
                                 <input type="number" id="input-monto-apuesta" min="10" value="50" class="input-estadio-numeric">
                             </div>
+                            
                             <div id="wrapper-apuesta-cromo" class="monto-apuesta-row" style="display: none;">
-                                <label class="label-tv">🃏 SELECCIONÁ TU CROMO:</label>
+                                <label class="get-label-tv">🃏 SELECCIONÁ TU CROMO:</label>
                                 <select id="select-cromo-repetido" class="select-estadio-custom select-cromo-wide"></select>
                             </div>
+                            
                             <button type="button" id="btn-preparar-apuesta" onclick="prepararOpcionesApuesta()" class="btn-estadio btn-bet-action">🎲 OPCIONES DE PRONÓSTICO</button>
                             <div id="contenedor-opciones-goles" class="grid-opciones-goles-match" style="display: none;"></div>
                         </div>
                     </div>
 
-                    <div class="contenedor-partido-timba-tv" style="margin-top: 25px; padding: 20px; text-align: center; border: 1px solid var(--dorado, #fbbf24);">
-                        <h3 style="color: var(--dorado, #fbbf24); font-size: 1.3rem; margin-top: 0; letter-spacing: 1px;">🎯 LA QUINIELA COMBINADA (X10)</h3>
-                        <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 15px; font-style: italic;">
+                    <div class="contenedor-partido-timba-tv" style="border: 2px solid rgba(251, 191, 36, 0.3);">
+                        <h3 style="color: var(--dorado, #fbbf24); font-size: 1.4rem; margin-top: 0; font-family: 'Oswald'; letter-spacing: 1px; text-transform: uppercase; text-align: center;">🎯 LA QUINIELA COMBINADA (X10)</h3>
+                        <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 20px; font-style: italic; text-align: center; line-height: 1.4;">
                             Acertá el resultado de los 3 partidos de la fecha en una sola boleta. ¡Premio x10 si no pifiás ninguno!
                         </p>
 
-                        <div id="contenedor-lista-quiniela" style="display: flex; flex-direction: column; gap: 12px; max-width: 420px; margin: 0 auto 15px auto; text-align: left;">
+                        <div id="contenedor-lista-quiniela" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
                             <p style="color: #64748b; text-align: center; font-size: 0.85rem;">⏳ Sincronizando cartelera rotativa de la Arena...</p>
                         </div>
 
-                        <div style="display: flex; justify-content: center; align-items: center; gap: 10px; max-width: 420px; margin: 0 auto;">
-                            <input type="number" id="input-monto-quiniela" placeholder="Monto Oro" min="50" value="100" class="input-estadio-numeric" style="max-width: 140px; margin: 0;">
-                            <button type="button" class="btn-estadio" style="background: var(--dorado, #fbbf24); color: #000; font-weight: bold;" onclick="enviarBoletaQuiniela()">🎲 JUGAR BOLETA</button>
+                        <div class="inputs-apuesta-timba-stadium" style="margin-top: 0;">
+                            <div class="monto-apuesta-row">
+                                <label class="get-label-tv">🪙 MONTO DE ORO:</label>
+                                <input type="number" id="input-monto-quiniela" placeholder="Monto Oro" min="50" value="100" class="input-estadio-numeric">
+                            </div>
+                            <button type="button" class="btn-estadio btn-bet-action" style="background: var(--dorado, #fbbf24); color: #000; font-weight: bold; width: 100%;" onclick="enviarBoletaQuiniela()">🎲 JUGAR BOLETA COMBINADA</button>
                         </div>
                         
-                        <div id="resultado-quiniela" style="margin-top: 15px; font-weight: bold; font-size: 0.9rem; min-height: 20px;"></div>
+                        <div id="resultado-quiniela" style="margin-top: 15px; font-weight: bold; font-size: 0.95rem; min-height: 20px; text-align: center; font-family: 'Oswald';"></div>
                     </div>
 
                 </div>
