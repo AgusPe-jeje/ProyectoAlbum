@@ -327,8 +327,33 @@ function mostrarJugadoresPorPais() {
      const contenedorGrid = document.getElementById("contenedor-grid-album");
      if (!contenedorGrid) return;
      contenedorGrid.innerHTML = "";
+     
+     // 1. Filtramos los jugadores pertenecientes al país seleccionado
      const jugadoresFiltrados = albumCompleto.filter(figu => figu.pais === paisSeleccionado);
 
+     // 🔥 NUEVO: Mapeo de prioridad de peso para ordenar de mayor a menor rareza
+     const pesoRarezas = {
+          'legendaria': 4,
+          'epica': 3,
+          'rara': 2,
+          'comun': 1,
+          'especial': 2 // Por si maneás algún string alternativo
+     };
+
+     // 2. Ordenamos el array dinámicamente según la tabla de pesos jerárquicos
+     jugadoresFiltrados.sort((a, b) => {
+          const pesoA = pesoRarezas[(a.rareza || 'comun').toLowerCase()] || 0;
+          const pesoB = pesoRarezas[(b.rareza || 'comun').toLowerCase()] || 0;
+          
+          // Si tienen diferente rareza, el de mayor peso va primero
+          if (pesoB !== pesoA) {
+               return pesoB - pesoA;
+          }
+          // Si empatan en rareza, los ordenamos alfabéticamente por nombre
+          return a.nombre.localeCompare(b.nombre);
+     });
+
+     // 3. Renderizado secuencial en la cuadrícula de la Arena
      jugadoresFiltrados.forEach((figu, index) => {
           const esObtenida = figu.obtenido > 0;
           const card = document.createElement("div");
@@ -343,6 +368,7 @@ function mostrarJugadoresPorPais() {
           contenedorGrid.appendChild(card);
      });
 
+     // 4. Ejecutamos el filtro secundario (Estado/Rareza) para mantener consistencia
      aplicarFiltrosCruzadosUI();
 }
 
