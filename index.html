@@ -74,19 +74,23 @@
             </div>
         </div>
         
-<!-- 🟢 Versión Carrusel Extrema: Eliminamos bloqueos de ancho y forzamos el desborde real -->
-        <nav class="nav-modulos-estadio" style="display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: flex-start; align-items: center; gap: 10px; margin: 20px auto; width: 100%; max-width: 900px; box-sizing: border-box; overflow-x: scroll !important; overflow-y: hidden; white-space: nowrap; padding: 10px 15px; -webkit-overflow-scrolling: touch;">
-            <button class="btn-modulo-match activo" onclick="cambiarModulo('modulo-sobres', this)" style="flex: 0 0 120px; min-width: 120px; height: 50px; padding: 0 10px; box-sizing: border-box;">🛍️ TIENDA</button>
-            <button class="btn-modulo-match" onclick="cambiarModulo('modulo-album', this)" style="flex: 0 0 120px; min-width: 120px; height: 50px; padding: 0 10px; box-sizing: border-box;">📖 MI ÁLBUM</button>
-            <button class="btn-modulo-match" onclick="cambiarModulo('modulo-penales', this)" style="flex: 0 0 120px; min-width: 120px; height: 50px; padding: 0 10px; box-sizing: border-box;">⚽ PENALES</button>
-            <button class="btn-modulo-match" onclick="cambiarModulo('modulo-timba', this)" style="flex: 0 0 120px; min-width: 120px; height: 50px; padding: 0 10px; box-sizing: border-box;">🎰 TIMBA</button>
-            <button type="button" class="btn-modulo-match" id="btn-nav-mercado" onclick="cambiarModulo('modulo-mercado-pases', this)" style="flex: 0 0 120px; min-width: 120px; height: 50px; padding: 0 10px; box-sizing: border-box;">💸 MERCADO</button>
-            <button class="btn-modulo-match" onclick="cambiarModulo('modulo-minimundial', this)" style="flex: 0 0 120px; min-width: 120px; height: 50px; padding: 0 10px; box-sizing: border-box;">🏆 MUNDIAL</button>
-            <button class="btn-modulo-match" style="border-color: var(--dorado); color: var(--dorado); flex: 0 0 150px; min-width: 150px; height: 50px; padding: 0 10px; box-sizing: border-box;" onclick="cambiarModulo('modulo-mundial-multi', this)">👥 MULTIJUGADOR</button>
-            <button type="button" id="btn-nav-contratos" class="btn-modulo-match" onclick="cambiarModulo('modulo-contratos-sbc', this)" style="flex: 0 0 160px; min-width: 160px; height: 50px; padding: 0 10px; box-sizing: border-box;">
-                🦾 CONTRATOS BOT
-            </button>
-        </nav>
+<!-- 🟢 Contenedor Padre: Bloquea el desborde vertical y activa el scroll horizontal nativo -->
+        <div style="width: 100%; max-width: 900px; margin: 25px auto; overflow-x: auto; overflow-y: hidden; padding: 10px 5px; box-sizing: border-box;" class="menu-scroll-padre">
+            
+            <!-- Contenedor Flexible: Fuerza un ancho amplio para garantizar que el scroll se mueva libremente -->
+            <nav class="nav-modulos-estadio" style="display: flex; flex-direction: row; flex-wrap: nowrap; gap: 15px; width: max-content; min-width: 100%; align-items: center;">
+                <button class="btn-modulo-match activo" onclick="cambiarModulo('modulo-sobres', this)" style="flex: 0 0 140px; width: 140px; height: 65px; padding: 0 15px; font-size: 1rem; box-sizing: border-box;">🛍️ TIENDA</button>
+                <button class="btn-modulo-match" onclick="cambiarModulo('modulo-album', this)" style="flex: 0 0 140px; width: 140px; height: 65px; padding: 0 15px; font-size: 1rem; box-sizing: border-box;">📖 MI ÁLBUM</button>
+                <button class="btn-modulo-match" onclick="cambiarModulo('modulo-penales', this)" style="flex: 0 0 140px; width: 140px; height: 65px; padding: 0 15px; font-size: 1rem; box-sizing: border-box;">⚽ PENALES</button>
+                <button class="btn-modulo-match" onclick="cambiarModulo('modulo-timba', this)" style="flex: 0 0 140px; width: 140px; height: 65px; padding: 0 15px; font-size: 1rem; box-sizing: border-box;">🎰 TIMBA</button>
+                <button type="button" class="btn-modulo-match" id="btn-nav-mercado" onclick="cambiarModulo('modulo-mercado-pases', this)" style="flex: 0 0 140px; width: 140px; height: 65px; padding: 0 15px; font-size: 1rem; box-sizing: border-box;">💸 MERCADO</button>
+                <button class="btn-modulo-match" onclick="cambiarModulo('modulo-minimundial', this)" style="flex: 0 0 140px; width: 140px; height: 65px; padding: 0 15px; font-size: 1rem; box-sizing: border-box;">🏆 MUNDIAL</button>
+                <button class="btn-modulo-match" style="border-color: var(--dorado); color: var(--dorado); flex: 0 0 165px; width: 165px; height: 65px; padding: 0 15px; font-size: 1rem; box-sizing: border-box;" onclick="cambiarModulo('modulo-mundial-multi', this)">👥 MULTIJUGADOR</button>
+                <button type="button" id="btn-nav-contratos" class="btn-modulo-match" onclick="cambiarModulo('modulo-contratos-sbc', this)" style="flex: 0 0 180px; width: 180px; height: 65px; padding: 0 15px; font-size: 1rem; box-sizing: border-box;">
+                    🦾 CONTRATOS BOT
+                </button>
+            </nav>
+        </div>
 
         <section style="width: 100%; max-width: 900px; box-sizing: border-box;">
 
