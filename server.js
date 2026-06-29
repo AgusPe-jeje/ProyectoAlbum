@@ -55,7 +55,7 @@ const verificarToken = (req, res, next) => {
 /* ========================================================================
    🛠️ MIDDLEWARE: MODO MANTENIMIENTO / ACCESO SELECTIVO TESTERS (FIXED DEFINITIVO)
    ======================================================================== */
-const MODO_MANTENIMIENTO = true; 
+const MODO_MANTENIMIENTO = false; 
 const TESTERS_PERMITIDOS = ["aguspe", "evepro"]; 
 
 app.use((req, res, next) => {
@@ -2802,7 +2802,7 @@ app.post('/api/misiones/reclamar', verificarToken, async (req, res) => {
 });
 
 // ========================================================================
-// 🎁 RECOMPENSAS DIARIAS: RECLAMO ATÓMICO Y CONTROL DE RACHAS (NEON)
+// 🎁 RECOMPENSAS DIARIAS: RECLAMO ATÓMICO Y CONTROL DE RACHAS (FIXED ISO)
 // ========================================================================
 app.post('/api/usuarios/reclamar-diario', verificarToken, async (req, res) => {
     try {
@@ -2825,24 +2825,30 @@ app.post('/api/usuarios/reclamar-diario', verificarToken, async (req, res) => {
         if (ultimoLogin) {
             const ultimaFecha = new Date(ultimoLogin);
             
-            // Forzamos el cálculo eliminando horas, minutos y segundos para comparar días calendario puros
-            const fechaHoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
-            const fechaUltimo = new Date(ultimaFecha.getFullYear(), ultimaFecha.getMonth(), ultimaFecha.getDate());
+            // 🛡️ CONTROL CALENDARIO PURO: Formateamos a strings planos 'YYYY-MM-DD' en base a la zona horaria del servidor
+            // Esto anula por completo la interferencia de horas, minutos y milisegundos residuales.
+            const stringHoy = ahora.toISOString().split('T')[0];
+            const stringUltimo = ultimaFecha.toISOString().split('T')[0];
             
-            const diferenciaDias = Math.floor((fechaHoy - fechaUltimo) / (1000 * 60 * 60 * 24));
-
-            if (diferenciaDias === 0) {
-                // A. Ya reclamó hoy calendario
+            // A. Si los strings son exactamente iguales, significa que ya reclamó en el día calendario actual
+            if (stringHoy === stringUltimo) {
                 return res.json({ 
                     ok: false, 
                     mensaje: `⏳ Ya reclamaste tu premio de hoy, crack. ¡Volvé mañana para avanzar al Día ${rachaActual === 7 ? 1 : rachaActual + 1}!`,
                     racha: rachaActual
                 });
-            } else if (diferenciaDias === 1) {
-                // B. Entró al día siguiente consecutivo. Avanza racha.
+            }
+
+            // B. Para saber si el login es consecutivo o si rompió la racha, medimos la distancia matemática en días base medianoche
+            const fechaBaseHoy = new Date(stringHoy);
+            const fechaBaseUltimo = new Date(stringUltimo);
+            const diferenciaDias = Math.round((fechaBaseHoy - fechaBaseUltimo) / (1000 * 60 * 60 * 24));
+
+            if (diferenciaDias === 1) {
+                // Entró al día siguiente consecutivo. Avanza racha.
                 rachaActual = rachaActual >= 7 ? 1 : rachaActual + 1;
             } else {
-                // C. Pasaron 2 o más días. Racha rota, vuelve al Día 1.
+                // Pasaron 2 o más días. Racha rota, vuelve al Día 1 de castigo.
                 rachaActual = 1;
             }
         } else {
@@ -2858,7 +2864,7 @@ app.post('/api/usuarios/reclamar-diario', verificarToken, async (req, res) => {
             regaloSobre = true;
         }
 
-        // 2. Registramos el impacto en Postgres de forma atómica
+        // 2. Registramos el impacto en Postgres de forma atómica y actualizamos el marcador temporal de Neon
         const queryUpdate = `
             UPDATE usuarios 
             SET monedas = monedas + $1, racha_login = $2, ultimo_login_timestamp = NOW() 
