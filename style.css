@@ -40,10 +40,9 @@ body.ambiente-mundial {
     display: none;
 }
 
-/* Oculta la barra de scroll en IE, Edge y Firefox */
 .nav-modulos-estadio {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    overflow-x: auto !important; /* 👈 Esto rompe cualquier bloqueo anterior */
+    display: flex;
 }
 
 /* Contenedor de la animación */
