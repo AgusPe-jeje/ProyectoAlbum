@@ -2403,8 +2403,12 @@ function cerrarInformeParche() {
     if (modalParche) modalParche.style.display = "none";
     datosInformeParcheCache = null; 
 
-    // 🏎️ PASO 3: Ejecutamos el reclamo diario inmediatamente al cerrar la bitácora de parches
-    verificarRecompensaDiariaSecuencial();
+    // 🏎️ PASO 3 CORREGIDO: Llamamos a tu función real sin el "Secuencial"
+    if (typeof verificarRecompensaDiaria === 'function') {
+        verificarRecompensaDiaria();
+    } else {
+        console.warn("⚠️ No se encontró la función verificarRecompensaDiaria.");
+    }
 }
 
 function abrirMercadoBot(listaTusRepetidas) {
