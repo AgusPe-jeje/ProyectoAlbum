@@ -50,6 +50,49 @@ body.ambiente-mundial {
     pointer-events: none;
 }
 
+/* 1. Definimos el contenedor del scroll para que tenga un respiro abajo */
+.menu-scroll-padre {
+    width: 100%;
+    max-width: 900px;
+    margin: 25px auto;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 10px 5px 18px 5px; /* 💡 Un poco más de padding abajo para separar la barra */
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 2. Diseñamos el tamaño de la barra de scroll horizontal */
+.menu-scroll-padre::-webkit-scrollbar {
+    height: 6px; /* Bien finita y sutil, nada de bloques gigantes */
+}
+
+/* 3. El riel de fondo (Track) -> Súper oscuro e integrado al estadio */
+.menu-scroll-padre::-webkit-scrollbar-track {
+    background: #020617; /* Fondo ultra oscuro profundo */
+    border-radius: 10px;
+    border: 1px solid #1e293b; /* Línea de borde muy fina a tono con el layout */
+}
+
+/* 4. El tirador que arrastrás (Thumb) -> Dorado Arena satinado */
+.menu-scroll-padre::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, #b45309 0%, var(--dorado) 50%, #b45309 100%);
+    border-radius: 10px;
+    box-shadow: 0 0 6px rgba(250, 204, 21, 0.4); /* Pequeño resplandor de Oro */
+    cursor: grab;
+}
+
+/* 5. Cuando pasás el mouse por arriba del tirador, brilla un poco más */
+.menu-scroll-padre::-webkit-scrollbar-thumb:hover {
+    background: var(--dorado);
+    box-shadow: 0 0 10px rgba(250, 204, 21, 0.7);
+}
+
+/* 6. Cuando lo estás arrastrando */
+.menu-scroll-padre::-webkit-scrollbar-thumb:active {
+    cursor: grabbing;
+}
+
 /* ========================================================================
    ⚡ COMPONENTES DINÁMICOS DEL ENCUENTRO (SINGLE & MULTI)
    ======================================================================== */
