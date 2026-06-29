@@ -156,7 +156,6 @@ async function autenticarUsuario(accion) {
           if (data.error) {
                alert(data.error);
           } else {
-               // 🔥 CAMBIO AQUÍ: Si el servidor blindado nos manda un token, lo encanutamos en el navegador
                if (data.token) {
                     localStorage.setItem("arena_token", data.token);
                }
@@ -168,30 +167,31 @@ async function autenticarUsuario(accion) {
                interfazJuego.style.removeProperty("display");
                interfazJuego.classList.add("mostrar");
                
-               // 🟢 SECTOR MISIONES API: Pedimos las misiones reales guardadas en la Base de Datos
+               // 🟢 SECTOR MISIONES API
                if (typeof cargarMisionesDelServidor === 'function') {
                     cargarMisionesDelServidor();
                }
                
-               // ⏱️ SECTOR CRONÓMETRO: Activamos el motor del reloj dinámico de reinicio diario
+               // ⏱️ SECTOR CRONÓMETRO
                if (typeof iniciarCronometroResetMisiones === 'function') {
                     iniciarCronometroResetMisiones();
                }
                
-               // 🎁 SECTOR PREMIOS DIARIOS: Ejecutamos la racha. Ella sola se encarga de acoplar el anuncio al cerrar.
-               if (typeof verificarRecompensaDiaria === 'function') {
-                    setTimeout(verificarRecompensaDiaria, 1000); 
+               // 📢 NUEVO FLUJO PREMIUM ORDENADO: Disparamos primero los anuncios. 
+               // Al cerrarse el video y la bitácora, se llamará a la racha automáticamente en segundo plano.
+               if (typeof iniciarControladorAnunciosSeguro === 'function') {
+                    setTimeout(iniciarControladorAnunciosSeguro, 1000); 
+               } else if (typeof verificarRecompensaDiaria === 'function') {
+                    // Resguardo por si no encuentra la función de anuncios
+                    setTimeout(verificarRecompensaDiaria, 1000);
                }
                
-               // Reseteamos filtros a nivel lógico al iniciar sesión
                filtroEstadoActual = 'todas';
                filtroRarezaActual = 'todas';
                
                actualizarInterfazUI();
                cargarAlbumLocal();
                actualizarTimbasRestantesUI();
-               
-               // 🛑 FIX: Se eliminó iniciarControladorAnunciosSeguro() de acá para matar la duplicación.
                
                if (accion === 'login') {
                     alert(`⚔️ ¡Bienvenido de vuelta, ${usuarioActual.username}!`);
