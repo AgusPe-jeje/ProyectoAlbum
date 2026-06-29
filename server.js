@@ -100,7 +100,8 @@ app.use((req, res, next) => {
         req.path.startsWith('/api/ranking') ||       // 🌟 Para el Top 10 de la Arena / Penales
         req.path.startsWith('/api/mundial') ||       // 🌟 Para los Reyes del Mundo y el contador de tiempo
         req.path.startsWith('/api/mercado') || 
-        req.path.startsWith('/api/usuarios/reclamar-diario')
+        req.path.startsWith('/api/usuarios/reclamar-diario') ||
+        req.path.startsWith('/api/contratos')
         
     ) {
         return next();
@@ -2878,6 +2879,113 @@ app.post('/api/usuarios/reclamar-diario', verificarToken, async (req, res) => {
     } catch (err) {
         console.error("❌ Error en /usuarios/reclamar-diario:", err.message);
         res.status(500).json({ error: "Error interno al procesar recompensa diaria." });
+    }
+});
+
+// ========================================================================
+// 🦾 BOT COMERCIANTE PREMIUM: CONTRATOS TEMÁTICOS SEMANALES (SBC)
+// ========================================================================
+
+// 1️⃣ Configuración base del desafío de la semana (Memoria del servidor)
+const CONTRATO_SEMANAL_CONFIG = {
+    id: 101,
+    titulo: "⚔️ DESAFÍO ALBICELESTE",
+    descripcion: "Entregá 3 jugadores COMUNES nacidos en ARGENTINA para obtener una recompensa masiva de Oro.",
+    requisitos: {
+        cantidad: 3,
+        rareza: "comun",
+        pais: "argentina"
+    },
+    recompensa: {
+        tipo: "oro_directo",
+        valor: 1500 // El Bot te paga 1500 monedas de oro netas
+    }
+};
+
+// 2️⃣ Endpoint para que el cliente consulte qué pide el Bot hoy
+app.get('/api/contratos/activo', verificarToken, (req, res) => {
+    res.json({ ok: true, contrato: CONTRATO_SEMANAL_CONFIG });
+});
+
+// 3️⃣ Endpoint Atómico para procesar el Quemador de Cartas (Trade-In)
+app.post('/api/contratos/completar', verificarToken, async (req, res) => {
+    const usuarioId = req.usuarioLogueado.id;
+    const { jugadorIds } = req.body; // Array con los 3 IDs elegidos por el usuario
+
+    const reqConfig = CONTRATO_SEMANAL_CONFIG.requisitos;
+
+    // Validaciones rápidas de estructura
+    if (!jugadorIds || !Array.isArray(jugadorIds) || jugadorIds.length !== reqConfig.cantidad) {
+        return res.status(400).json({ ok: false, mensaje: `⚠️ Debés seleccionar exactamente ${reqConfig.cantidad} jugadores.` });
+    }
+
+    const client = await pool.connect();
+
+    try {
+        // 🔒 Arrancamos una transacción segura en Postgres (Neon)
+        await client.query('BEGIN');
+
+        for (const jId of jugadorIds) {
+            // A. Auditamos que el jugador califique en Rareza y País en la tabla maestra
+            const queryJugador = "SELECT nombre, pais, rareza FROM jugadores WHERE id = $1";
+            const jugRes = await client.query(queryJugador, [jId]);
+
+            if (jugRes.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.json({ ok: false, mensaje: "❌ Uno de los jugadores enviados no existe en la Arena." });
+            }
+
+            const j = jugRes.rows[0];
+            if (j.rareza.toLowerCase() !== reqConfig.rareza.toLowerCase() || j.pais.toLowerCase() !== reqConfig.pais.toLowerCase()) {
+                await client.query('ROLLBACK');
+                return res.json({ ok: false, mensaje: `❌ ${j.nombre.toUpperCase()} no cumple los requisitos (Debe ser ${reqConfig.rareza.toUpperCase()} de ${reqConfig.pais.toUpperCase()}).` });
+            }
+
+            // B. Verificamos que el usuario tenga repetidas reales (cantidad > 1) en usuario_progreso
+            const queryProgreso = "SELECT cantidad FROM usuario_progreso WHERE usuario_id = $1 AND jugador_id = $2";
+            const progRes = await client.query(queryProgreso, [usuarioId, jId]);
+            const cantidadDisponible = progRes.rows[0]?.cantidad || 0;
+
+            if (cantidadDisponible <= 1) {
+                await client.query('ROLLBACK');
+                return res.json({ ok: false, mensaje: `❌ No tenés copias REPETIDAS de ${j.nombre.toUpperCase()} para sacrificar.` });
+            }
+        }
+
+        // 🔥 EL TRITURADOR DE CROMOS: Restamos 1 unidad a cada jugador del stock del usuario
+        for (const jId of jugadorIds) {
+            const queryUpdateStock = `
+                UPDATE usuario_progreso 
+                SET cantidad = cantidad - 1 
+                WHERE usuario_id = $1 AND jugador_id = $2 
+                RETURNING cantidad;
+            `;
+            await client.query(queryUpdateStock, [usuarioId, jId]);
+        }
+
+        // 🪙 ACREDITACIÓN DE RECOMPENSA: Sumamos el Oro directo al perfil del usuario
+        const premioOro = CONTRATO_SEMANAL_CONFIG.recompensa.valor;
+        const queryPremio = "UPDATE usuarios SET monedas = monedas + $1 WHERE id = $2 RETURNING monedas";
+        const userRes = await client.query(queryPremio, [premioOro, usuarioId]);
+        const nuevoOroTotal = userRes.rows[0].monedas;
+
+        // 🏁 Si todo salió impecable, guardamos los cambios de forma permanente en Neon
+        await client.query('COMMIT');
+
+        res.json({
+            ok: true,
+            nuevoOro: nuevoOroTotal,
+            mensaje: `💪 ¡CONTRATO CERRADO! El Bot trituró las 3 repetidas y te acreditó 🪙 ${premioOro} de Oro en tu cuenta.`
+        });
+
+    } catch (err) {
+        // Si algo falló en el medio, deshacemos todo para evitar duplicaciones o robos de cartas
+        await client.query('ROLLBACK');
+        console.error("❌ Error crítico en el endpoint de SBC:", err);
+        res.status(500).json({ ok: false, error: "Error interno en los servidores de la Arena." });
+    } finally {
+        // Liberamos el slot del pool de conexión
+        client.release();
     }
 });
 
