@@ -35,16 +35,6 @@ body.ambiente-mundial {
     letter-spacing: 0.5px;
 }
 
-/* Oculta la barra de scroll en Chrome, Safari y Opera */
-.nav-modulos-estadio::-webkit-scrollbar {
-    display: none;
-}
-
-.nav-modulos-estadio {
-    overflow-x: auto !important; /* 👈 Esto rompe cualquier bloqueo anterior */
-    display: flex;
-}
-
 /* Contenedor de la animación */
 .desplegable-misiones-anim {
     max-height: 1200px; /* Un techo alto para que cubra holgadamente todas las misiones */
