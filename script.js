@@ -1382,288 +1382,253 @@ async function ejecutarTorneoMundial() {
     }
     if (jugadoresSeleccionadosDraft.length !== 3) return alert("❌ Completá la alineación de 3 jugadores.");
 
-     mostrarCarga("Pidiendo autorización de planilla a la FIFA...");
-     try {
-          const res = await fetch(`${URL_BASE}/mundial/jugar`, {
-               method: 'POST',
-               headers: obtenerHeadersSeguros(), 
-               body: JSON.stringify({
-                    seleccionElegida: window.mundialSeleccionUsuario,
-                    rivalClasificacion: mundialRivalClasif, 
-                    jugadorIds: jugadoresSeleccionadosDraft
-               }) 
-          });
-          const data = await res.json(); ocultarCarga();
+    mostrarCarga("Pidiendo autorización de planilla a la FIFA...");
+    try {
+        const res = await fetch(`${URL_BASE}/mundial/jugar`, {
+             method: 'POST',
+             headers: obtenerHeadersSeguros(), 
+             body: JSON.stringify({
+                  seleccionElegida: window.mundialSeleccionUsuario,
+                  rivalClasificacion: mundialRivalClasif, 
+                  jugadorIds: jugadoresSeleccionadosDraft
+             }) 
+        });
+        const data = await res.json(); ocultarCarga();
 
-          if (!data.ok) return alert(data.mensaje);
+        if (!data.ok) return alert(data.mensaje);
 
-          if (typeof trackearProgresoMision === 'function') {
-               await trackearProgresoMision("mundial", 1);
-          }
+        if (typeof trackearProgresoMision === 'function') {
+             await trackearProgresoMision("mundial", 1);
+        }
 
-          document.getElementById("fase-draft-mundial").style.display = "none";
-          document.getElementById("fase-fixture-mundial").style.display = "block";
+        document.getElementById("fase-draft-mundial").style.display = "none";
+        document.getElementById("fase-fixture-mundial").style.display = "block";
 
-          const contenedorLista = document.getElementById("lista-cruces-mundial-simulacion");
-          contenedorLista.innerHTML = "";
+        const contenedorLista = document.getElementById("lista-cruces-mundial-simulacion");
+        contenedorLista.innerHTML = "";
 
-          if (!data.progreso.ganoClasificacion) {
-               contenedorLista.innerHTML = `<div class="item-historial-partido" style="color:var(--rojo); border-color:var(--rojo); text-align:center;"><span>❌ Quedaste afuera por falta de puntos en eliminatorias.</span></div>`;
-               usuarioActual.monedas = data.datosActualizados?.monedas || usuarioActual.monedas;
-               actualizarInterfazUI(); actualizarEstadoMundialUI(); liberarNavegacionArenaUI(); return;
-          }
+        if (!data.progreso.ganoClasificacion) {
+             contenedorLista.innerHTML = `<div class="item-historial-partido" style="color:var(--rojo); border-color:var(--rojo); text-align:center;"><span>❌ Quedaste afuera por falta de puntos en eliminatorias.</span></div>`;
+             usuarioActual.monedas = data.datosActualizados?.monedas || usuarioActual.monedas;
+             actualizarInterfazUI(); actualizarEstadoMundialUI(); liberarNavegacionArenaUI(); return;
+        }
 
-          const wrapperTabla = document.createElement("div");
-          wrapperTabla.style.cssText = "background:rgba(0,0,0,0.4); padding:15px; border-radius:12px; margin-bottom:20px; border:1px solid #1a2436;";
-          wrapperTabla.innerHTML = `<h4 style="color:var(--dorado); margin:0 0 10px 0; font-family:'Oswald'; text-align:center;">📊 TABLA EN VIVO</h4><table style="width:100%; border-collapse:collapse; text-align:center; font-weight:bold;"><thead><tr style="color:#64748b; font-size:0.85rem;"><th>POS</th><th style="text-align:left;">SELECCIÓN</th><th>GF</th><th>GC</th><th>PTS</th></tr></thead><tbody id="tbody-tabla-grupo-live"></tbody></table>`;
-          contenedorLista.appendChild(wrapperTabla);
+        const wrapperTabla = document.createElement("div");
+        wrapperTabla.style.cssText = "background:rgba(0,0,0,0.4); padding:15px; border-radius:12px; margin-bottom:20px; border:1px solid #1a2436;";
+        wrapperTabla.innerHTML = `<h4 style="color:var(--dorado); margin:0 0 10px 0; font-family:'Oswald'; text-align:center;">📊 TABLA EN VIVO</h4><table style="width:100%; border-collapse:collapse; text-align:center; font-weight:bold;"><thead><tr style="color:#64748b; font-size:0.85rem;"><th>POS</th><th style="text-align:left;">SELECCIÓN</th><th>GF</th><th>GC</th><th>PTS</th></tr></thead><tbody id="tbody-tabla-grupo-live"></tbody></table>`;
+        contenedorLista.appendChild(wrapperTabla);
 
-          const renderizarTablaGrupoLive = (tablaEstado) => {
-               const tbody = document.getElementById("tbody-tabla-grupo-live"); if (!tbody) return;
-               let listaOrdenada = Object.values(tablaEstado).sort((a,b) => b.pts !== a.pts ? b.pts - a.pts : (b.gf - b.gc) - (a.gf - a.gc));
-               tbody.innerHTML = "";
-               listaOrdenada.forEach((fila, idx) => {
-                    const esTuPais = fila.pais === window.mundialSeleccionUsuario;
-                    const tr = document.createElement("tr"); tr.style.color = esTuPais ? "var(--verde-match)" : "#fff";
-                    tr.innerHTML = `<td style="padding:6px 0; color:${idx < 2 ? 'var(--verde-match)':'var(--rojo)'};">${idx + 1}</td><td style="text-align:left;">⚽ ${fila.pais.toUpperCase()}</td><td>${fila.gf}</td><td>${fila.gc}</td><td style="color:var(--dorado);">${fila.pts}</td>`;
-                    tbody.appendChild(tr);
-               });
-          };
+        const renderizarTablaGrupoLive = (tablaEstado) => {
+             const tbody = document.getElementById("tbody-tabla-grupo-live"); if (!tbody) return;
+             let listaOrdenada = Object.values(tablaEstado).sort((a,b) => b.pts !== a.pts ? b.pts - a.pts : (b.gf - b.gc) - (a.gf - a.gc));
+             tbody.innerHTML = "";
+             listaOrdenada.forEach((fila, idx) => {
+                  const esTuPais = fila.pais === window.mundialSeleccionUsuario;
+                  const tr = document.createElement("tr"); tr.style.color = esTuPais ? "var(--verde-match)" : "#fff";
+                  tr.innerHTML = `<td style="padding:6px 0; color:${idx < 2 ? 'var(--verde-match)':'var(--rojo)'};">${idx + 1}</td><td style="text-align:left;">⚽ ${fila.pais.toUpperCase()}</td><td>${fila.gf}</td><td>${fila.gc}</td><td style="color:var(--dorado);">${fila.pts}</td>`;
+                  tbody.appendChild(tr);
+             });
+        };
 
-          let estadoTablaMundial = {};
-          data.progreso.integrantesGrupo.forEach(p => { estadoTablaMundial[p] = { pais: p, pts: 0, gf: 0, gc: 0 }; });
-          renderizarTablaGrupoLive(estadoTablaMundial);
+        let estadoTablaMundial = {};
+        data.progreso.integrantesGrupo.forEach(p => { estadoTablaMundial[p] = { pais: p, pts: 0, gf: 0, gc: 0 }; });
+        renderizarTablaGrupoLive(estadoTablaMundial);
 
-          // 🎵 GATILLO DE AUDIO INYECTADO: Sonido de Silbatazo al arrancar la Fase de Grupos
-          if (typeof AudioArena !== 'undefined' && AudioArena.play) AudioArena.play('pitazo');
+        if (typeof AudioArena !== 'undefined' && AudioArena.play) AudioArena.play('pitazo');
 
-          for (let f = 0; f < data.progreso.bitacoraGrupo.length; f++) {
-               const fechaData = data.progreso.bitacoraGrupo[f];
-               const divFecha = document.createElement("div");
-               divFecha.style.cssText = "background:#0b111e; padding:12px; border-radius:8px; border-left:4px solid var(--celeste); margin-bottom:15px;";
-               divFecha.innerHTML = `<div style="color:var(--celeste); font-size:0.9rem; font-weight:bold;">📅 FECHA ${fechaData.fecha}</div><div style="display:flex; justify-content:space-between;"><span>🇺🇾 ${fechaData.local} vs ${fechaData.visitante}</span><span id="goles-m1-f${f}" style="color:var(--verde-match);">0 - 0</span></div><div style="display:flex; justify-content:space-between;"><span>🤖 ${fechaData.botL} vs ${fechaData.botV}</span><span id="goles-m2-f${f}" style="color:#aaa;">0 - 0</span></div><div id="reloj-f${f}" style="text-align:center; font-size:0.8rem; color:#64748b;">⏱️ 00:00</div>`;
-               contenedorLista.appendChild(divFecha); divFecha.scrollIntoView({ behavior: 'smooth' });
+        // SIMULACIÓN CRONOLÓGICA DE LA FASE DE GRUPOS
+        for (let f = 0; f < data.progreso.bitacoraGrupo.length; f++) {
+             const fechaData = data.progreso.bitacoraGrupo[f];
+             const divFecha = document.createElement("div");
+             divFecha.style.cssText = "background:#0b111e; padding:12px; border-radius:8px; border-left:4px solid var(--celeste); margin-bottom:15px;";
+             divFecha.innerHTML = `<div style="color:var(--celeste); font-size:0.9rem; font-weight:bold;">📅 FECHA ${fechaData.fecha}</div><div style="display:flex; justify-content:space-between;"><span>🇺🇾 ${fechaData.local} vs ${fechaData.visitante}</span><span id="goles-m1-f${f}" style="color:var(--verde-match); font-weight:bold;">0 - 0</span></div><div style="display:flex; justify-content:space-between;"><span>🤖 ${fechaData.botL} vs ${fechaData.botV}</span><span id="goles-m2-f${f}" style="color:#aaa;">0 - 0</span></div><div id="reloj-f${f}" style="text-align:center; font-size:0.8rem; color:#64748b;">⏱️ 00:00</div>`;
+             contenedorLista.appendChild(divFecha); divFecha.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-               await new Promise((resolveFecha) => {
-                    let segV = 0; let g1_L = 0; let g1_V = 0; let g2_L = 0; let g2_V = 0;
-                    const tGroup = setInterval(() => {
-                         segV += 9; if (segV > 90) segV = 90;
-                         
-                         // 🎵 GATILLO DE AUDIO INYECTADO: Si hay variación de goles en tu pantalla, ruge la tribuna
-                         let huboGol = false;
-                         if (g1_L < fechaData.gL && Math.random() < 0.2) { g1_L++; huboGol = true; }
-                         if (g1_V < fechaData.gV && Math.random() < 0.2) { g1_V++; huboGol = true; }
-                         if (g2_L < fechaData.gBL && Math.random() < 0.2) g2_L++;
-                         if (g2_V < fechaData.gBV && Math.random() < 0.2) g2_V++;
+             await new Promise((resolveFecha) => {
+                  let segV = 0; let g1_L = 0; let g1_V = 0; let g2_L = 0; let g2_V = 0;
+                  
+                  const tGroup = setInterval(() => {
+                       segV += 3; 
+                       if (segV > 90) segV = 90;
+                       
+                       let huboGol = false;
 
-                         if (huboGol && typeof AudioArena !== 'undefined' && AudioArena.play) {
-                              AudioArena.play('gol');
-                         }
+                       // REPRODUCCIÓN ESTRICTA DEL BACKEND: Buscamos si el minuto actual matchea con los cronogramas
+                       if (fechaData.minutosL && fechaData.minutosL.includes(segV)) { g1_L++; huboGol = true; }
+                       if (fechaData.minutosV && fechaData.minutosV.includes(segV)) { g1_V++; huboGol = true; }
+                       if (fechaData.minutosBL && fechaData.minutosBL.includes(segV)) g2_L++;
+                       if (fechaData.minutosBV && fechaData.minutosBV.includes(segV)) g2_V++;
 
-                         if (segV === 90) { g1_L = fechaData.gL; g1_V = fechaData.gV; g2_L = fechaData.gBL; g2_V = fechaData.gBV; }
-                         document.getElementById(`goles-m1-f${f}`).innerText = `${g1_L} - ${g1_V}`;
-                         document.getElementById(`goles-m2-f${f}`).innerText = `${g2_L} - ${g2_V}`;
-                         document.getElementById(`reloj-f${f}`).innerText = `⏱️ MINUTO ${segV}:00`;
+                       if (huboGol && typeof AudioArena !== 'undefined' && AudioArena.play) {
+                            AudioArena.play('gol');
+                       }
 
-                         if (segV >= 90) {
-                              clearInterval(tGroup);
-                              const acumLive = (loc, vis, gl, gv) => {
-                                   estadoTablaMundial[loc].gf += gl; estadoTablaMundial[loc].gc += gv;
-                                   estadoTablaMundial[vis].gf += gv; estadoTablaMundial[vis].gc += gl;
-                                   if (gl > gv) estadoTablaMundial[loc].pts += 3;
-                                   else if (gl < gv) estadoTablaMundial[vis].pts += 3;
-                                   else { estadoTablaMundial[loc].pts += 1; estadoTablaMundial[vis].pts += 1; }
-                              };
-                              acumLive(fechaData.local, fechaData.visitante, fechaData.gL, fechaData.gV);
-                              acumLive(fechaData.botL, fechaData.botV, fechaData.gBL, fechaData.gBV);
-                              renderizarTablaGrupoLive(estadoTablaMundial); resolveFecha();
-                         }
-                    }, 1000);
-               });
-          }
+                       document.getElementById(`goles-m1-f${f}`).innerText = `${g1_L} - ${g1_V}`;
+                       document.getElementById(`goles-m2-f${f}`).innerText = `${g2_L} - ${g2_V}`;
+                       document.getElementById(`reloj-f${f}`).innerText = `⏱️ MINUTO ${segV.toString().padStart(2, '0')}:00`;
 
-          if (!data.progreso.clasifico) {
-               const cartelEliminado = document.createElement("div");
-               cartelEliminado.style.cssText = "text-align:center; padding:15px; border:2px solid var(--rojo); color:var(--rojo); font-weight:bold; border-radius:8px;";
-               cartelEliminado.innerText = `❌ Quedaste fuera en Grupos (Puesto #${data.progreso.posicionFinalGrupo}).`;
-               contenedorLista.appendChild(cartelEliminado);
-               usuarioActual.monedas = data.datosActualizados?.monedas || usuarioActual.monedas;
-               actualizarInterfazUI(); actualizarEstadoMundialUI(); liberarNavegacionArenaUI(); return;
-          }
+                       if (segV >= 90) {
+                            clearInterval(tGroup);
+                            const acumLive = (loc, vis, gl, gv) => {
+                                 estadoTablaMundial[loc].gf += gl; estadoTablaMundial[loc].gc += gv;
+                                 estadoTablaMundial[vis].gf += gv; estadoTablaMundial[vis].gc += gl;
+                                 if (gl > gv) estadoTablaMundial[loc].pts += 3;
+                                 else if (gl < gv) estadoTablaMundial[vis].pts += 3;
+                                 else { estadoTablaMundial[loc].pts += 1; estadoTablaMundial[vis].pts += 1; }
+                            };
+                            acumLive(fechaData.local, fechaData.visitante, fechaData.gL, fechaData.gV);
+                            acumLive(fechaData.botL, fechaData.botV, fechaData.gBL, fechaData.gBV);
+                            renderizarTablaGrupoLive(estadoTablaMundial); 
+                            resolveFecha();
+                       }
+                  }, 150); // Simulación dinámica fluida
+             });
+        }
 
-          for (let i = 0; i < data.progreso.bitacoraPlayoffs.length; i++) {
-               const partido = data.progreso.bitacoraPlayoffs[i];
-               const ganoEsteCruce = partido.resultado.includes("Ganaste");
-               await simularMarcadorPantalla(contenedorLista, partido.ronda, window.mundialSeleccionUsuario, partido.rival, ganoEsteCruce);
-               if (!ganoEsteCruce) break;
-          }
+        if (!data.progreso.clasifico) {
+             const cartelEliminado = document.createElement("div");
+             cartelEliminado.style.cssText = "text-align:center; padding:15px; border:2px solid var(--rojo); color:var(--rojo); font-weight:bold; border-radius:8px;";
+             cartelEliminado.innerText = `❌ Quedaste fuera en Grupos (Puesto #${data.progreso.posicionFinalGrupo}).`;
+             contenedorLista.appendChild(cartelEliminado);
+             usuarioActual.monedas = data.datosActualizados?.monedas || usuarioActual.monedas;
+             actualizarInterfazUI(); actualizarEstadoMundialUI(); liberarNavegacionArenaUI(); return;
+        }
 
-          if (data.progreso.campeon) {
-               const corona = document.createElement("div");
-               corona.style.cssText = "text-align:center; margin-top:20px; color:var(--dorado); font-size:1.4rem; font-weight:bold;";
-               corona.innerText = "🏆 ¡CAMPEÓN DEL MUNDO! 🏆\n🎁 ¡Premio de 5.000 de Oro depositado!";
-               contenedorLista.appendChild(corona); corona.scrollIntoView({ behavior: 'smooth' });
-          }
+        // REPRODUCCIÓN CRONOLÓGICA DE PLAYOFFS ELIMINATORIOS
+        for (let i = 0; i < data.progreso.bitacoraPlayoffs.length; i++) {
+             const partido = data.progreso.bitacoraPlayoffs[i];
+             const ganoEsteCruce = partido.resultado.includes("Ganaste");
+             // 🔥 Pasamos el objeto 'partido' completo para extraer su timeline nativo
+             await simularMarcadorPantalla(contenedorLista, partido.ronda, window.mundialSeleccionUsuario, partido.rival, ganoEsteCruce, partido);
+             if (!ganoEsteCruce) break;
+        }
 
-          if (data.datosActualizados) {
-               usuarioActual.monedas = data.datosActualizados.monedas;
-               usuarioActual.puntos_ranking = data.datosActualizados.puntos_ranking;
-               usuarioActual.copas_mundiales = data.datosActualizados.copas_mundiales;
-               actualizarInterfazUI(); cargarRankingMundialesLocal();
-          }
-          actualizarEstadoMundialUI(); liberarNavegacionArenaUI();
-     } catch (err) { console.error(err); ocultarCarga(); liberarNavegacionArenaUI(); }
+        if (data.progreso.campeon) {
+             const corona = document.createElement("div");
+             corona.style.cssText = "text-align:center; margin-top:20px; color:var(--dorado); font-size:1.4rem; font-weight:bold;";
+             corona.innerText = "🏆 ¡CAMPEÓN DEL MUNDO! 🏆\n🎁 ¡Premio de 5.000 de Oro depositado!";
+             contenedorLista.appendChild(corona); corona.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        if (data.datosActualizados) {
+             usuarioActual.monedas = data.datosActualizados.monedas;
+             usuarioActual.puntos_ranking = data.datosActualizados.puntos_ranking;
+             usuarioActual.copas_mundiales = data.datosActualizados.copas_mundiales;
+             actualizarInterfazUI(); cargarRankingMundialesLocal();
+        }
+        actualizarEstadoMundialUI(); liberarNavegacionArenaUI();
+    } catch (err) { console.error(err); ocultarCarga(); liberarNavegacionArenaUI(); }
 }
 
-function simularMarcadorPantalla(contenedor, ronda, tuPais, rival, ganoUsuario) {
+function simularMarcadorPantalla(contenedor, ronda, tuPais, rival, ganoUsuario, partidoData) {
     return new Promise((resolve) => {
-          const filaPartido = document.createElement("div");
-          filaPartido.className = "partido-simulado-card"; 
-          
-          const idUnico = ronda.replace(/ /g,'') + Math.floor(Math.random() * 1000);
-          
-          filaPartido.innerHTML = `
-              <div style="display:flex; justify-content:space-between; align-items:center; color:var(--dorado); border-bottom:1px solid #1e293b; padding-bottom:8px; margin-bottom:12px;">
-                   <span style="text-transform: uppercase; font-family:'Oswald'; font-size: 1rem; letter-spacing: 0.5px;">📋 ${ronda}</span>
-                   <span id="reloj-vivo-${idUnico}" style="font-weight:bold; color:var(--celeste); font-family: monospace; font-size: 0.9rem;">⏱️ MINUTO 00:00</span>
-              </div>
-              <div style="display:flex; justify-content:space-between; align-items:center; padding: 5px 0;">
-                   <span style="width:42%; text-align:left; font-weight:bold; font-size:1.1rem; color: #fff;">
-                        ⚽ ${tuPais.toUpperCase()} <span id="boost-badge-${idUnico}" class="boost-badge-gaming oculto">BOOSTED</span>
-                   </span>
-                   <span id="score-vivo-${idUnico}" style="font-family:'Oswald'; font-size:1.9rem; background:#020617; padding:4px 18px; border-radius:8px; color:var(--verde-match); min-width:80px; text-align:center; box-shadow: inset 0 0 12px rgba(0,255,136,0.15); border: 1px solid #1e293b; letter-spacing: 1px;">0 - 0</span>
-                   <span style="width:42%; text-align:right; font-weight:bold; font-size:1.1rem; color: #fff;">
-                        ${rival.toUpperCase()} 🤖
-                   </span>
-              </div>
-              <div id="consola-incidencias-${idUnico}" class="consola-incidencias-tv">
-                   ⚽ El árbitro da la orden... ¡Comienza el partido!
-              </div>
-              <div id="zona-entretiempo-${idUnico}" class="box-entretiempo-tactico" style="display:none;">
-                   <p style="margin:0 0 10px 0; font-size:0.85rem; color:var(--dorado); font-weight:bold; text-transform: uppercase; font-family: 'Oswald'; letter-spacing: 0.5px;">👔 ¡ENTRETIEMPO! Charla técnica disponible</p>
-                   <button type="button" id="btn-charla-${idUnico}" class="btn-estadio" style="background:var(--dorado); color:#000; font-size:0.8rem; padding:6px 14px; font-weight: bold; border-radius: 6px;">📣 Arengar Equipo (+15% Ataque)</button>
-              </div>
-          `;
-          contenedor.appendChild(filaPartido); 
-          filaPartido.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+         const filaPartido = document.createElement("div");
+         filaPartido.className = "partido-simulado-card"; 
+         const idUnico = ronda.replace(/ /g,'') + Math.floor(Math.random() * 1000);
+         
+         filaPartido.innerHTML = `
+             <div style="display:flex; justify-content:space-between; align-items:center; color:var(--dorado); border-bottom:1px solid #1e293b; padding-bottom:8px; margin-bottom:12px;">
+                  <span style="text-transform: uppercase; font-family:'Oswald'; font-size: 1rem; letter-spacing: 0.5px;">📋 ${ronda}</span>
+                  <span id="reloj-vivo-${idUnico}" style="font-weight:bold; color:var(--celeste); font-family: monospace; font-size: 0.9rem;">⏱️ MINUTO 00:00</span>
+             </div>
+             <div style="display:flex; justify-content:space-between; align-items:center; padding: 5px 0;">
+                  <span style="width:42%; text-align:left; font-weight:bold; font-size:1.1rem; color: #fff;">
+                       ⚽ ${tuPais.toUpperCase()} <span id="boost-badge-${idUnico}" class="boost-badge-gaming oculto">BOOSTED</span>
+                  </span>
+                  <span id="score-vivo-${idUnico}" style="font-family:'Oswald'; font-size:1.9rem; background:#020617; padding:4px 18px; border-radius:8px; color:var(--verde-match); min-width:80px; text-align:center; box-shadow: inset 0 0 12px rgba(0,255,136,0.15); border: 1px solid #1e293b; letter-spacing: 1px;">0 - 0</span>
+                  <span style="width:42%; text-align:right; font-weight:bold; font-size:1.1rem; color: #fff;">
+                       ${rival.toUpperCase()} 🤖
+                  </span>
+             </div>
+             <div id="consola-incidencias-${idUnico}" class="consola-incidencias-tv">
+                  ⚽ El árbitro da la orden... ¡Comienzan los cruces eliminatorios!
+             </div>
+             <div id="zona-entretiempo-${idUnico}" class="box-entretiempo-tactico" style="display:none;">
+                  <p style="margin:0 0 10px 0; font-size:0.85rem; color:var(--dorado); font-weight:bold; text-transform: uppercase; font-family: 'Oswald'; letter-spacing: 0.5px;">👔 ¡ENTRETIEMPO! Charla técnica disponible</p>
+                  <button type="button" id="btn-charla-${idUnico}" class="btn-estadio" style="background:var(--dorado); color:#000; font-size:0.8rem; padding:6px 14px; font-weight: bold; border-radius: 6px;">📣 Arengar Equipo (+15% Ataque)</button>
+             </div>
+         `;
+         contenedor.appendChild(filaPartido); 
+         filaPartido.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-          // 🎵 GATILLO DE AUDIO INYECTADO: Silbato del referí al arrancar la ronda de Playoffs
-          if (typeof AudioArena !== 'undefined' && AudioArena.play) AudioArena.play('pitazo');
+         if (typeof AudioArena !== 'undefined' && AudioArena.play) AudioArena.play('pitazo');
 
-          // Generación lógica de goles esperados finales
-          let golesTu = Math.floor(Math.random() * 3); 
-          let golesRival = Math.floor(Math.random() * 3);
-          if (ganoUsuario && golesTu <= golesRival) golesTu = golesRival + Math.floor(Math.random() * 2) + 1;
-          else if (!ganoUsuario && golesRival <= golesTu) golesRival = golesTu + Math.floor(Math.random() * 2) + 1;
+         // 🟢 SINCRONIZACIÓN PERFECTA: Clonamos las matrices del backend
+         let cronogramaGolesTu = partidoData.minutosL ? [...partidoData.minutosL] : [];
+         let cronogramaGolesRival = partidoData.minutosV ? [...partidoData.minutosV] : [];
 
-          // Relatos dinámicos por minuto
-          let incidenciasSimuladas = {
-               15: `⚠️ Presiona ${rival.toUpperCase()}, bombazo que pasa cerca del ángulo izquierdo.`,
-               45: "⏳ ENTRETIEMPO: Los jugadores se retiran al descanso a recomponer ideas.",
-               72: `🟥 ¡Falta durísima! Tarjeta amarilla para el capitán de ${rival.toUpperCase()}.`,
-               85: `🔥 ¡Zafarrancho en el área! La hinchada empuja con el alma.`
-          };
+         let golesTuActuales = 0; 
+         let golesRivalActuales = 0; 
+         let segundoVirtual = 0;
+         let partidoPausado = false; 
 
-          let golesTuActuales = 0; 
-          let golesRivalActuales = 0; 
-          let segundoVirtual = 0;
-          let tieneBoost = false;
-          let partidoPausado = false; 
+         // Control de la Charla técnica sin corromper el marcador final precalculado
+         document.getElementById(`btn-charla-${idUnico}`).onclick = () => {
+              const badge = document.getElementById(`boost-badge-${idUnico}`);
+              if (badge) badge.classList.remove("oculto");
+              const btnCharla = document.getElementById(`btn-charla-${idUnico}`);
+              btnCharla.disabled = true;
+              btnCharla.style.background = "#1e293b"; btnCharla.style.color = "#64748b";
+              btnCharla.innerText = "✅ ¡EQUIPO MOTIVADO!";
+              
+              // Ajuste visual lógico de adorno si ganabas: añade un gol tardío al min 87 si no estaba agendado
+              if (ganoUsuario && !cronogramaGolesTu.includes(87)) {
+                   cronogramaGolesTu.push(87);
+                   cronogramaGolesTu.sort((a,b)=>a-b);
+              }
+         };
 
-          // GESTIÓN DEL CLICK EN CHARLA TÉCNICA
-          document.getElementById(`btn-charla-${idUnico}`).onclick = () => {
-               tieneBoost = true;
-               
-               const badge = document.getElementById(`boost-badge-${idUnico}`);
-               if (badge) badge.classList.remove("oculto");
-               
-               const btnCharla = document.getElementById(`btn-charla-${idUnico}`);
-               btnCharla.disabled = true;
-               btnCharla.style.background = "#1e293b";
-               btnCharla.style.color = "#64748b";
-               btnCharla.innerText = "✅ ¡EQUIPO MOTIVADO!";
-               
-               if (!ganoUsuario && Math.random() < 0.4) {
-                    golesTu++; 
-               }
-          };
+         const timer = setInterval(() => {
+              if (partidoPausado) return; 
 
-          // LOOP ÚNICO DE CRONÓMETRO IN-GAME
-          const timer = setInterval(() => {
-               if (partidoPausado) return; 
+              if (segundoVirtual === 45) {
+                   partidoPausado = true;
+                   document.getElementById(`zona-entretiempo-${idUnico}`).style.display = "block";
+                   if (typeof AudioArena !== 'undefined' && AudioArena.play) AudioArena.play('pitazo');
 
-               if (segundoVirtual === 45) {
-                    partidoPausado = true;
-                    document.getElementById(`zona-entretiempo-${idUnico}`).style.display = "block";
-                    document.getElementById(`consola-incidencias-${idUnico}`).innerText = "📣 Charla técnica en curso en los vestuarios...";
-                    
-                    // 🎵 GATILLO DE AUDIO INYECTADO: Silbatazo corto indicando fin del PT
-                    if (typeof AudioArena !== 'undefined' && AudioArena.play) AudioArena.play('pitazo');
+                   setTimeout(() => {
+                        document.getElementById(`zona-entretiempo-${idUnico}`).style.display = "none";
+                        partidoPausado = false;
+                        segundoVirtual += 3;
+                        if (typeof AudioArena !== 'undefined' && AudioArena.play) AudioArena.play('pitazo');
+                   }, 4000);
+                   return;
+              }
 
-                    setTimeout(() => {
-                         document.getElementById(`zona-entretiempo-${idUnico}`).style.display = "none";
-                         partidoPausado = false;
-                         segundoVirtual += 3;
-                         // 🎵 GATILLO DE AUDIO INYECTADO: Silbatazo de inicio del ST
-                         if (typeof AudioArena !== 'undefined' && AudioArena.play) AudioArena.play('pitazo');
-                    }, 5000);
-                    return;
-               }
+              segundoVirtual += 3; 
+              if (segundoVirtual > 90) segundoVirtual = 90;
 
-               segundoVirtual += 3; 
-               if (segundoVirtual > 90) segundoVirtual = 90;
+              let huboGol = false;
 
-               if ((segundoVirtual >= 10 && segundoVirtual < 45) || segundoVirtual >= 50) {
-                    let cantoGol = false;
-                    if (golesTuActuales < golesTu && Math.random() < (tieneBoost ? 0.20 : 0.11)) {
-                         golesTuActuales++;
-                         cantoGol = true;
-                         // Sonido de monedas agregado solo de premio de ambiente extra si querés
-                         inyectarAlertaIncidencia(idUnico, `⚽ ¡GOOOL DE ${tuPais.toUpperCase()}! 🔥`);
-                    }
-                    if (golesRivalActuales < golesRival && Math.random() < 0.10) {
-                         golesRivalActuales++;
-                         cantoGol = true;
-                         inyectarAlertaIncidencia(idUnico, `💥 Gol de ${rival.toUpperCase()}. Se grita fuerte en el banco rival.`);
-                    }
+              // Disparadores quirúrgicos basados en el JSON
+              if (cronogramaGolesTu.includes(segundoVirtual)) { 
+                   golesTuActuales++; 
+                   huboGol = true; 
+                   inyectarAlertaIncidencia(idUnico, `⚽ ¡GOOOL DE ${tuPais.toUpperCase()}! Excelente jugada colectiva. 🔥`); 
+              }
+              if (cronogramaGolesRival.includes(segundoVirtual)) { 
+                   golesRivalActuales++; 
+                   huboGol = true; 
+                   inyectarAlertaIncidencia(idUnico, `💥 Gol de ${rival.toUpperCase()}. El delantero define al primer palo.`); 
+              }
 
-                    // 🎵 GATILLO DE AUDIO INYECTADO: ¡Goooool! Estalla la tribuna virtual
-                    if (cantoGol && typeof AudioArena !== 'undefined' && AudioArena.play) {
-                        AudioArena.play('gol');
-                    }
-               }
+              if (huboGol && typeof AudioArena !== 'undefined' && AudioArena.play) AudioArena.play('gol');
 
-               if (segundoVirtual === 90) { 
-                    golesTuActuales = golesTu; 
-                    golesRivalActuales = golesRival; 
-               }
+              document.getElementById(`reloj-vivo-${idUnico}`).innerText = `⏱️ MINUTO ${segundoVirtual.toString().padStart(2,'0')}:00`;
+              document.getElementById(`score-vivo-${idUnico}`).innerText = `${golesTuActuales} - ${golesRivalActuales}`;
 
-               document.getElementById(`reloj-vivo-${idUnico}`).innerText = `⏱️ MINUTO ${segundoVirtual.toString().padStart(2,'0')}:00`;
-               document.getElementById(`score-vivo-${idUnico}`).innerText = `${golesTuActuales} - ${golesRivalActuales}`;
+              if (segundoVirtual >= 90) {
+                   clearInterval(timer); 
+                   filaPartido.style.borderColor = ganoUsuario ? "var(--verde-match)" : "var(--rojo)";
+                   if (typeof AudioArena !== 'undefined' && AudioArena.play) AudioArena.play('pitazo');
 
-               if (incidenciasSimuladas[segundoVirtual]) {
-                    document.getElementById(`consola-incidencias-${idUnico}`).innerText = incidenciasSimuladas[segundoVirtual];
-               }
-
-               if (segundoVirtual >= 90) {
-                    clearInterval(timer); 
-                    filaPartido.style.borderColor = ganoUsuario ? "var(--verde-match)" : "var(--rojo)";
-                    
-                    // 🎵 GATILLO DE AUDIO INYECTADO: Pitazo final del referí
-                    if (typeof AudioArena !== 'undefined' && AudioArena.play) AudioArena.play('pitazo');
-
-                    const finLabel = document.createElement("div");
-                    finLabel.style.cssText = `text-align:right; font-size:0.85rem; font-weight:bold; margin-top:8px; font-family:'Oswald'; color:${ganoUsuario ? 'var(--verde-match)' : 'var(--rojo)'};`;
-                    finLabel.innerText = ganoUsuario ? "🏁 FINALIZADO - AVANZAS ✅" : "🏁 FINALIZADO - ELIMINADO ❌";
-                    filaPartido.appendChild(finLabel);
-                    
-                    document.getElementById(`consola-incidencias-${idUnico}`).innerText = ganoUsuario 
-                        ? "🎉 ¡Silbatazo final! Triunfo histórico para meterse en el bolsillo a la hinchada." 
-                        : "😢 Final del partido. Rendimiento amargo, toca pensar en el próximo torneo.";
-                    
-                    resolve(); 
-               }
-          }, 400);
+                   const finLabel = document.createElement("div");
+                   finLabel.style.cssText = `text-align:right; font-size:0.85rem; font-weight:bold; margin-top:8px; font-family:'Oswald'; color:${ganoUsuario ? 'var(--verde-match)' : 'var(--rojo)'};`;
+                   finLabel.innerText = ganoUsuario ? "🏁 FINALIZADO - AVANZAS ✅" : "🏁 FINALIZADO - ELIMINADO ❌";
+                   filaPartido.appendChild(finLabel);
+                   resolve(); 
+              }
+         }, 400);
     });
 }
 
