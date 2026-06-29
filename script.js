@@ -3540,3 +3540,17 @@ function toggleVisibilidadMisiones() {
         AudioArena.play('click');
     }
 }
+
+// ⚡ MOTOR DE SCROLL HORIZONTAL CON LA RUEDA DEL MOUSE
+document.addEventListener("DOMContentLoaded", () => {
+    const contenedorScroll = document.querySelector(".menu-scroll-padre");
+    
+    if (contenedorScroll) {
+        contenedorScroll.addEventListener("wheel", (evt) => {
+            // Si el usuario mueve la rueda vertical, interceptamos el evento
+            evt.preventDefault();
+            // Desplazamos horizontalmente la misma cantidad de pixeles
+            contenedorScroll.scrollLeft += evt.deltaY;
+        }, { passive: false });
+    }
+});
