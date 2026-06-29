@@ -2725,7 +2725,7 @@ app.post('/api/timba/quiniela', verificarToken, async (req, res) => {
 // 🏅 ENDPOINTS SEGUROS PARA EL SISTEMA DE MISIONES DIARIAS (CONEXIÓN NEON)
 // ========================================================================
 
-// 1. OBTENER LAS MISIONES DIARIAS ACTUALES DEL JUGADOR (CON RESET DIARIO AUTOMÁTICO)
+// 1. OBTENER LAS MISIONES DIARIAS ACTUALES DEL JUGADOR (CON RESET DIARIO AUTOMÁTICO - FIX STRING PLANO)
 app.get('/api/misiones/obtener', verificarToken, async (req, res) => {
     const usuarioId = req.usuarioLogueado.id; // Sincronizado con tu middleware real
     const client = await pool.connect();
@@ -2735,14 +2735,14 @@ app.get('/api/misiones/obtener', verificarToken, async (req, res) => {
 
         // 🕵️‍♂️ 1. Control del tiempo real (GMT-3 para la Arena en Buenos Aires)
         const ahora = new Date();
-        // Convertimos a la zona horaria local para evitar desajustes de UTC en el servidor de Render
         const opcionesFecha = { timeZone: 'America/Argentina/Buenos_Aires', year: 'numeric', month: '2-digit', day: '2-digit' };
         const [mes, dia, anio] = ahora.toLocaleDateString('en-US', opcionesFecha).split('/');
-        const fechaHoyString = `${anio}-${mes}-${dia}`; // Formato limpio YYYY-MM-DD
+        const fechaHoyString = `${anio}-${mes}-${dia}`; // Formato limpio YYYY-MM-DD sin interferencia de horas
 
-        // 🔑 2. Chequeamos la marca del último reset en el usuario
+        // 🔑 2. Chequeamos la marca del último reset directamente como formato texto desde PostgreSQL
+        // 🛡️ Al usar TO_CHAR evitamos que JavaScript intente instanciar un Date y le reste 3 horas por desfase UTC
         const userCheck = await client.query(
-            "SELECT ultimo_reset_misiones FROM usuarios WHERE id = $1",
+            "SELECT TO_CHAR(ultimo_reset_misiones, 'YYYY-MM-DD') as ultimo_reset FROM usuarios WHERE id = $1",
             [usuarioId]
         );
 
@@ -2751,16 +2751,10 @@ app.get('/api/misiones/obtener', verificarToken, async (req, res) => {
             return res.status(404).json({ ok: false, error: "Usuario no encontrado en la Arena." });
         }
 
-        const ultimoReset = userCheck.rows[0].ultimo_reset_misiones;
-        let fechaUltimoResetString = null;
+        // Leemos la string plana pura del registro (Ej: '2026-06-29' o null)
+        const fechaUltimoResetString = userCheck.rows[0].ultimo_reset;
 
-        if (ultimoReset) {
-            const uResetDate = new Date(ultimoReset);
-            const [uMes, uDia, uAnio] = uResetDate.toLocaleDateString('en-US', opcionesFecha).split('/');
-            fechaUltimoResetString = `${uAnio}-${uMes}-${uDia}`;
-        }
-
-        // ♻️ 3. EL DISPARADOR DEL RESET: Si nunca reseteó o si cambió la fecha del calendario
+        // ♻️ 3. EL DISPARADOR DEL RESET: Si nunca reseteó o si cambió la fecha del calendario local
         if (!fechaUltimoResetString || fechaUltimoResetString !== fechaHoyString) {
             
             // Ponemos a 0 el progreso de todas las misiones de tu tabla 'usuario_misiones'
@@ -2777,7 +2771,7 @@ app.get('/api/misiones/obtener', verificarToken, async (req, res) => {
                 WHERE id = $2
             `, [fechaHoyString, usuarioId]);
 
-            console.log(`♻️ ¡Silbatazo de medianoche! Cartelera reseteada a 0 para el usuario ${usuarioId}`);
+            console.log(`♻️ ¡Silbatazo de medianoche! Cartelera reseteada a 0 para el usuario ${usuarioId} (Fecha: ${fechaHoyString})`);
         }
 
         // 4. Traemos los datos frescos (Ya sea limpios o en progreso de hoy)
