@@ -2725,20 +2725,76 @@ app.post('/api/timba/quiniela', verificarToken, async (req, res) => {
 // 🏅 ENDPOINTS SEGUROS PARA EL SISTEMA DE MISIONES DIARIAS (CONEXIÓN NEON)
 // ========================================================================
 
-// 1. OBTENER LAS MISIONES DIARIAS ACTUALES DEL JUGADOR
+// 1. OBTENER LAS MISIONES DIARIAS ACTUALES DEL JUGADOR (CON RESET DIARIO AUTOMÁTICO)
 app.get('/api/misiones/obtener', verificarToken, async (req, res) => {
-    try {
-        const usuarioId = req.usuarioLogueado.id; // 🔥 Sincronizado con tu middleware real
+    const usuarioId = req.usuarioLogueado.id; // Sincronizado con tu middleware real
+    const client = await pool.connect();
 
-        const resultado = await pool.query(
+    try {
+        await client.query('BEGIN');
+
+        // 🕵️‍♂️ 1. Control del tiempo real (GMT-3 para la Arena en Buenos Aires)
+        const ahora = new Date();
+        // Convertimos a la zona horaria local para evitar desajustes de UTC en el servidor de Render
+        const opcionesFecha = { timeZone: 'America/Argentina/Buenos_Aires', year: 'numeric', month: '2-digit', day: '2-digit' };
+        const [mes, dia, anio] = ahora.toLocaleDateString('en-US', opcionesFecha).split('/');
+        const fechaHoyString = `${anio}-${mes}-${dia}`; // Formato limpio YYYY-MM-DD
+
+        // 🔑 2. Chequeamos la marca del último reset en el usuario
+        const userCheck = await client.query(
+            "SELECT ultimo_reset_misiones FROM usuarios WHERE id = $1",
+            [usuarioId]
+        );
+
+        if (userCheck.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ ok: false, error: "Usuario no encontrado en la Arena." });
+        }
+
+        const ultimoReset = userCheck.rows[0].ultimo_reset_misiones;
+        let fechaUltimoResetString = null;
+
+        if (ultimoReset) {
+            const uResetDate = new Date(ultimoReset);
+            const [uMes, uDia, uAnio] = uResetDate.toLocaleDateString('en-US', opcionesFecha).split('/');
+            fechaUltimoResetString = `${uAnio}-${uMes}-${uDia}`;
+        }
+
+        // ♻️ 3. EL DISPARADOR DEL RESET: Si nunca reseteó o si cambió la fecha del calendario
+        if (!fechaUltimoResetString || fechaUltimoResetString !== fechaHoyString) {
+            
+            // Ponemos a 0 el progreso de todas las misiones de tu tabla 'usuario_misiones'
+            await client.query(`
+                UPDATE usuario_misiones 
+                SET progreso = 0, reclamada = FALSE, actualizado_en = NOW()
+                WHERE usuario_id = $1
+            `, [usuarioId]);
+
+            // Guardamos la marca de hoy en el usuario para bloquear nuevos resets hasta mañana
+            await client.query(`
+                UPDATE usuarios 
+                SET ultimo_reset_misiones = $1 
+                WHERE id = $2
+            `, [fechaHoyString, usuarioId]);
+
+            console.log(`♻️ ¡Silbatazo de medianoche! Cartelera reseteada a 0 para el usuario ${usuarioId}`);
+        }
+
+        // 4. Traemos los datos frescos (Ya sea limpios o en progreso de hoy)
+        const resultado = await client.query(
             "SELECT id, mision_id, descripcion, tipo, progreso, meta, recompensa, reclamada FROM usuario_misiones WHERE usuario_id = $1 ORDER BY mision_id ASC",
             [usuarioId]
         );
 
+        await client.query('COMMIT');
         res.json({ ok: true, misiones: resultado.rows });
+
     } catch (err) {
-        console.error("❌ Error en /misiones/obtener:", err.message);
-        res.status(500).json({ error: "Error en el servidor al cargar objetivos." });
+        await client.query('ROLLBACK');
+        console.error("❌ Error en /misiones/obtener con reset dinámico:", err.message);
+        res.status(500).json({ error: "Error en el servidor al cargar u optimizar misiones." });
+    } finally {
+        client.release();
     }
 });
 
