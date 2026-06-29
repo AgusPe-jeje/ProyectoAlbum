@@ -2288,13 +2288,18 @@ async function cargarRankingMundialesLocal() {
 let datosInformeParcheCache = null;
 
 /* ========================================================================
-   📢 CONTROLADOR DE NOVEDADES Y PARCHES DE LA ARENA (MULTIMEDIA NATIVO)
+   📢 PASO 1: CONTROLADOR DE NOVEDADES Y PARCHES DE LA ARENA (MULTIMEDIA NATIVO)
    ======================================================================== */
 async function iniciarControladorAnunciosSeguro() {
     try {
         const res = await fetch(`${URL_BASE}/anuncio-actual`);
         const anuncio = await res.json();
-        if (!anuncio || !anuncio.activo) return;
+        
+        if (!anuncio || !anuncio.activo) {
+            // 🏎️ CONTROL DE FLUJO: Si no hay anuncio activo, salta directo a la Recompensa Diaria (Paso 3)
+            verificarRecompensaDiaria();
+            return;
+        }
 
         datosInformeParcheCache = anuncio.informe || null;
 
@@ -2305,7 +2310,6 @@ async function iniciarControladorAnunciosSeguro() {
         
         if (!modal || !tituloHtml || !cuerpoHtml) return;
 
-        // Renderizado limpio de cabeceras
         tituloHtml.textContent = anuncio.titulo.toUpperCase();
         cuerpoHtml.innerHTML = ""; 
 
@@ -2317,36 +2321,40 @@ async function iniciarControladorAnunciosSeguro() {
             cuerpoHtml.appendChild(p);
         }
         
-        // Inyección de Imagen
-        if (anuncio.tipo === "imagen" && anuncio.urlImagen) {
+        // Inyección de Video Iframe Responsivo
+        if (anuncio.tipo === "video" && anuncio.urlVideo) {
+            const containerVideo = document.createElement('div'); 
+            containerVideo.className = "anuncio-video-container";
+            containerVideo.style.cssText = "position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); margin-bottom: 15px;";
+            
+            const iframe = document.createElement('iframe'); 
+            iframe.src = anuncio.urlVideo; 
+            iframe.setAttribute('allowfullscreen', 'true'); 
+            iframe.style.cssText = "position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;";
+            
+            containerVideo.appendChild(iframe); 
+            cuerpoHtml.appendChild(containerVideo);
+        } 
+        // Inyección de Imagen alternativo
+        else if (anuncio.tipo === "imagen" && anuncio.urlImagen) {
             const img = document.createElement('img'); 
             img.src = anuncio.urlImagen; 
             img.className = "anuncio-media"; 
             img.alt = "Novedades";
             cuerpoHtml.appendChild(img);
-        } 
-        // Inyección de Video Iframe
-        else if (anuncio.tipo === "video" && anuncio.urlVideo) {
-            const containerVideo = document.createElement('div'); 
-            containerVideo.className = "anuncio-video-container";
-            const iframe = document.createElement('iframe'); 
-            iframe.src = anuncio.urlVideo; 
-            iframe.setAttribute('allowfullscreen', 'true'); 
-            iframe.style.border = "none";
-            containerVideo.appendChild(iframe); 
-            cuerpoHtml.appendChild(containerVideo);
         }
 
-        // 🔥 RESTAURACIÓN DE BOTÓN: Devolvemos el click nativo de cierre de la v2.4.1
+        // Interceptamos el click nativo de cierre
         if (btnEntendido) {
             btnEntendido.onclick = () => {
-                if (typeof cerrarAnuncioGlobal === 'function') cerrarAnuncioGlobal();
+                cerrarAnuncioGlobal();
             };
         }
 
         modal.style.display = "flex";
     } catch (err) { 
         console.error("Error en banner de novedades:", err); 
+        verificarRecompensaDiaria(); // Resguardo por si falla la red, que pueda reclamar igual
     }
 }
 
@@ -2357,9 +2365,12 @@ function cerrarAnuncioGlobal() {
         document.getElementById('anuncioCuerpo').innerHTML = ""; 
     }
 
-    // 🏎️ Si el caché del anuncio guardó los datos del informe del parche de Neon, abre el HUD de cambios
+    // 🏎️ PASO 2: Abre el HUD estructural si el caché guardó los datos del informe
     if (datosInformeParcheCache) {
         abrirInformeActualizacionUI(datosInformeParcheCache);
+    } else {
+        // Si no hay informe de cambios, pasa directo a la Recompensa Diaria
+        verificarRecompensaDiaria();
     }
 }
 
@@ -2391,6 +2402,9 @@ function cerrarInformeParche() {
     const modalParche = document.getElementById("modal-informe-parche");
     if (modalParche) modalParche.style.display = "none";
     datosInformeParcheCache = null; 
+
+    // 🏎️ PASO 3: Ejecutamos el reclamo diario inmediatamente al cerrar la bitácora de parches
+    verificarRecompensaDiariaSecuencial();
 }
 
 function abrirMercadoBot(listaTusRepetidas) {
@@ -3125,7 +3139,7 @@ function iniciarCronometroResetMisiones() {
 }
 
 /* ========================================================================
-   🎁 SISTEMA PREMIUM: RECOMPENSA POR CONEXIÓN DIARIA CONTINUA (DAILY CLAIM)
+   🎁 PASO 3: SISTEMA PREMIUM: RECOMPENSA POR CONEXIÓN DIARIA CONTINUA (DAILY CLAIM)
    ======================================================================== */
 async function verificarRecompensaDiaria() {
     try {
@@ -3158,32 +3172,25 @@ async function verificarRecompensaDiaria() {
                 `;
                 modal.style.display = "flex";
 
-                // INTERCEPCIÓN CONTROLADA DEL BOTÓN DE CIERRE
+                // INTERCEPCIÓN CONTROLADA DEL BOTÓN DE CIERRE FINAL
                 if (btnEntendido) {
                     btnEntendido.onclick = () => {
-                        // Limpiamos el modal por completo para la siguiente carga
                         modal.style.display = "none";
                         cuerpoHtml.innerHTML = "";
 
-                        // 🏁 SECUENCIA A: Si completó el Día 7, prioridad máxima al sobre Legendario
+                        // Si completó el Día 7, se lleva el sobre Legendario final
                         if (data.regaloSobre && typeof comprarSobreEspecifico === 'function') {
                             comprarSobreEspecifico("legendaria");
-                        } else {
-                            // 🏁 SECUENCIA B: Pasamos al anuncio multimedia normal de forma fluida
-                            iniciarControladorAnunciosSeguro();
                         }
                     };
                 }
             }
         } else {
-            console.log(`ℹ️ Control diario: ${data.mensaje}`);
-            // Si ya reclamó hoy, abrimos el controlador de novedades multimedia directamente
-            iniciarControladorAnunciosSeguro();
+            // Si ya reclamó hoy, el flujo simplemente termina en silencio sin pisar nada.
+            console.log(`ℹ️ Control diario completado: ${data.mensaje}`);
         }
     } catch (err) {
         console.error("Error al gestionar el bono de racha diario:", err);
-        // Resguardo por si falla la API de racha, que no tape las novedades
-        iniciarControladorAnunciosSeguro();
     }
 }
 
