@@ -3293,3 +3293,179 @@ const AudioArena = {
         }
     }
 };
+
+/* ========================================================================
+   🦾 ENGINE INTERACTIVO DEL BOT COMERCIANTE: CONTRATOS SEMANALES (SBC)
+   ======================================================================== */
+let sbcContratoActivoCache = null;
+let sbcJugadoresSeleccionados = []; // Almacena los IDs de las cartas elegidas para quemar
+
+async function cargarModuloSBC() {
+    const titulo = document.getElementById("sbc-titulo-desafio");
+    const desc = document.getElementById("sbc-descripcion-desafio");
+    const listaReq = document.getElementById("sbc-lista-requisitos");
+    const grid = document.getElementById("grid-sbc-elegibles");
+
+    if (!titulo || !grid) return;
+
+    sbcJugadoresSeleccionados = [];
+    document.getElementById("sbc-contador-slots").innerText = "0 / 3";
+
+    try {
+        // Consultamos la configuración viva al Backend
+        const res = await fetch(`${URL_BASE}/contratos/activo`, {
+            method: 'GET',
+            headers: obtenerHeadersSeguros()
+        });
+        const data = await res.json();
+
+        if (!data.ok || !data.contrato) {
+            titulo.innerText = "❌ SIN CONTRATOS DISPONIBLES";
+            desc.innerText = "El Bot Comerciante no tiene pedidos esta semana.";
+            return;
+        }
+
+        sbcContratoActivoCache = data.contrato;
+        const req = sbcContratoActivoCache.requisitos;
+
+        // Renderizamos las cabeceras e info del Contrato
+        titulo.innerText = sbcContratoActivoCache.titulo.toUpperCase();
+        desc.innerText = sbcContratoActivoCache.descripcion;
+
+        listaReq.innerHTML = `
+            <div>🔹 <strong>Cantidad exigida:</strong> ${req.cantidad} jugadores.</div>
+            <div>🔹 <strong>Rareza exacta:</strong> ${req.rareza.toUpperCase()}</div>
+            <div>🔹 <strong>País de origen:</strong> ${req.pais.toUpperCase()}</div>
+            <div style="margin-top: 8px; border-top: 1px dashed #334155; padding-top: 8px; color: var(--verde-match);">
+                🎁 <strong>Premio:</strong> 🪙 ${sbcContratoActivoCache.recompensa.valor} Oro Neto.
+            </div>
+        `;
+
+        renderizarCartasElegiblesSBC();
+
+    } catch (err) {
+        console.error("Error al cargar datos del SBC:", err);
+        grid.innerHTML = "<p style='color:var(--rojo); text-align:center;'>Fallo de red al conectar con el Bot.</p>";
+    }
+}
+
+function renderizarCartasElegiblesSBC() {
+    const grid = document.getElementById("grid-sbc-elegibles");
+    if (!grid || !sbcContratoActivoCache) return;
+    grid.innerHTML = "";
+
+    const req = sbcContratoActivoCache.requisitos;
+    const miAlbum = window.albumCompleto || [];
+
+    // Filtramos los que tengan al menos 1 repetida y cumplan los filtros del Bot
+    const elegibles = miAlbum.filter(carta => {
+        const copias = carta.obtenido !== undefined ? carta.obtenido : (carta.cantidad || 0);
+        const cumpleCant = copias > 1; 
+        const cumpleRareza = carta.rareza.toLowerCase() === req.rareza.toLowerCase();
+        const cumplePais = carta.pais.toLowerCase() === req.pais.toLowerCase();
+        return cumpleCant && cumpleRareza && cumplePais;
+    });
+
+    if (elegibles.length === 0) {
+        grid.innerHTML = `<div style="color:#64748b; grid-column:1/-1; text-align:center; padding:30px; font-style:italic;">❌ No tenés cromos REPETIDOS de ${req.pais.toUpperCase()} que sean ${req.rareza.toUpperCase()} en tus vestuarios.</div>`;
+        return;
+    }
+
+    // Calculamos el total actual de cartas seleccionadas en el pool
+    const totalSeleccionadas = sbcJugadoresSeleccionados.length;
+
+    elegibles.forEach(carta => {
+        const cardBox = document.createElement("div");
+        const copias = carta.obtenido !== undefined ? carta.obtenido : (carta.cantidad || 0);
+        const maxRepetidasDisponibles = copias - 1; // Dejamos 1 siempre en el álbum
+
+        // Contamos cuántas veces se seleccionó ESTE jugador específico en el pool actual
+        const vecesElegido = sbcJugadoresSeleccionados.filter(id => id === carta.id).length;
+        const estaElegida = vecesElegido > 0;
+
+        cardBox.className = `carta-clash ${carta.rareza.toLowerCase()} ${estaElegida ? 'carta-sbc-seleccionada' : ''}`;
+        cardBox.style.cursor = "pointer";
+        cardBox.style.position = "relative";
+        
+        // Renderizamos las copias que quedan libres para meter en el contrato
+        cardBox.innerHTML = `
+            <div class="badge-repetidas" style="background: ${vecesElegido === maxRepetidasDisponibles ? 'var(--rojo)' : 'var(--celeste)'}; color:#000; font-weight:bold;">
+                ${vecesElegido} / ${maxRepetidasDisponibles}
+            </div>
+            <img src="${carta.foto}" class="carta-foto" alt="${carta.nombre}">
+            <div class="rareza-vertical">${carta.rareza.toUpperCase()}</div>
+        `;
+
+        cardBox.onclick = () => {
+            if (vecesElegido < maxRepetidasDisponibles) {
+                // Si todavía tiene copias disponibles y no superamos el cupo total del SBC
+                if (totalSeleccionadas >= req.cantidad) {
+                    return alert(`⚠️ El contrato solo exige ${req.cantidad} jugadores en total.`);
+                }
+                sbcJugadoresSeleccionados.push(carta.id);
+            } else {
+                // Si ya llegó al tope de sus repetidas, al hacer clic reiniciamos el contador de esta carta
+                sbcJugadoresSeleccionados = sbcJugadoresSeleccionados.filter(id => id !== carta.id);
+            }
+
+            // Refrescamos contadores generales en la interfaz
+            document.getElementById("sbc-contador-slots").innerText = `${sbcJugadoresSeleccionados.length} / ${req.cantidad}`;
+            renderizarCartasElegiblesSBC();
+        };
+
+        grid.appendChild(cardBox);
+    });
+}
+
+async function enviarContratoAlBot() {
+    if (!sbcContratoActivoCache) return;
+    const req = sbcContratoActivoCache.requisitos;
+
+    if (sbcJugadoresSeleccionados.length !== req.cantidad) {
+        return alert(`❌ Planilla incompleta. Debés tildar exactamente ${req.cantidad} jugadores de la grilla.`);
+    }
+
+    if (!confirm("⚠️ ¡ATENCIÓN JUGADOR!\n\nAl confirmar, estos 3 cromos se quemarán de tu inventario de forma permanente y no podrán recuperarse. ¿Firmamos el trato?")) {
+        return;
+    }
+
+    mostrarCarga("El Bot Comerciante está auditando los pases entregados...");
+
+    try {
+        const res = await fetch(`${URL_BASE}/contratos/completar`, {
+            method: 'POST',
+            headers: obtenerHeadersSeguros(),
+            body: JSON.stringify({ jugadorIds: sbcJugadoresSeleccionados })
+        });
+        const data = await res.json();
+        ocultarCarga();
+
+        if (data.ok) {
+            alert(data.mensaje);
+
+            // Sincronizamos las nuevas monedas calculadas por el backend de forma segura
+            if (usuarioActual && data.nuevoOro !== undefined) {
+                usuarioActual.monedas = data.nuevoOro;
+                const lblMonedas = document.getElementById("lbl-monedas");
+                if (lblMonedas) lblMonedas.innerText = usuarioActual.monedas;
+            }
+
+            // 🎵 Gatillo de audio premium metálico si tenés el motor activo
+            if (typeof AudioArena !== 'undefined' && AudioArena.play) {
+                AudioArena.play('monedas');
+            }
+
+            // Recargamos el álbum local del cliente y refrescamos el módulo de SBC
+            if (typeof cargarAlbumLocal === 'function') cargarAlbumLocal();
+            cargarModuloSBC();
+
+        } else {
+            alert(data.mensaje || "❌ El Bot rechazó las cartas enviadas.");
+        }
+
+    } catch (err) {
+        console.error("Error en el envío del Trade-In:", err);
+        ocultarCarga();
+        alert("❌ Error de red al procesar el Trade-In con el Servidor.");
+    }
+}
