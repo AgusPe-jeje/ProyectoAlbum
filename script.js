@@ -2007,9 +2007,12 @@ window.renderizarFixturePasoAPaso = function(bitacora, premio, apuestasTexto) {
         const rondaNombre = partido.ronda || `PARTIDO #${index + 1}`;
         const golesLocalDefinitivos = partido.golesLocal || 0; 
         const golesVisitanteDefinitivos = partido.golesVisitante || 0;
-        const incidenciasDelPartido = partido.incidencias || {};
 
-        secuenciaPromesas = secuenciaPromesas.then(() => {
+        // 🛡️ SINCRONIZACIÓN CON EL SERVER: Mapeamos las líneas de tiempo precalculadas
+        const cronogramaGolesTu = partido.minutosL ? [...partido.minutosL] : [];
+        const cronogramaGolesRival = partido.minutosV ? [...partido.minutosV] : [];
+
+        secuenciaPromesas = sequencePromesas = secuenciaPromesas.then(() => {
             return new Promise((resolveCruce) => {
                  const bloquePartido = document.createElement("div"); 
                  bloquePartido.className = "partido-simulado-card"; 
@@ -2034,7 +2037,6 @@ window.renderizarFixturePasoAPaso = function(bitacora, premio, apuestasTexto) {
                  tablero.appendChild(bloquePartido); 
                  bloquePartido.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-                 // 🎵 GATILLO DE AUDIO INYECTADO: Silbatazo inicial del árbitro al arrancar el partido online
                  if (typeof AudioArena !== 'undefined' && AudioArena.play) AudioArena.play('pitazo');
 
                  let minVirtual = 0; 
@@ -2042,37 +2044,31 @@ window.renderizarFixturePasoAPaso = function(bitacora, premio, apuestasTexto) {
                  let gV_act = 0;
 
                  const timerMulti = setInterval(() => {
-                      minVirtual += 5; 
+                      minVirtual += 3; // Corremos a pasos de a 3 min para acoplar perfecto con el backend
                       if (minVirtual > 90) minVirtual = 90;
 
-                      if (minVirtual >= 15) {
-                           let gritoGolOnline = false;
-                           if (gL_act < golesLocalDefinitivos && Math.random() < 0.2) {
-                                gL_act++;
-                                gritoGolOnline = true;
-                                inyectarGritoGolMulti(index, `⚽ ¡GOOOL DE ${loc.toUpperCase()}! Se cae el estadio... 🔥`);
-                           }
-                           if (gV_act < golesVisitanteDefinitivos && Math.random() < 0.2) {
-                                gV_act++;
-                                gritoGolOnline = true;
-                                inyectarGritoGolMulti(index, `💥 ¡GOL DE ${vis.toUpperCase()}! Silencio sepulcral en la Arena...`);
-                           }
+                      let huboGol = false;
 
-                           // 🎵 GATILLO DE AUDIO INYECTADO: Tribuna estalla si hay gol en el marcador
-                           if (gritoGolOnline && typeof AudioArena !== 'undefined' && AudioArena.play) {
-                               AudioArena.play('gol');
-                           }
+                      // 🟢 REPRODUCCIÓN ATÓMICA DE CRONOGRAMA: Cero Math.random() en el front
+                      if (cronogramaGolesTu.includes(minVirtual)) {
+                           gL_act++;
+                           huboGol = true;
+                           inyectarGritoGolMulti(index, `⚽ ¡GOOOL DE ${loc.toUpperCase()}! Se cae el estadio... 🔥`);
+                      }
+                      
+                      if (cronogramaGolesRival.includes(minVirtual)) {
+                           gV_act++;
+                           huboGol = true;
+                           inyectarGritoGolMulti(index, `💥 ¡GOL DE ${vis.toUpperCase()}! Silencio sepulcral en la Arena...`);
                       }
 
-                      if (minVirtual === 45 && typeof AudioArena !== 'undefined' && AudioArena.play) {
-                           // Silbato corto indicando entretiempo tactico
-                           AudioArena.play('pitazo');
+                      if (huboGol && typeof AudioArena !== 'undefined' && AudioArena.play) {
+                           AudioArena.play('gol');
                       }
 
-                      if (minVirtual === 50 && typeof AudioArena !== 'undefined' && AudioArena.play) {
-                           // Silbato de reanudacion del segundo tiempo
-                           AudioArena.play('pitazo');
-                      }
+                      // Entretiempo e incidencias cronológicas
+                      if (minVirtual === 45 && typeof AudioArena !== 'undefined' && AudioArena.play) AudioArena.play('pitazo');
+                      if (minVirtual === 48 && typeof AudioArena !== 'undefined' && AudioArena.play) AudioArena.play('pitazo');
 
                       if (minVirtual === 90) { 
                            gL_act = golesLocalDefinitivos; 
@@ -2085,14 +2081,8 @@ window.renderizarFixturePasoAPaso = function(bitacora, premio, apuestasTexto) {
                       const elScore = document.getElementById(`multi-score-${index}`);
                       if (elScore) elScore.innerText = `${gL_act} - ${gV_act}`;
 
-                      if (incidenciasDelPartido[minVirtual]) {
-                           document.getElementById(`multi-log-vivo-${index}`).innerText = incidenciasDelPartido[minVirtual];
-                      }
-
                       if (minVirtual >= 90) {
                            clearInterval(timerMulti);
-                           
-                           // 🎵 GATILLO DE AUDIO INYECTADO: Pitazo final del encuentro
                            if (typeof AudioArena !== 'undefined' && AudioArena.play) AudioArena.play('pitazo');
 
                            if (partido.definicionPenales) {
@@ -2112,7 +2102,7 @@ window.renderizarFixturePasoAPaso = function(bitacora, premio, apuestasTexto) {
                            document.getElementById(`multi-log-vivo-${index}`).innerText = "🏁 El árbitro pita el final del encuentro. Planillas guardadas con éxito.";
                            resolveCruce(); 
                       }
-                 }, 400);
+                 }, 250); // Velocidad fluida de transmisión de fixture
             });
         });
     });
@@ -2157,11 +2147,11 @@ window.renderizarFixturePasoAPaso = function(bitacora, premio, apuestasTexto) {
          tablero.appendChild(bloquePremio); bloquePremio.scrollIntoView({ behavior: 'smooth' });
 
          document.getElementById("btn-regresar-limpio-multi").onclick = () => {
-             document.getElementById("multi-pantalla-fixture").style.display = "none";
-             document.getElementById("multi-menu-inicial").style.display = "block";
-             if (document.getElementById("modulo-mundial-multi")) document.getElementById("modulo-mundial-multi").style.display = "block";
-             liberarNavegacionArenaUI(); multiSalaId = null; multiCodigoSala = null; multiEsCreador = false; jugadoresSeleccionadosDraft = [];
-             const btnTienda = document.querySelector("button[onclick*='modulo-sobres']"); cambiarModulo('modulo-sobres', btnTienda);
+              document.getElementById("multi-pantalla-fixture").style.display = "none";
+              document.getElementById("multi-menu-inicial").style.display = "block";
+              if (document.getElementById("modulo-mundial-multi")) document.getElementById("modulo-mundial-multi").style.display = "block";
+              liberarNavegacionArenaUI(); multiSalaId = null; multiCodigoSala = null; multiEsCreador = false; jugadoresSeleccionadosDraft = [];
+              const btnTienda = document.querySelector("button[onclick*='modulo-sobres']"); cambiarModulo('modulo-sobres', btnTienda);
          };
     });
 };
@@ -2172,7 +2162,7 @@ function inyectarGritoGolMulti(index, mensajeTexto) {
      logView.innerText = mensajeTexto;
      logView.style.color = "var(--dorado)";
      logView.style.fontWeight = "bold";
-     setTimeout(() => { if (logView) { logView.style.color = "#64748b"; logView.style.fontWeight = "normal"; } }, 1600);
+     setTimeout(() => { if (logView) { logView.style.color = "#94a3b8"; logView.style.fontWeight = "normal"; } }, 1600);
 }
 
 function conmutarInputsMultiUI() {
