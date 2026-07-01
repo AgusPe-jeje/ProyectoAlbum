@@ -1345,7 +1345,7 @@ app.post('/api/timba/preparar', verificarToken, async (req, res) => {
             [ahora, nuevasTimbasGuardadas, usuario_id]
         );
 
-        // 🎲 GENERACIÓN REAL DE LA BANCA
+        // 🎲 1. GENERACIÓN REAL DE LA BANCA
         const golesLReal = generarGolesServidor();
         const golesVReal = generarGolesServidor();
         const signoReal = golesLReal > golesVReal ? 'L' : (golesLReal < golesVReal ? 'V' : 'E');
@@ -1359,74 +1359,67 @@ app.post('/api/timba/preparar', verificarToken, async (req, res) => {
             { label: labelReal, tipo: 'exacto' }
         ];
 
-        // 🌪️ LLUVIA DE AZAR PARA SIGNOS COINCIDENTES (Generación ciega)
-        let intentosSigno = 0;
-        while (poolOpciones.filter(o => o.tipo === 'signo').length < 2 && intentosSigno < 100) {
-            intentosSigno++;
-            let gl = generarGolesServidor();
-            let gv = generarGolesServidor();
-            let combo = `${gl} - ${gv}`;
-            let signoOpc = gl > gv ? 'L' : (gl < gv ? 'V' : 'E');
+        // 🌪️ 2. BOLSA DE RUIDO ABSOLUTO DE FÚTBOL REALISTA (Chau dependencia matemática)
+        const bolsaDeResultados = [
+            {l:1, v:0}, {l:2, v:0}, {l:2, v:1}, {l:3, v:0}, {l:3, v:1}, {l:3, v:2}, {l:4, v:1}, {l:4, v:2}, // Locales
+            {l:0, v:1}, {l:0, v:2}, {l:1, v:2}, {l:0, v:3}, {l:1, v:3}, {l:2, v:3}, {l:1, v:4}, {l:2, v:4}, // Visitantes
+            {l:0, v:0}, {l:1, v:1}, {l:2, v:2}, {l:3, v:3}                                               // Empates
+        ];
 
-            // Si coincide el signo por puro azar, pero NO es el marcador exacto, entra
-            if (signoOpc === signoReal && combo !== labelReal && !combinacionesUsadas.has(combo)) {
+        // Desordenamos la bolsa de ruido por completo en cada giro
+        const bolsaMezclada = bolsaDeResultados.sort(() => Math.random() - 0.5);
+
+        // 🔮 3. EXTRACCIÓN DE LAS 2 OPCIONES DE SIGNO COINCIDENTE
+        for (const resBolsa of bolsaMezclada) {
+            if (poolOpciones.filter(o => o.tipo === 'signo').length >= 2) break;
+            
+            const combo = `${resBolsa.l} - ${resBolsa.v}`;
+            const signoOpc = resBolsa.l > resBolsa.v ? 'L' : (resBolsa.l < resBolsa.v ? 'V' : 'E');
+
+            if (signoOpc === signoReal && !combinacionesUsadas.has(combo)) {
                 combinacionesUsadas.add(combo);
                 poolOpciones.push({ label: combo, tipo: 'signo' });
             }
         }
 
-        // 🌪️ LLUVIA DE AZAR PARA ERRORES (Generación ciega)
-        let intentosError = 0;
-        while (poolOpciones.filter(o => o.tipo === 'error').length < 3 && intentosError < 100) {
-            intentosError++;
-            let gl = generarGolesServidor();
-            let gv = generarGolesServidor();
+        // 🔮 4. EXTRACCIÓN DE LAS 3 OPCIONES DE ERROR
+        for (const resBolsa of bolsaMezclada) {
+            if (poolOpciones.filter(o => o.tipo === 'error').length >= 3) break;
             
-            // Inyección ocasional de aleatoriedad extrema para romper cualquier sesgo de "goles chicos"
-            if (Math.random() < 0.3) gl = Math.floor(Math.random() * 4) + 2;
-            if (Math.random() < 0.3) gv = Math.floor(Math.random() * 4) + 2;
+            const combo = `${resBolsa.l} - ${resBolsa.v}`;
+            const signoOpc = resBolsa.l > resBolsa.v ? 'L' : (resBolsa.l < resBolsa.v ? 'V' : 'E');
 
-            let combo = `${gl} - ${gv}`;
-            let signoOpc = gl > gv ? 'L' : (gl < gv ? 'V' : 'E');
-
-            // Si el signo es completamente diferente por azar, entra
             if (signoOpc !== signoReal && !combinacionesUsadas.has(combo)) {
                 combinacionesUsadas.add(combo);
                 poolOpciones.push({ label: combo, tipo: 'error' });
             }
         }
 
-        // 🛡️ SALVAGUARDA ABSOLUTA ANTI-BLOQUEOS
-        // Si por pura probabilidad matemática extrema falta alguna opción, rellenamos con caos puro sin mirar atrás
-        let idBackup = 0;
+        // 🛡️ 5. SALVAGUARDA TOTAL CAÓTICA (En caso de que falte alguna por descarte milimétrico)
+        let idBackup = 1;
         while (poolOpciones.length < 6) {
-            idBackup++;
-            let gl = generarGolesServidor() + idBackup;
-            let gv = generarGolesServidor();
-            let combo = `${gl} - ${gv}`;
-            
+            const combo = `${golesLReal + idBackup} - ${golesVReal + idBackup + 1}`;
             if (!combinacionesUsadas.has(combo)) {
                 combinacionesUsadas.add(combo);
-                let signoOpc = gl > gv ? 'L' : (gl < gv ? 'V' : 'E');
-                let tipoFaltante = signoOpc === signoReal ? 'signo' : 'error';
-                poolOpciones.push({ label: combo, tipo: tipoFaltante });
+                poolOpciones.push({ label: combo, tipo: 'error' });
             }
+            idBackup++;
         }
 
-        // 🧠 MEZCLADO CRIPTOGRÁFICO DOBLE PARA EL FRONTEND
+        // 🧠 6. BARAJADO CRIPTOGRÁFICO FINAL PARA EL CLIENTE
         const poolParaCliente = poolOpciones.map((opc, index) => ({
             idOpcion: index, 
             label: opc.label
         })).sort(() => Math.random() - 0.5);
 
-        // Guardamos la jugada en la memoria volátil del servidor de la Arena
+        // Guardamos la verdad en el mapa de control
         apuestasActivasServidor[usuario_id] = {
             golesLReal,
             golesVReal,
             tipoApuesta,
             montoApuesta,
             jugadorIdApostado,
-            mapeoOpciones: poolOpciones // Mantiene la verdad: index 0 exacto, 1-2 signo, 3-5 error
+            mapeoOpciones: poolOpciones
         };
 
         const tiempoActualizado = nuevasTimbasGuardadas >= MAX_TIMBAS ? 0 : MILISEGUNDOS_POR_TIMBA;
@@ -1439,7 +1432,7 @@ app.post('/api/timba/preparar', verificarToken, async (req, res) => {
         });
 
     } catch (err) {
-        console.error("❌ Fallo en motor de Timba:", err.message);
+        console.error("❌ Fallo crítico en motor de Timba:", err.message);
         return res.status(500).json({ ok: false, mensaje: "Error en el servidor al preparar." });
     }
 });
