@@ -1455,22 +1455,22 @@ app.post('/api/timba/procesar', verificarToken, async (req, res) => {
 
     const { golesLReal, golesVReal, tipoApuesta, montoApuesta, jugadorIdApostado, mapeoOpciones } = apuesta;
     
-    // Recuperamos la opción elegida del array barajado
+    // 🕵️‍♂️ Recuperamos la opción elegida del array barajado usando el ID oculto
     const opcionElegida = mapeoOpciones.find(o => o.idOpcion === parseInt(idOpcionElegida)) || mapeoOpciones[idOpcionElegida];
 
     if (!opcionElegida) {
         return res.status(400).json({ ok: false, mensaje: "Opción de apuesta inválida o alterada." });
     }
 
-    // 🕵️‍♂️ NUEVO DETECTOR DE VERDAD MATEMÁTICO DIRECTO (Cero patrones por ID)
+    // 🛡️ DETECTOR DE VERDAD MATEMÁTICO PURO (Sin patrones, lee texto directo)
     const labelReal = `${golesLReal} - ${golesVReal}`;
     const signoReal = golesLReal > golesVReal ? 'L' : (golesLReal < golesVReal ? 'V' : 'E');
 
-    // Parseamos la opción que eligió el usuario en caliente
+    // Desarmamos el string de lo que el usuario seleccionó en la interfaz
     const [golesLElegidos, golesVElegidos] = opcionElegida.label.split(' - ').map(Number);
     const signoElegido = golesLElegidos > golesVElegidos ? 'L' : (golesLElegidos < golesVElegidos ? 'V' : 'E');
 
-    // Clasificación en tiempo real basada puramente en el texto
+    // Clasificación dinámica en caliente
     let tipoDictamen = 'error'; 
     if (opcionElegida.label === labelReal) {
         tipoDictamen = 'exacto';
@@ -1563,7 +1563,7 @@ app.post('/api/timba/procesar', verificarToken, async (req, res) => {
             }
         }
 
-        // Limpieza de memoria y retorno de datos actualizados
+        // Limpieza atómica de la jugada activa para evitar doble procesamiento (Exploit Fix)
         const userCheck = await pool.query("SELECT monedas, puntos_ranking FROM usuarios WHERE id = $1", [usuario_id]);
         delete apuestasActivasServidor[usuario_id];
 
