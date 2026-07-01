@@ -1354,50 +1354,70 @@ app.post('/api/timba/preparar', verificarToken, async (req, res) => {
         const labelReal = `${golesLReal} - ${golesVReal}`;
         combinacionesUsadas.add(labelReal);
 
-        // La opción 0 es el boleto ganador definitivo
+        // Forzamos la opción exacta como base indispensable
         const poolOpciones = [
             { label: labelReal, tipo: 'exacto' }
         ];
 
-        // 🌪️ MOTOR CAÓTICO ANTI-DESCARTE (2 Opciones de Signo acertado, 3 Erróneas)
-        // Metemos ruido generando marcadores totalmente locos para romper patrones visuales
-
-        // Generamos las 2 que aciertan el signo pero NO el resultado exacto
-        while (poolOpciones.filter(o => o.tipo === 'signo').length < 2) {
+        // 🌪️ LLUVIA DE AZAR PARA SIGNOS COINCIDENTES (Generación ciega)
+        let intentosSigno = 0;
+        while (poolOpciones.filter(o => o.tipo === 'signo').length < 2 && intentosSigno < 100) {
+            intentosSigno++;
             let gl = generarGolesServidor();
             let gv = generarGolesServidor();
             let combo = `${gl} - ${gv}`;
             let signoOpc = gl > gv ? 'L' : (gl < gv ? 'V' : 'E');
 
-            // Obligatorio: Mismo signo, diferente marcador exacto y no repetido
+            // Si coincide el signo por puro azar, pero NO es el marcador exacto, entra
             if (signoOpc === signoReal && combo !== labelReal && !combinacionesUsadas.has(combo)) {
                 combinacionesUsadas.add(combo);
                 poolOpciones.push({ label: combo, tipo: 'signo' });
             }
         }
 
-        // Generamos las 3 que fallan completamente el signo (Error)
-        while (poolOpciones.filter(o => o.tipo === 'error').length < 3) {
-            // Un 40% de probabilidad de meter marcadores "bomba" pesados para distorsionar grupos de descarte
-            let gl = Math.random() < 0.4 ? Math.floor(Math.random() * 4) + 3 : generarGolesServidor();
-            let gv = Math.random() < 0.4 ? Math.floor(Math.random() * 4) + 3 : generarGolesServidor();
+        // 🌪️ LLUVIA DE AZAR PARA ERRORES (Generación ciega)
+        let intentosError = 0;
+        while (poolOpciones.filter(o => o.tipo === 'error').length < 3 && intentosError < 100) {
+            intentosError++;
+            let gl = generarGolesServidor();
+            let gv = generarGolesServidor();
+            
+            // Inyección ocasional de aleatoriedad extrema para romper cualquier sesgo de "goles chicos"
+            if (Math.random() < 0.3) gl = Math.floor(Math.random() * 4) + 2;
+            if (Math.random() < 0.3) gv = Math.floor(Math.random() * 4) + 2;
+
             let combo = `${gl} - ${gv}`;
             let signoOpc = gl > gv ? 'L' : (gl < gv ? 'V' : 'E');
 
-            // Obligatorio: Signo totalmente diferente al real y no repetido
+            // Si el signo es completamente diferente por azar, entra
             if (signoOpc !== signoReal && !combinacionesUsadas.has(combo)) {
                 combinacionesUsadas.add(combo);
                 poolOpciones.push({ label: combo, tipo: 'error' });
             }
         }
 
-        // 🧠 LA ESTOCADA FINAL: Mapeamos y desordenamos de forma criptográfica el array para el cliente
-        // Guardamos el índice real ORIGINAL en el ID para que cuando vuelva en el POST /procesar, 
-        // sepamos quirúrgicamente qué tipo de opción tocó sin importar en qué posición quedó impresa.
+        // 🛡️ SALVAGUARDA ABSOLUTA ANTI-BLOQUEOS
+        // Si por pura probabilidad matemática extrema falta alguna opción, rellenamos con caos puro sin mirar atrás
+        let idBackup = 0;
+        while (poolOpciones.length < 6) {
+            idBackup++;
+            let gl = generarGolesServidor() + idBackup;
+            let gv = generarGolesServidor();
+            let combo = `${gl} - ${gv}`;
+            
+            if (!combinacionesUsadas.has(combo)) {
+                combinacionesUsadas.add(combo);
+                let signoOpc = gl > gv ? 'L' : (gl < gv ? 'V' : 'E');
+                let tipoFaltante = signoOpc === signoReal ? 'signo' : 'error';
+                poolOpciones.push({ label: combo, tipo: tipoFaltante });
+            }
+        }
+
+        // 🧠 MEZCLADO CRIPTOGRÁFICO DOBLE PARA EL FRONTEND
         const poolParaCliente = poolOpciones.map((opc, index) => ({
-            idOpcion: index, // 👈 Mantiene la referencia original oculta
+            idOpcion: index, 
             label: opc.label
-        })).sort(() => Math.random() - 0.5); // Mezclado caótico
+        })).sort(() => Math.random() - 0.5);
 
         // Guardamos la jugada en la memoria volátil del servidor de la Arena
         apuestasActivasServidor[usuario_id] = {
