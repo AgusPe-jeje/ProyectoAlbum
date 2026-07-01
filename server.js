@@ -1363,66 +1363,69 @@ app.post('/api/timba/preparar', verificarToken, async (req, res) => {
         // Metemos ruido generando marcadores totalmente locos para romper patrones visuales
 
         // Generamos las 2 que aciertan el signo pero NO el resultado exacto
-        while (poolOpciones.filter(o => o.tipo === 'signo').length < 2) {
-            let gl = generarGolesServidor();
-            let gv = generarGolesServidor();
-            let combo = `${gl} - ${gv}`;
-            let signoOpc = gl > gv ? 'L' : (gl < gv ? 'V' : 'E');
+       while (poolOpciones.filter(o => o.tipo === 'signo').length < 2) {
+            // Generamos un modificador aleatorio para mover los goles sin alterar quién gana
+            let variacion = Math.floor(Math.random() * 2) + 1; 
+            let gl = golesLReal;
+            let gv = golesVReal;
 
-            // Obligatorio: Mismo signo, diferente marcador exacto y no repetido
-            if (signoOpc === signoReal && combo !== labelReal && !combinacionesUsadas.has(combo)) {
+            if (signoReal === 'L') { gl += variacion; }
+            else if (signoReal === 'V') { gv += variacion; }
+            else { gl += variacion; gv += variacion; } // Empate: subimos ambos por igual
+
+            let combo = `${gl} - ${gv}`;
+            if (combo !== labelReal && !combinacionesUsadas.has(combo)) {
                 combinacionesUsadas.add(combo);
                 poolOpciones.push({ label: combo, tipo: 'signo' });
             }
         }
 
-        // Generamos las 3 que fallan completamente el signo (Error)
-        while (poolOpciones.filter(o => o.tipo === 'error').length < 3) {
-            // Un 40% de probabilidad de meter marcadores "bomba" pesados para distorsionar grupos de descarte
-            let gl = Math.random() < 0.4 ? Math.floor(Math.random() * 4) + 3 : generarGolesServidor();
-            let gv = Math.random() < 0.4 ? Math.floor(Math.random() * 4) + 3 : generarGolesServidor();
-            let combo = `${gl} - ${gv}`;
+        // 2️⃣ Generamos las 3 opciones de Error (Signo totalmente opuesto o desviado)
+        // Espejamos el resultado real o inyectamos marcadores caóticos grandes directos
+        let variantesError = [
+            { gl: golesVReal, gv: golesLReal }, // Espejo directo (Si real es 3-1, este es 1-3)
+            { gl: golesVReal + 2, gv: golesLReal },
+            { gl: generarGolesServidor(), gv: generarGolesServidor() }
+        ];
+
+        variantesError.forEach(v => {
+            let gl = v.gl;
+            let gv = v.gv;
             let signoOpc = gl > gv ? 'L' : (gl < gv ? 'V' : 'E');
 
-            // Obligatorio: Signo totalmente diferente al real y no repetido
-            if (signoOpc !== signoReal && !combinacionesUsadas.has(combo)) {
+            // Si por casualidad el espejo da el mismo signo, lo forzamos a cambiar drásticamente
+            if (signoOpc === signoReal) {
+                if (signoReal === 'L') { gl = 0; gv = golesLReal + 1; }
+                else if (signoReal === 'V') { gl = golesVReal + 1; gv = 0; }
+                else { gl = golesLReal + 2; gv = 0; } // Rompe el empate
+            }
+
+            let combo = `${gl} - ${gv}`;
+            let intentos = 0;
+            
+            // Resguardo por duplicados
+            while (combinacionesUsadas.has(combo) && intentos < 10) {
+                gl += 1;
+                combo = `${gl} - ${gv}`;
+                intentos++;
+            }
+
+            combinacionesUsadas.add(combo);
+            if (poolOpciones.length < 6) {
+                poolOpciones.push({ label: combo, tipo: 'error' });
+            }
+        });
+
+        // Si por algún descarte milimétrico faltó rellenar, metemos un backup caótico tradicional
+        while (poolOpciones.length < 6) {
+            let gl = generarGolesServidor() + 2;
+            let gv = generarGolesServidor();
+            let combo = `${gl} - ${gv}`;
+            if (!combinacionesUsadas.has(combo)) {
                 combinacionesUsadas.add(combo);
                 poolOpciones.push({ label: combo, tipo: 'error' });
             }
         }
-
-        // 🧠 LA ESTOCADA FINAL: Mapeamos y desordenamos de forma criptográfica el array para el cliente
-        // Guardamos el índice real ORIGINAL en el ID para que cuando vuelva en el POST /procesar, 
-        // sepamos quirúrgicamente qué tipo de opción tocó sin importar en qué posición quedó impresa.
-        const poolParaCliente = poolOpciones.map((opc, index) => ({
-            idOpcion: index, // 👈 Mantiene la referencia original oculta
-            label: opc.label
-        })).sort(() => Math.random() - 0.5); // Mezclado caótico
-
-        // Guardamos la jugada en la memoria volátil del servidor de la Arena
-        apuestasActivasServidor[usuario_id] = {
-            golesLReal,
-            golesVReal,
-            tipoApuesta,
-            montoApuesta,
-            jugadorIdApostado,
-            mapeoOpciones: poolOpciones // Mantiene la verdad: index 0 exacto, 1-2 signo, 3-5 error
-        };
-
-        const tiempoActualizado = nuevasTimbasGuardadas >= MAX_TIMBAS ? 0 : MILISEGUNDOS_POR_TIMBA;
-        
-        return res.json({ 
-            ok: true, 
-            opciones: poolParaCliente,
-            timbas_restantes: nuevasTimbasGuardadas,
-            siguienteIn: tiempoActualizado
-        });
-
-    } catch (err) {
-        console.error("❌ Fallo en motor de Timba:", err.message);
-        return res.status(500).json({ ok: false, mensaje: "Error en el servidor al preparar." });
-    }
-});
 
 app.post('/api/timba/procesar', verificarToken, async (req, res) => {
     const usuario_id = req.usuarioLogueado.id;
