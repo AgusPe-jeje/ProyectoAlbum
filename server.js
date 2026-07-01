@@ -1338,56 +1338,49 @@ app.post('/api/timba/preparar', verificarToken, async (req, res) => {
         }
 
         const nuevasTimbasGuardadas = timbasActuales - 1;
-        const ahora = new Date();
-
-        await pool.query(
-            `UPDATE usuarios SET ultimo_giro_timestamp = $1, timbas_hoy = $2 WHERE id = $3`,
-            [ahora, nuevasTimbasGuardadas, usuario_id]
-        );
+        await pool.query(`UPDATE usuarios SET ultimo_giro_timestamp = NOW(), timbas_hoy = $1 WHERE id = $2`, [nuevasTimbasGuardadas, usuario_id]);
 
         // 🎲 1. GENERACIÓN REAL DE LA BANCA
         const golesLReal = generarGolesServidor();
         const golesVReal = generarGolesServidor();
         const signoReal = golesLReal > golesVReal ? 'L' : (golesLReal < golesVReal ? 'V' : 'E');
-
-        const combinacionesUsadas = new Set();
         const labelReal = `${golesLReal} - ${golesVReal}`;
-        combinacionesUsadas.add(labelReal);
 
-        // Forzamos la opción exacta como base indispensable
-        const poolOpciones = [
-            { label: labelReal, tipo: 'exacto' }
-        ];
+        const combinacionesUsadas = new Set([labelReal]);
+        const poolOpciones = [{ label: labelReal, tipo: 'exacto' }];
 
-        // 🌪️ 2. BOLSA DE RUIDO ABSOLUTO DE FÚTBOL REALISTA (Chau dependencia matemática)
-        const bolsaDeResultados = [
-            {l:1, v:0}, {l:2, v:0}, {l:2, v:1}, {l:3, v:0}, {l:3, v:1}, {l:3, v:2}, {l:4, v:1}, {l:4, v:2}, // Locales
-            {l:0, v:1}, {l:0, v:2}, {l:1, v:2}, {l:0, v:3}, {l:1, v:3}, {l:2, v:3}, {l:1, v:4}, {l:2, v:4}, // Visitantes
-            {l:0, v:0}, {l:1, v:1}, {l:2, v:2}, {l:3, v:3}                                               // Empates
-        ];
-
-        // Desordenamos la bolsa de ruido por completo en cada giro
-        const bolsaMezclada = bolsaDeResultados.sort(() => Math.random() - 0.5);
+        // 🌪️ 2. GENERADOR MUTANTE DE MARCADORES (Puro Azar Asimétrico)
+        function crearMarcadorCaotico() {
+            const r = Math.random();
+            // Distribución dinámica para que varíen los números en cada petición
+            if (r < 0.15) return { l: 0, v: 0 }; 
+            if (r < 0.40) return { l: Math.floor(Math.random() * 3) + 1, v: Math.floor(Math.random() * 2) }; // Locales: 1-0, 2-1, 3-0
+            if (r < 0.65) return { l: Math.floor(Math.random() * 2), v: Math.floor(Math.random() * 3) + 1 }; // Visitantes: 0-1, 1-2, 0-3
+            if (r < 0.85) return { l: Math.floor(Math.random() * 2) + 2, v: Math.floor(Math.random() * 2) + 2 }; // Empates altos / Partidos locos: 2-2, 3-3, 3-2
+            return { l: Math.floor(Math.random() * 3) + 3, v: Math.floor(Math.random() * 3) }; // Goleadas raras: 4-1, 5-0, 3-1
+        }
 
         // 🔮 3. EXTRACCIÓN DE LAS 2 OPCIONES DE SIGNO COINCIDENTE
-        for (const resBolsa of bolsaMezclada) {
-            if (poolOpciones.filter(o => o.tipo === 'signo').length >= 2) break;
-            
-            const combo = `${resBolsa.l} - ${resBolsa.v}`;
-            const signoOpc = resBolsa.l > resBolsa.v ? 'L' : (resBolsa.l < resBolsa.v ? 'V' : 'E');
+        let safeSigno = 0;
+        while (poolOpciones.filter(o => o.tipo === 'signo').length < 2 && safeSigno < 300) {
+            safeSigno++;
+            const marcador = crearMarcadorCaotico();
+            const combo = `${marcador.l} - ${marcador.v}`;
+            const signoOpc = marcador.l > marcador.v ? 'L' : (marcador.l < marcador.v ? 'V' : 'E');
 
-            if (signoOpc === signoReal && !combinacionesUsadas.has(combo)) {
+            if (signoOpc === signoReal && combo !== labelReal && !combinacionesUsadas.has(combo)) {
                 combinacionesUsadas.add(combo);
                 poolOpciones.push({ label: combo, tipo: 'signo' });
             }
         }
 
-        // 🔮 4. EXTRACCIÓN DE LAS 3 OPCIONES DE ERROR
-        for (const resBolsa of bolsaMezclada) {
-            if (poolOpciones.filter(o => o.tipo === 'error').length >= 3) break;
-            
-            const combo = `${resBolsa.l} - ${resBolsa.v}`;
-            const signoOpc = resBolsa.l > resBolsa.v ? 'L' : (resBolsa.l < resBolsa.v ? 'V' : 'E');
+        // 🔮 4. EXTRACCIÓN DE LAS 3 OPCIONES DE ERROR (Signos totalmente diferentes)
+        let safeError = 0;
+        while (poolOpciones.filter(o => o.tipo === 'error').length < 3 && safeError < 300) {
+            safeError++;
+            const marcador = crearMarcadorCaotico();
+            const combo = `${marcador.l} - ${marcador.v}`;
+            const signoOpc = marcador.l > marcador.v ? 'L' : (marcador.l < marcador.v ? 'V' : 'E');
 
             if (signoOpc !== signoReal && !combinacionesUsadas.has(combo)) {
                 combinacionesUsadas.add(combo);
@@ -1395,22 +1388,27 @@ app.post('/api/timba/preparar', verificarToken, async (req, res) => {
             }
         }
 
-        // 🛡️ 5. SALVAGUARDA TOTAL CAÓTICA (En caso de que falte alguna por descarte milimétrico)
-        let idBackup = 1;
+        // 🛡️ 5. SALVAGUARDA TOTAL ANTI-REPETIDOS
+        let desvio = 1;
         while (poolOpciones.length < 6) {
-            const combo = `${golesLReal + idBackup} - ${golesVReal + idBackup + 1}`;
+            const combo = `${golesLReal + desvio} - ${golesVReal + desvio + 1}`;
             if (!combinacionesUsadas.has(combo)) {
                 combinacionesUsadas.add(combo);
                 poolOpciones.push({ label: combo, tipo: 'error' });
             }
-            idBackup++;
+            desvio++;
         }
 
-        // 🧠 6. BARAJADO CRIPTOGRÁFICO FINAL PARA EL CLIENTE
+        // 🧠 6. BARAJADO CRIPTOGRÁFICO FISHER-YATES REAL (Destruye el orden del array)
         const poolParaCliente = poolOpciones.map((opc, index) => ({
             idOpcion: index, 
             label: opc.label
-        })).sort(() => Math.random() - 0.5);
+        }));
+
+        for (let i = poolParaCliente.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [poolParaCliente[i], poolParaCliente[j]] = [poolParaCliente[j], poolParaCliente[i]];
+        }
 
         // Guardamos la verdad en el mapa de control
         apuestasActivasServidor[usuario_id] = {
@@ -1432,7 +1430,7 @@ app.post('/api/timba/preparar', verificarToken, async (req, res) => {
         });
 
     } catch (err) {
-        console.error("❌ Fallo crítico en motor de Timba:", err.message);
+        console.error("❌ Fallo crítico en motor de Timba Caótico:", err.message);
         return res.status(500).json({ ok: false, mensaje: "Error en el servidor al preparar." });
     }
 });
